@@ -1,7 +1,11 @@
+from urllib.parse import quote_plus
+
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+
+    PROJECT_NAME: str = "AI Powered Education Tutoring App"
 
     DB_USER: str
     DB_PASSWORD: str
@@ -11,9 +15,12 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self):
+
+        password = quote_plus(self.DB_PASSWORD)
+
         return (
             f"mysql+pymysql://{self.DB_USER}:"
-            f"{self.DB_PASSWORD}@"
+            f"{password}@"
             f"{self.DB_HOST}:"
             f"{self.DB_PORT}/"
             f"{self.DB_NAME}"
@@ -21,6 +28,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()
