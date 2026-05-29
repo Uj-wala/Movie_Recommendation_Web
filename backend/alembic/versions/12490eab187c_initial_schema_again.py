@@ -1,8 +1,8 @@
-"""create auth tables
+"""initial schema again
 
-Revision ID: 3ab5e5d09065
+Revision ID: 12490eab187c
 Revises: 
-Create Date: 2026-05-27 15:13:28.674347
+Create Date: 2026-05-29 13:51:36.553211
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3ab5e5d09065'
+revision: str = '12490eab187c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,7 +26,7 @@ def upgrade() -> None:
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('phone_number', sa.String(length=20), nullable=True),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
-    sa.Column('role', sa.Enum('STUDENT', 'TEACHER', 'PARENT', name='userrole'), nullable=False),
+    sa.Column('role', sa.Enum('STUDENT', 'TEACHER', 'PARENT', 'ADMIN', name='userrole'), nullable=False),
     sa.Column('security_question', sa.Enum('FAVORITE_FOOD', 'FAVORITE_COUNTRY', 'FAVORITE_SPORT', name='securityquestion'), nullable=False),
     sa.Column('security_answer_hash', sa.String(length=255), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
@@ -73,7 +73,7 @@ def upgrade() -> None:
     op.create_table('student_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('grade', sa.String(length=50), nullable=False),
-    sa.Column('school_name', sa.String(length=255), nullable=False),
+    sa.Column('school_name', sa.String(length=255), nullable=True),
     sa.Column('workplace', sa.String(length=255), nullable=True),
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),

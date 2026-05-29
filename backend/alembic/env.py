@@ -9,7 +9,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 # IMPORTANT MODEL IMPORTS
-from app.modules.auth import *
+from app.models import *
 
 config = context.config
 
