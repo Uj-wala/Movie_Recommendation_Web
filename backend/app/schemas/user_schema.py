@@ -1,32 +1,21 @@
 import re
 from typing import Optional
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-    field_validator,
-    model_validator
-)
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 
-from app.core.enums import (
-    UserRole,
-    SecurityQuestion
-)
+from app.core.enums import UserRole, SecurityQuestion
+
+PASSWORD_REGEX = re.compile(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
 
 
-PASSWORD_REGEX = re.compile(
-    r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
-)
-
-
-PHONE_REGEX = re.compile(
-    r"^[0-9]{10,15}$"
-)
+PHONE_REGEX = re.compile(r"^[0-9]{10,15}$")
 
 
 class RegisterRequest(BaseModel):
 
     full_name: str
+
+    country_id: str
 
     email: Optional[EmailStr] = None
 
@@ -47,9 +36,7 @@ class RegisterRequest(BaseModel):
         value = value.strip()
 
         if len(value) < 3:
-            raise ValueError(
-                "Full name must be at least 3 characters"
-            )
+            raise ValueError("Full name must be at least 3 characters")
 
         return value
 
@@ -61,9 +48,7 @@ class RegisterRequest(BaseModel):
             return value
 
         if not PHONE_REGEX.match(value):
-            raise ValueError(
-                "Invalid phone number format"
-            )
+            raise ValueError("Invalid phone number format")
 
         return value
 
@@ -85,9 +70,7 @@ class RegisterRequest(BaseModel):
         value = value.strip()
 
         if len(value) < 2:
-            raise ValueError(
-                "Security answer is too short"
-            )
+            raise ValueError("Security answer is too short")
 
         return value
 
@@ -95,9 +78,7 @@ class RegisterRequest(BaseModel):
     def validate_email_or_phone(self):
 
         if not self.email and not self.phone_number:
-            raise ValueError(
-                "Either email or phone number is required"
-            )
+            raise ValueError("Either email or phone number is required")
 
         return self
 
@@ -115,9 +96,7 @@ class LoginRequest(BaseModel):
         value = value.strip()
 
         if not value:
-            raise ValueError(
-                "Email or phone number is required"
-            )
+            raise ValueError("Email or phone number is required")
 
         return value
 
@@ -126,9 +105,7 @@ class LoginRequest(BaseModel):
     def validate_password(cls, value):
 
         if not value.strip():
-            raise ValueError(
-                "Password is required"
-            )
+            raise ValueError("Password is required")
 
         return value
 
@@ -151,9 +128,7 @@ class ResetPasswordRequest(BaseModel):
     def validate_new_password(cls, value):
 
         if not PASSWORD_REGEX.match(value):
-            raise ValueError(
-                "Weak password"
-            )
+            raise ValueError("Weak password")
 
         return value
 
