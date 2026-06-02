@@ -232,11 +232,23 @@ class StudentDetailsRequest(BaseModel):
     @classmethod
     def validate_grade(cls, value):
         allowed = [
-            "4th Grade",
-            "5th Grade",
-            "6th Grade",
-            "7th Grade",
-            "Others"
+            "Grade 1",
+            "Grade 2",
+            "Grade 3",
+            "Grade 4",
+            "Grade 5",
+            "Grade 6",
+            "Grade 7",
+            "Grade 8",
+            "Grade 9",
+            "Grade 10",
+            "1st year university",
+            "2nd year university",
+            "3rd year university",
+            "4th year university",
+            "Graduate studies",
+            "Adult learner",
+            "Other",
         ]
         if value not in allowed:
             raise ValueError("Invalid grade selected")
@@ -315,11 +327,24 @@ class ParentVerificationRequest(BaseModel):
     @classmethod
     def validate_child_grade(cls, value):
         allowed = [
-            "4th Grade",
-            "5th Grade",
-            "6th Grade",
-            "7th Grade",
-            "Others"
+        
+            "Grade 1",
+            "Grade 2",
+            "Grade 3",
+            "Grade 4",
+            "Grade 5",
+            "Grade 6",
+            "Grade 7",
+            "Grade 8",
+            "Grade 9",
+            "Grade 10",
+            "1st year university",
+            "2nd year university",
+            "3rd year university",
+            "4th year university",
+            "Graduate studies",
+            "Adult learner",
+            "Other",
         ]
         if value not in allowed:
             raise ValueError("Invalid grade selected")
