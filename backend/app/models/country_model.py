@@ -9,35 +9,21 @@ class Country(Base, BaseModel):
     __tablename__ = "countries"
 
     name: Mapped[str] = mapped_column(
-        String(100),
-        nullable=False,
-        unique=True
+        String(100), nullable=False, unique=True, index=True
     )
 
     iso_code: Mapped[str] = mapped_column(
-        String(2),
-        nullable=False,
-        unique=True,
-        index=True
+        String(2), nullable=False, unique=True, index=True
     )
 
     phone_code: Mapped[str] = mapped_column(
-        String(10),
-        nullable=False
+        String(20), nullable=False  # Increased from 10
     )
 
     default_language: Mapped[str] = mapped_column(
-        String(10),
-        nullable=False,
-        default="en"
+        String(10), nullable=False, default="en"
     )
 
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    users = relationship(
-        "User",
-        back_populates="country"
-    )
+    users = relationship("User", back_populates="country")
