@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from passlib.context import CryptContext
-
+from app.core.security import hash_password, hash_security_answer
 from app.models.user_model import User
 from app.models.student_profile_model import StudentProfile
 from app.models.parent_profile_model import ParentProfile
@@ -14,9 +14,6 @@ from app.schemas.user_schema import (
     ParentVerificationRequest,
     TeacherVerificationRequest
 )
-
-pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
-
 
 def register_by_phone(data: RegisterRequest, db: Session):
 
@@ -46,9 +43,9 @@ def register_by_phone(data: RegisterRequest, db: Session):
         full_name=data.full_name,
         phone_number=data.phone_number,
         email=None,
-        password_hash=pwd_context.hash(data.password),
+        password_hash=hash_password(data.password),
         security_question=SecurityQuestion(data.security_question),
-        security_answer_hash=pwd_context.hash(data.security_answer),
+        security_answer_hash=hash_security_answer(data.security_answer),
         role=UserRole(data.role),
         failed_login_attempts=0,
         is_active=True,

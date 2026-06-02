@@ -3,7 +3,8 @@ from starlette import status
 from sqlalchemy.orm import Session
 from app.schemas.user_schema import RegisterRequest
 from app.models.user_model import User
-from app.core.security import hash_password
+from app.core.security import hash_password, hash_security_answer
+from app.core.enums import UserRole
 
 class EmailRegister:
     def register_email(self,data:RegisterRequest,db:Session):
@@ -17,9 +18,9 @@ class EmailRegister:
                 phone_number=data.phone_number,
                 country_id=data.country_id,
                 password_hash=hash_password(data.password),
-                role=data.role,
+                role=UserRole(data.role),
                 security_question=data.security_question,
-                security_answer_hash=data.security_answer)
+                security_answer_hash=hash_security_answer(data.security_answer))
             db.add(user)
             db.commit()
             db.refresh(user)

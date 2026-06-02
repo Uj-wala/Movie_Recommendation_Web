@@ -177,6 +177,9 @@ class UserResponse(BaseModel):
 
     profile_completed: bool
 
+class UserRegisterResponse(BaseModel):
+    data: UserResponse
+    message: str
 
 class ConfirmRoleRequest(BaseModel):
 
