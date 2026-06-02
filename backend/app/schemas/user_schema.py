@@ -1,36 +1,47 @@
 import re
 from typing import Optional
+from app.core.enums import UserRole, SecurityQuestion 
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    field_validator,
+    model_validator,
+    ValidationError,
+    TypeAdapter,ConfigDict
+)
+ 
+PASSWORD_REGEX = re.compile(
+    r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
+)
+UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$") 
 
-from pydantic import BaseModel, EmailStr, field_validator, model_validator
-
-from app.core.enums import UserRole, SecurityQuestion
-
-PASSWORD_REGEX = re.compile(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
-
-# Updated: supports 5-15 digits to cover all countries worldwide
-PHONE_REGEX = re.compile(r"^\+?[0-9]{5,15}$")
-
-UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-
-
+PHONE_REGEX = re.compile(
+    r"^[0-9]{10,15}$"
+)
+ 
+EMAIL_VALIDATOR = TypeAdapter(EmailStr)
+ 
+ 
 class RegisterRequest(BaseModel):
-
+ 
     full_name: str
 
     country_id: str
 
+ 
     email: Optional[EmailStr] = None
-
+ 
     phone_number: Optional[str] = None
-
+ 
     password: str
 
     confirm_password: str
 
+ 
     role: UserRole
-
+ 
     security_question: SecurityQuestion
-
+ 
     security_answer: str
 
     agree_terms: bool
@@ -54,8 +65,7 @@ class RegisterRequest(BaseModel):
         value = value.strip()
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid country ID format")
-        return value
-
+ 
     @field_validator("phone_number")
     @classmethod
     def validate_phone_number(cls, value):
@@ -65,7 +75,7 @@ class RegisterRequest(BaseModel):
         if not PHONE_REGEX.match(value):
             raise ValueError("Invalid phone number. Must be 5 to 15 digits, optionally starting with +")
         return value
-
+ 
     @field_validator("password")
     @classmethod
     def validate_password(cls, value):
@@ -73,6 +83,7 @@ class RegisterRequest(BaseModel):
             raise ValueError("Password must be at least 6 characters")
         if " " in value:
             raise ValueError("Password must not contain spaces")
+ 
         if not PASSWORD_REGEX.match(value):
             raise ValueError(
                 "Password must contain uppercase, lowercase, number and special character"
@@ -84,8 +95,9 @@ class RegisterRequest(BaseModel):
     def validate_confirm_password(cls, value):
         if not value.strip():
             raise ValueError("Confirm password is required")
+ 
         return value
-
+ 
     @field_validator("security_answer")
     @classmethod
     def validate_security_answer(cls, value):
@@ -102,8 +114,14 @@ class RegisterRequest(BaseModel):
         allowed = [UserRole.STUDENT, UserRole.TEACHER, UserRole.PARENT]
         if value not in allowed:
             raise ValueError("Role must be student, teacher or parent")
+ 
+        value = value.strip()
+ 
+        if len(value) < 2:
+            raise ValueError("Security answer is too short")
+ 
         return value
-
+ 
     @model_validator(mode="after")
     def validate_passwords_match(self):
         if self.password and self.confirm_password:
@@ -115,67 +133,242 @@ class RegisterRequest(BaseModel):
     def validate_email_or_phone(self):
         if not self.email and not self.phone_number:
             raise ValueError("Either email or phone number is required")
+    def validate_email_or_phone(self):
+ 
+        if not self.email and not self.phone_number:
+            raise ValueError("Either email or phone number is required")
+ 
         return self
-
-
+ 
+ 
 class LoginRequest(BaseModel):
-
+ 
     email_or_phone: str
-
+ 
     password: str
-
+ 
     @field_validator("email_or_phone")
     @classmethod
     def validate_email_or_phone(cls, value):
         value = value.strip()
+ 
         if not value:
             raise ValueError("Email or phone number is required")
+ 
+        if len(value) > 254:
+            raise ValueError(
+                "Email or phone number is too long"
+            )
+ 
+        if "@" in value:
+            try:
+                EMAIL_VALIDATOR.validate_python(value)
+            except ValidationError:
+                raise ValueError(
+                    "Invalid email format"
+                )
+ 
+            return value.lower()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError(
+                "Invalid phone number format"
+            )
+ 
         return value
-
+ 
     @field_validator("password")
     @classmethod
     def validate_password(cls, value):
-        if not value.strip():
-            raise ValueError("Password is required")
+        if not value or not value.strip():
+            raise ValueError(
+                "Password is required"
+            )
+ 
+        if len(value) < 8:
+            raise ValueError(
+                "Password must be at least 8 characters"
+            )
+ 
+        if len(value) > 128:
+            raise ValueError(
+                "Password is too long"
+            )
+ 
         return value
-
-
+   
+class LogoutRequest(BaseModel):
+ 
+    refresh_token: str
+ 
+    @field_validator("refresh_token")
+    @classmethod
+    def validate_refresh_token(cls, value):
+ 
+        value = value.strip()
+ 
+        if not value:
+            raise ValueError(
+                "Refresh token is required"
+            )
+ 
+        return value    
+   
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+ 
+ 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+ 
+ 
 class ForgotPasswordRequest(BaseModel):
+ 
+    email: Optional[EmailStr] = None
+ 
+    phone_number: Optional[str] = None
+ 
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value):
+ 
+        if value is None:
+            return value
+ 
+        value = value.strip()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError(
+                "Invalid phone number format"
+            )
+ 
+        return value
+ 
+    @model_validator(mode="after")
+    def validate_email_or_phone(self):
+ 
+        if not self.email and not self.phone_number:
+            raise ValueError(
+                "Either email or phone number is required"
+            )
+ 
+        if self.email and self.phone_number:
+            raise ValueError(
+                "Use either email or phone number, not both"
+            )
+ 
+        return self
 
-    email_or_phone: str
-
-
+class VerifyForgotPasswordOtpRequest(BaseModel):
+    email: str | None = None
+    phone_number: str | None = None
+    otp: str
+ 
+ 
+ 
 class ResetPasswordRequest(BaseModel):
-
+ 
     user_id: str
-
+ 
     otp_code: str
-
+ 
     new_password: str
-
+ 
     @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, value):
         if not PASSWORD_REGEX.match(value):
             raise ValueError("Weak password")
+ 
         return value
-
-
+ 
+class BlockedAccountResetRequest(BaseModel):
+ 
+    email_or_phone: str
+ 
+    security_question: SecurityQuestion
+ 
+    security_answer: str
+ 
+    new_password: str
+ 
+    @field_validator("email_or_phone")
+    @classmethod
+    def validate_email_or_phone(cls, value):
+ 
+        value = value.strip()
+ 
+        if not value:
+            raise ValueError(
+                "Email or phone number is required"
+            )
+ 
+        if len(value) > 254:
+            raise ValueError(
+                "Email or phone number is too long"
+            )
+ 
+        if "@" in value:
+            try:
+                EMAIL_VALIDATOR.validate_python(value)
+            except ValidationError:
+                raise ValueError(
+                    "Invalid email format"
+                )
+ 
+            return value.lower()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError(
+                "Invalid phone number format"
+            )
+ 
+        return value
+ 
+    @field_validator("security_answer")
+    @classmethod
+    def validate_security_answer(cls, value):
+ 
+        value = value.strip()
+ 
+        if len(value) < 2:
+            raise ValueError(
+                "Security answer is too short"
+            )
+ 
+        return value
+ 
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value):
+ 
+        if not PASSWORD_REGEX.match(value):
+            raise ValueError(
+                "Password must contain uppercase, lowercase, number and special character"
+            )
+ 
+        return value
+ 
+ 
 class UserResponse(BaseModel):
-
+ 
     id: str
-
+ 
     full_name: str
-
+ 
     email: Optional[str]
-
+ 
     phone_number: Optional[str]
-
+ 
     role: UserRole
-
+ 
     is_verified: bool
 
     profile_completed: bool
+    model_config = ConfigDict(from_attributes=True)
+ 
 
 class UserRegisterResponse(BaseModel):
     data: UserResponse
@@ -416,3 +609,4 @@ class TeacherVerificationResponse(BaseModel):
     message: str
 
     user_id: str
+ 

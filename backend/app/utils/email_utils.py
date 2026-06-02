@@ -2,6 +2,12 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
+from app.utils.sms_utils import send_sms_otp
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from app.schemas.user_schema import ForgotPasswordRequest
+from app.utils.user_utils import get_user_by_identifier
+import random
 SENDER_EMAIL = settings.EMAIL_USERNAME
 SENDER_PASSWORD = settings.EMAIL_PASSWORD
 def send_email_otp(email, otp):

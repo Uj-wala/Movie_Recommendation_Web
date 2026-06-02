@@ -14,6 +14,8 @@ from app.models.parent_profile_model import ParentProfile
 from app.authotp.otp_router import router as otp_router
 from app.api.phone_registration import router as phone_router
 
+from app.api.auth_login import router as login_router
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -35,3 +37,6 @@ app.include_router(otp_router)
 @app.get("/")
 def root():
     return {"message": "AI Powered Education Tutoring App is running"}
+
+app.include_router(login_router)
+
