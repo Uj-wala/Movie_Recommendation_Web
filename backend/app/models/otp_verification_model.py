@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.base_model import BaseModel
-from app.core.enums import OTPType
+from app.core.enums import OTPType, OTPChannel
 
 
 class OTPVerification(Base, BaseModel):
@@ -36,6 +36,11 @@ class OTPVerification(Base, BaseModel):
         Enum(OTPType),
         nullable=False
     )
+
+    channel: Mapped[OTPChannel] = mapped_column(
+    Enum(OTPChannel),
+    nullable=False
+)
 
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

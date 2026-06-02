@@ -13,6 +13,20 @@ class Settings(BaseSettings):
     DB_PORT: int
     DB_NAME: str
 
+   
+    EMAIL_USERNAME: str
+    EMAIL_PASSWORD: str
+
+    # Twilio settings
+    TWILIO_ACCOUNT_SID: str
+    TWILIO_AUTH_TOKEN: str
+    TWILIO_PHONE_NUMBER: str
+    TWILIO_VERIFY_SERVICE_SID: str
+    
+
+    class Config:
+        env_file = ".env"
+
     @property
     def DATABASE_URL(self):
 

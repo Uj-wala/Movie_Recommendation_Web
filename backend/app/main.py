@@ -11,7 +11,7 @@ from app.models.user_session_model import UserSession
 from app.models.student_profile_model import StudentProfile
 from app.models.teacher_profile_model import TeacherProfile
 from app.models.parent_profile_model import ParentProfile
-
+from app.authotp.otp_router import router as otp_router
 from app.api.phone_registration import router as phone_router
 
 Base.metadata.create_all(bind=engine)
@@ -31,7 +31,7 @@ app.add_middleware(
 
 app.include_router(auth_routes.router)
 app.include_router(phone_router)
-
+app.include_router(otp_router)
 @app.get("/")
 def root():
     return {"message": "AI Powered Education Tutoring App is running"}

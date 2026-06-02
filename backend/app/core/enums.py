@@ -7,6 +7,9 @@ class UserRole(str, Enum):
     PARENT = "parent"
     ADMIN = "admin"
 
+class OTPChannel(str, Enum):
+    EMAIL = "email"
+    PHONE = "phone"
 
 class OTPType(str, Enum):
     REGISTRATION = "registration"
