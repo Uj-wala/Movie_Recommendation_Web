@@ -244,7 +244,7 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
             detail="Invalid refresh token"
         )
  
-    user = get_user_by_id(db, int(user_id))
+    user = get_user_by_id(db, (user_id))
  
     if (
         not user
@@ -265,7 +265,7 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
     if (
         not stored_token
         or stored_token.revoked
-        or stored_token.expires_at < datetime.now(timezone.utc)
+        or stored_token.expires_at < datetime.utcnow()
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
