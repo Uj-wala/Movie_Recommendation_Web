@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.core.security import hash_password
+from app.core.security import hash_security_answer
 from app.core.enums import (
     UserRole,
     SecurityQuestion,
@@ -36,7 +37,7 @@ def create_admin():
             password_hash=hash_password("Admin@123"),
             role=UserRole.ADMIN,
             security_question=(SecurityQuestion.FAVORITE_COUNTRY),
-            security_answer_hash=hash_password("India"),
+            security_answer_hash=hash_security_answer("India"),
             is_verified=True,
             is_active=True,
             profile_completed=True,

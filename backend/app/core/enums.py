@@ -9,7 +9,7 @@ class UserRole(str, Enum):
 
 class OTPChannel(str, Enum):
     EMAIL = "email"
-    PHONE = "phone"
+    SMS = "sms"
 
 class OTPType(str, Enum):
     REGISTRATION = "registration"
