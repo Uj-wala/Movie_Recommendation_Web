@@ -18,9 +18,6 @@ def verify_security_answer(plain_security_answer: str, hashed_security_answer: s
     return pwd_context.verify(plain_security_answer, hashed_security_answer)
  
  
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-)
+
  
  
