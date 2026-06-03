@@ -1,5 +1,6 @@
-from datetime import datetime, timezone,timedelta
+from datetime import datetime, timezone, timedelta
 import random
+from twilio.rest import Client
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from app.models.otp_verification_model import OTPVerification   
@@ -24,6 +25,21 @@ from app.utils.sms_utils import send_sms_otp, verify_sms_otp
 from app.utils.token_utils import hash_token
 from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
+
+client = Client(
+    settings.TWILIO_ACCOUNT_SID,
+    settings.TWILIO_AUTH_TOKEN
+)
+
+def verify_email_otp(email: str, otp: str):
+    verification_check = client.verify.v2.services(
+        settings.TWILIO_VERIFY_SERVICE_SID
+    ).verification_checks.create(
+        to=email,
+        code=otp
+    )
+
+    return verification_check.status == "approved"
  
  
 ACCOUNT_BLOCKED_DETAIL = {
@@ -176,30 +192,61 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
  
  
 def forgot_password(db: Session, payload):
+
     identifier = payload.email or payload.phone_number
     user = get_user_by_identifier(db, identifier)
 
     if not user:
-        raise HTTPException(404, "User not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     if not user.is_active:
-        raise HTTPException(403, "User is inactive")
+        raise HTTPException(status_code=403, detail="User is inactive")
+
+    otp = str(random.randint(100000, 999999))
 
     if payload.email:
-        otp_status = send_email_otp(payload.email)
+
+        send_email_otp(payload.email, otp)
+
+        otp_record = OTPVerification(
+            user_id=user.id,
+            otp_code=otp,
+            otp_type=OTPType.PASSWORD_RESET,
+            channel=OTPChannel.EMAIL,
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+            is_used=False,
+            attempts=0
+        )
+
+        db.add(otp_record)
+        db.commit()
+
         return {"message": "OTP sent to email"}
 
     phone = payload.phone_number
 
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number required")
+
     if not phone.startswith("+"):
         phone = f"+91{phone}"
 
-    status = send_sms_otp(phone)
+    send_sms_otp(phone)
 
-    return {
-        "message": "OTP sent via Twilio",
-        "status": status
-    }
+    otp_record = OTPVerification(
+        user_id=user.id,
+        otp_code=otp,
+        otp_type=OTPType.PASSWORD_RESET,
+        channel=OTPChannel.SMS,
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+        is_used=False,
+        attempts=0
+    )
+
+    db.add(otp_record)
+    db.commit()
+
+    return {"message": "OTP sent via SMS"}
  
 def verify_forgot_password_otp(db: Session, payload):
 
@@ -207,23 +254,43 @@ def verify_forgot_password_otp(db: Session, payload):
     user = get_user_by_identifier(db, identifier)
 
     if not user:
-        raise HTTPException(404, "User not found")
-
-    phone = payload.phone_number
-
-    if phone and not phone.startswith("+"):
-        phone = f"+91{phone}"
+        raise HTTPException(status_code=404, detail="User not found")
 
     if payload.email:
-        raise HTTPException(400, "Email OTP not implemented in Twilio flow")
+
+        otp_record = db.query(OTPVerification).filter(
+            OTPVerification.user_id == user.id,
+            OTPVerification.channel == OTPChannel.EMAIL,
+            OTPVerification.otp_type == OTPType.PASSWORD_RESET,
+            OTPVerification.is_used == False,
+            OTPVerification.expires_at > datetime.now(timezone.utc)
+        ).order_by(OTPVerification.created_at.desc()).first()
+
+        if not otp_record:
+            raise HTTPException(status_code=400, detail="OTP expired or not found")
+
+        if otp_record.otp_code != payload.otp:
+            raise HTTPException(status_code=400, detail="Invalid OTP")
+
+        otp_record.is_used = True
+        db.commit()
+
+        return {
+            "message": "Email OTP verified successfully",
+            "verified": True
+        }
+
+    phone = payload.phone_number
+    if phone and not phone.startswith("+"):
+        phone = f"+91{phone}"
 
     verified = verify_sms_otp(phone, payload.otp)
 
     if not verified:
-        raise HTTPException(400, "Invalid OTP")
+        raise HTTPException(status_code=400, detail="Invalid OTP")
 
     return {
-        "message": "OTP verified successfully",
+        "message": "SMS OTP verified successfully",
         "verified": True
     }
  
