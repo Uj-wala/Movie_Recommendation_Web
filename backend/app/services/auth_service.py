@@ -47,55 +47,7 @@ class AuthService:
                     status_code=400,
                     detail="Phone number already exists"
                 )
-
-        user = User(
-            full_name=request.full_name,
-            email=request.email,
-            phone_number=request.phone_number,
-            password_hash=hash_password(
-                request.password
-            ),
-            role=request.role,
-            security_question=request.security_question,
-            security_answer_hash=hash_password(
-                request.security_answer
-            )
-        )
-
-        return UserRepository.create_user(
-            db,
-            user
-        )
-
-    @staticmethod
-    def reset_password(
-        db: Session,
-        request: ResetPasswordRequest
-    ):
-
-        user = UserRepository.get_by_id(
-            db,
-            request.user_id
-        )
-
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        user.password_hash = hash_password(
-            request.new_password
-        )
-
-        UserRepository.update_user(
-            db,
-            user
-        )
-
-        return {
-            "message": "Password reset successful"
-        }
+            
 from datetime import datetime, timezone, timedelta
 import random
 from twilio.rest import Client
