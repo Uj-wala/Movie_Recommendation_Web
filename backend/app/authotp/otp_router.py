@@ -24,9 +24,7 @@ router = APIRouter(
 )
 
 
-# -------------------------
-# PHONE OTP
-# -------------------------
+
 
 @router.post("/resend-otp")
 def resend_otp(
