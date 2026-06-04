@@ -23,12 +23,6 @@ def register_by_phone(data: RegisterRequest, db: Session):
             detail="Passwords do not match"
         )
 
-    if not data.agree_terms:
-        raise HTTPException(
-            status_code=400,
-            detail="You must agree to the terms and conditions"
-        )
-
     existing_user = db.query(User).filter(
         User.phone_number == data.phone_number
     ).first()
