@@ -12,9 +12,9 @@ const ConfirmRole = () => {
 
   const getNextRoute = () => {
     switch (role.toLowerCase()) {
-      case 'student': return '/student-details';
-      case 'teacher': return '/teacher-verification';
-      case 'parent': return '/parent-verification';
+      case 'student': return `/verify-account?role=${role.toLowerCase()}`;
+      case 'teacher': return `/verify-account?role=${role.toLowerCase()}`;
+      case 'parent': return `/verify-account?role=${role.toLowerCase()}`;
       default: return '/login';
     }
   };

@@ -11,6 +11,7 @@ import StudentDetails from './pages/StudentDetails';
 import TeacherVerification from './pages/TeacherVerification';
 import ParentVerification from './pages/ParentVerification';
 import Home from './pages/Home';
+import SuccessPage from './pages/SuccessPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/student-details" element={<StudentDetails />} />
         <Route path="/parent-verification" element={<ParentVerification />} />
         <Route path="/teacher-verification" element={<TeacherVerification />} />
+        <Route path="/success" element={<SuccessPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
