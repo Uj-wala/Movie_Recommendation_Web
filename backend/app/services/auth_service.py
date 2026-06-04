@@ -50,7 +50,7 @@ class AuthService:
             
 from datetime import datetime, timezone, timedelta
 import random
-from twilio.rest import Client
+#from twilio.rest import Client
     
 from datetime import datetime, timezone,timedelta
 import random
@@ -79,20 +79,20 @@ from app.utils.token_utils import hash_token
 from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
 
-client = Client(
-    settings.TWILIO_ACCOUNT_SID,
-    settings.TWILIO_AUTH_TOKEN
-)
+# client = Client(
+   # settings.TWILIO_ACCOUNT_SID,
+   # settings.TWILIO_AUTH_TOKEN
+#)
 
-def verify_email_otp(email: str, otp: str):
-    verification_check = client.verify.v2.services(
-        settings.TWILIO_VERIFY_SERVICE_SID
-    ).verification_checks.create(
-        to=email,
-        code=otp
-    )
+#def verify_email_otp(email: str, otp: str):
+ #   verification_check = client.verify.v2.services(
+  #      settings.TWILIO_VERIFY_SERVICE_SID
+   # ).verification_checks.create(
+    #    to=email,
+     #   code=otp
+    #)
 
-    return verification_check.status == "approved"
+    #return verification_check.status == "approved"
  
  
 ACCOUNT_BLOCKED_DETAIL = {
@@ -276,7 +276,7 @@ def forgot_password(db: Session, payload):
  
         return {"message": "OTP sent to email"}
  
-    phone = payload.phone_number
+    """phone = payload.phone_number
  
     if not phone:
         raise HTTPException(status_code=400, detail="Phone number required")
@@ -297,9 +297,9 @@ def forgot_password(db: Session, payload):
     )
  
     db.add(otp_record)
-    db.commit()
+   # db.commit()
  
-    return {"message": "OTP sent via SMS"}
+    #return {"message": "OTP sent via SMS"}"""
  
  
 def verify_forgot_password_otp(db: Session, payload):
@@ -334,7 +334,7 @@ def verify_forgot_password_otp(db: Session, payload):
             "verified": True
         }
 
-    phone = payload.phone_number
+    """phone = payload.phone_number
     if phone and not phone.startswith("+"):
         phone = f"+91{phone}"
 
@@ -346,7 +346,7 @@ def verify_forgot_password_otp(db: Session, payload):
     return {
         "message": "SMS OTP verified successfully",
         "verified": True
-    }
+    }"""
 
 def create_new_password(db: Session, payload):
 
