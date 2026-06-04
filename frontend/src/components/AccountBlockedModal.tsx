@@ -1,5 +1,6 @@
 import React from "react";
 import { X, AlertTriangle, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface AccountBlockedModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
   return (
@@ -24,8 +27,7 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
 
         <div className="flex flex-col items-center text-center mt-4">
           <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-6">
-            <AlertTriangle className="w-8 h-8 text-green-600" />{" "}
-            {/* Design shows a green triangle but red bg, actually looks like a green outline triangle */}
+            <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
@@ -40,7 +42,11 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
 
           <form
             className="w-full text-left"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              navigate('/forgot-password');
+              onClose();
+            }}
           >
             <div className="mb-4">
               <label className="block text-xs font-bold text-gray-900 mb-2">
@@ -51,7 +57,7 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
                   <option>Select a Security Question</option>
                   <option>What is your Favorite Food?</option>
                   <option>What is your Favorite Country?</option>
-                  <option>What is your favorte Sport?</option>
+                  <option>What is your favorite Sport?</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
                   <ChevronDown className="w-4 h-4" />
@@ -60,10 +66,13 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
             </div>
 
             <div className="mb-8">
+              <label className="block text-xs font-bold text-gray-900 mb-2">
+                Answer
+              </label>
               <input
                 type="text"
                 className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="Kumar Gandham"
+                placeholder="Type your answer here"
               />
             </div>
 

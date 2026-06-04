@@ -9,7 +9,7 @@ const StudentDetails = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/parent-verification');
+    navigate('/success');
   };
 
   return (
@@ -17,7 +17,7 @@ const StudentDetails = () => {
       <SplitScreenLayout>
         {/* Back Button */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
+          <Link to="/verify-account?role=student" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
             <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
               <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
             </div>
@@ -26,7 +26,7 @@ const StudentDetails = () => {
         </div>
 
         <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
-          <div className="flex justify-center w-full mb-8">
+          <div className="flex justify-start w-full mb-8">
             <Logo />
           </div>
 
@@ -45,13 +45,12 @@ const StudentDetails = () => {
                     required
                   >
                     <option value="" disabled hidden>Select Grade</option>
+                    <option value="4">4th Grade</option>
+                    <option value="5">5th Grade</option>
                     <option value="6">6th Grade</option>
                     <option value="7">7th Grade</option>
                     <option value="8">8th Grade</option>
-                    <option value="9">9th Grade</option>
-                    <option value="10">10th Grade</option>
-                    <option value="11">11th Grade</option>
-                    <option value="12">12th Grade</option>
+                    <option value="others">Others</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,17 +72,6 @@ const StudentDetails = () => {
                 />
               </div>
 
-              <div className="mb-8">
-                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                  School Name
-                </label>
-                <input
-                  type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="public School"
-                  required
-                />
-              </div>
 
               <button
                 type="submit"

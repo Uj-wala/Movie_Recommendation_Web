@@ -22,7 +22,8 @@ def register_by_phone(data: RegisterRequest, db: Session):
             status_code=400,
             detail="Passwords do not match"
         )
- 
+
+
     existing_user = db.query(User).filter(
         User.phone_number == data.phone_number
     ).first()

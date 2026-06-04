@@ -52,6 +52,7 @@ class RegisterRequest(BaseModel):
     security_question: SecurityQuestion
  
     security_answer: str
+    
  
     @field_validator("full_name")
     @classmethod
@@ -140,10 +141,6 @@ class RegisterRequest(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_email_or_phone(self):
- 
-        if not self.email and not self.phone_number:
-            raise ValueError("Either email or phone number is required")
     def validate_email_or_phone(self):
  
         if not self.email and not self.phone_number:

@@ -34,53 +34,56 @@ const ParentVerification = () => {
 
             <h1 className="text-[24px] sm:text-[28px] font-bold text-[#111111] mb-8 font-sans">Parent Verification</h1>
 
-          <form className="w-full" onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                Enter Child Name:
-              </label>
-              <input
-                type="text"
-                className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                placeholder="John Cena"
-                required
-              />
-            </div>
+            <form className="w-full" onSubmit={handleSubmit}>
+              <div className="mb-6">
+                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
+                  Enter Child Name:
+                </label>
+                <input
+                  type="text"
+                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
+                  placeholder="John Cena"
+                  onInput={(e) => {
+                    e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
+                  }}
+                  required
+                />
+              </div>
 
-            <div className="mb-6">
-              <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                Child Grade
-              </label>
-              <input
-                type="text"
-                className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                placeholder="Plus 2"
-                required
-              />
-            </div>
+              <div className="mb-6">
+                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
+                  Child Grade
+                </label>
+                <input
+                  type="text"
+                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
+                  placeholder="Plus 2"
+                  required
+                />
+              </div>
 
-            <div className="mb-8">
-              <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                Student ID
-              </label>
-              <input
-                type="text"
-                className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                placeholder="AI245836AP"
-                required
-              />
-            </div>
-            
-            <button
-              type="submit"
-              className="bg-[#248943] hover:bg-[#1d6e35] text-white font-bold py-3 px-10 rounded-lg transition-colors text-[15px]"
-            >
-              Continue
-            </button>
-          </form>
+              <div className="mb-8">
+                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
+                  Student ID
+                </label>
+                <input
+                  type="text"
+                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
+                  placeholder="AI245836AP"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="bg-[#248943] hover:bg-[#1d6e35] text-white font-bold py-3 px-10 rounded-lg transition-colors text-[15px]"
+              >
+                Continue
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-    </SplitScreenLayout>
+      </SplitScreenLayout>
     </>
   );
 };

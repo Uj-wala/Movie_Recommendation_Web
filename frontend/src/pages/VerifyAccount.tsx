@@ -1,10 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 
 const VerifyAccount = () => {
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get('role') || 'student';
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -48,7 +50,7 @@ const VerifyAccount = () => {
     <SplitScreenLayout>
       {/* Back Button */}
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-        <Link to="/register" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
+        <Link to={`/confirm-role?role=${role}`} className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
             <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
           </div>
@@ -99,7 +101,7 @@ const VerifyAccount = () => {
           </p>
 
           <Link
-            to="/select-role"
+            to={role === 'teacher' ? '/teacher-verification' : role === 'parent' ? '/parent-verification' : '/student-details'}
             className="w-full block text-center bg-[#299555] hover:bg-[#238148] text-white font-semibold py-3 px-4 rounded-lg transition-colors mt-2"
           >
             Verify Account

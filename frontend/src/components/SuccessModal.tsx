@@ -10,9 +10,9 @@ interface SuccessModalProps {
   redirectUrl?: string;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ 
-  isOpen, 
-  title = "Success!", 
+const SuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  title = "Success!",
   message = "Your details have been submitted successfully.",
   buttonText = "Continue",
   redirectUrl = "/"
@@ -29,10 +29,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
           </p>
 
           <div className="relative w-[180px] h-[180px] mb-10 flex items-center justify-center">
-            <img 
-              src="/Group%201000002268.png" 
-              alt="Success Thumbs Up" 
-              className="w-full h-full object-contain" 
+            <img
+              src="/Group%201000002268.png"
+              alt="Success Thumbs Up"
+              className="w-full h-full object-contain"
             />
           </div>
 

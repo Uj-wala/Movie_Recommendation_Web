@@ -16,7 +16,7 @@ const Register = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/verify-account');
+    navigate('/select-role');
   };
 
   return (
@@ -67,7 +67,10 @@ const Register = () => {
               <input
                 type="text"
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="you@institution.edu"
+                placeholder="John Doe"
+                onInput={(e) => {
+                  e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
+                }}
               />
             </div>
           </div>

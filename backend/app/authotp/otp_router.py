@@ -31,14 +31,13 @@ def resend_otp(
     payload: ResendOTPRequest,
     db: Session = Depends(get_db)
 ):
-    message = OTPService.resend_otp(
-        db,
-        payload.phone_number
-    )
+    
+    response = OTPService.resend_otp(
+    db,
+    payload.phone_number
+)
 
-    return {
-        "message": message
-    }
+    return response
 
 
 @router.post("/verify-otp")
