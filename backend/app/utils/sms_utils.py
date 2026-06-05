@@ -1,36 +1,27 @@
-from twilio.rest import Client  
-from app.core.config import settings
+import random
 
-client = Client(
-    settings.TWILIO_ACCOUNT_SID,
-    settings.TWILIO_AUTH_TOKEN
-)
+# Temporary OTP storage
+otp_store = {}
 
 def send_sms_otp(phone_number: str):
+    otp = str(random.randint(100000, 999999))
 
-    if not phone_number.startswith("+"):
-        phone_number = f"+91{phone_number}"
+    otp_store[phone_number] = otp
 
-    verification = client.verify.v2.services(
-        settings.TWILIO_VERIFY_SERVICE_SID
-    ).verifications.create(
-        to=phone_number,
-        channel="sms"
-    )
+    print(f"OTP for {phone_number}: {otp}")
 
-    return verification.status
+    return otp
 
 
 def verify_sms_otp(phone_number: str, otp_code: str):
+    stored_otp = otp_store.get(phone_number)
 
-    if not phone_number.startswith("+"):
-        phone_number = f"+91{phone_number}"
+    if not stored_otp:
+        return False
 
-    verification_check = client.verify.v2.services(
-        settings.TWILIO_VERIFY_SERVICE_SID
-    ).verification_checks.create(
-        to=phone_number,
-        code=otp_code
-    )
+    if stored_otp != otp_code:
+        return False
 
-    return verification_check.status == "approved"
+    del otp_store[phone_number]
+
+    return True

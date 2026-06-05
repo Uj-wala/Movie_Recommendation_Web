@@ -23,15 +23,20 @@ class Settings(BaseSettings):
     EMAIL_USERNAME: str
     EMAIL_PASSWORD: str
 
-    # Twilio settings
+    """Twilio settings
     TWILIO_ACCOUNT_SID: str
     TWILIO_AUTH_TOKEN: str
     TWILIO_PHONE_NUMBER: str
-    TWILIO_VERIFY_SERVICE_SID: str
+    TWILIO_VERIFY_SERVICE_SID: str"""
     
 
     class Config:
         env_file = ".env"
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    MAX_LOGIN_ATTEMPTS: int = 3
 
     @property
     def DATABASE_URL(self):
