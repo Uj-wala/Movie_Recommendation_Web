@@ -1,17 +1,62 @@
-import React from 'react';
+
+
+import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-
+import { saveParentVerification } from "../services/PhoneRegistrationService";
+ 
 const ParentVerification = () => {
   const navigate = useNavigate();
-
-  const handleSubmit = (e: React.FormEvent) => {
+ 
+  const [childName,          setChildName]          = useState('');
+  const [childGrade,         setChildGrade]         = useState('');
+  const [studentReferenceId, setStudentReferenceId] = useState('');
+  const [loading,            setLoading]            = useState(false);
+  const [error,              setError]              = useState('');
+ 
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/teacher-verification');
+    setError('');
+    try {
+      setLoading(true);
+ 
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        setError('User session not found. Please register again.');
+        return;
+      }
+ 
+   
+      await saveParentVerification({
+      user_id: userId,
+      child_name: childName,
+      child_grade: childGrade,
+      student_reference_id: studentReferenceId,
+    });
+    
+     
+      navigate('/verify-account?role=parent');
+ 
+    } catch (err: any) {
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === 'string') {
+          setError(detail);
+        } else if (Array.isArray(detail)) {
+          setError(detail.map((e: any) => e.msg).join(', '));
+        } else {
+          setError('Submission failed. Please try again.');
+        }
+      } else {
+        setError('Submission failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
-
+ 
   return (
     <>
       <SplitScreenLayout>
@@ -24,17 +69,26 @@ const ParentVerification = () => {
             Back
           </Link>
         </div>
-
+ 
         <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
           <div className="flex justify-center w-full mb-8">
             <Logo />
           </div>
-
+ 
           <div className="w-full bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-8 border border-gray-50">
-
+ 
             <h1 className="text-[24px] sm:text-[28px] font-bold text-[#111111] mb-8 font-sans">Parent Verification</h1>
-
+ 
+            {/* ✅ Error message */}
+            {error && (
+              <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+ 
             <form className="w-full" onSubmit={handleSubmit}>
+ 
+              {/* Child Name */}
               <div className="mb-6">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Enter Child Name:
@@ -43,13 +97,16 @@ const ParentVerification = () => {
                   type="text"
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
                   placeholder="John Cena"
+                  value={childName}
+                  onChange={(e) => setChildName(e.target.value)}
                   onInput={(e) => {
                     e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
                   }}
                   required
                 />
               </div>
-
+ 
+              {/* Child Grade */}
               <div className="mb-6">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Child Grade
@@ -58,10 +115,13 @@ const ParentVerification = () => {
                   type="text"
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
                   placeholder="Plus 2"
+                  value={childGrade}
+                  onChange={(e) => setChildGrade(e.target.value)}
                   required
                 />
               </div>
-
+ 
+              {/* Student ID */}
               <div className="mb-8">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Student ID
@@ -70,16 +130,20 @@ const ParentVerification = () => {
                   type="text"
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
                   placeholder="AI245836AP"
+                  value={studentReferenceId}
+                  onChange={(e) => setStudentReferenceId(e.target.value)}
                   required
                 />
               </div>
-
+ 
               <button
                 type="submit"
-                className="bg-[#248943] hover:bg-[#1d6e35] text-white font-bold py-3 px-10 rounded-lg transition-colors text-[15px]"
+                disabled={loading}
+                className="bg-[#248943] hover:bg-[#1d6e35] text-white font-bold py-3 px-10 rounded-lg transition-colors text-[15px] disabled:opacity-50"
               >
-                Continue
+                {loading ? 'Please wait...' : 'Continue'}
               </button>
+ 
             </form>
           </div>
         </div>
@@ -87,5 +151,6 @@ const ParentVerification = () => {
     </>
   );
 };
-
+ 
 export default ParentVerification;
+ 

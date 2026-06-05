@@ -9,15 +9,22 @@ const ConfirmRole = () => {
   const role = searchParams.get('role') || 'Student';
   // Capitalize the role
   const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+  
+const getNextRoute = () => {
+  switch (role.toLowerCase()) {
+    case 'student':
+      return '/student-details';
 
-  const getNextRoute = () => {
-    switch (role.toLowerCase()) {
-      case 'student': return `/verify-account?role=${role.toLowerCase()}`;
-      case 'teacher': return `/verify-account?role=${role.toLowerCase()}`;
-      case 'parent': return `/verify-account?role=${role.toLowerCase()}`;
-      default: return '/login';
-    }
-  };
+    case 'teacher':
+      return '/teacher-verification';
+
+    case 'parent':
+      return '/parent-verification';
+
+    default:
+      return '/login';
+  }
+};
 
   return (
     <SplitScreenLayout>
