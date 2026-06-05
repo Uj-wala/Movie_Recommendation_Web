@@ -14,7 +14,7 @@ const Register = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     navigate('/select-role');
   };
@@ -178,7 +178,7 @@ const Register = () => {
             <input
               type="text"
               className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-              placeholder="Kumar Gandham"
+              placeholder="Enter your Security Answer"
             />
           </div>
 

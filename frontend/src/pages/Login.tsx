@@ -16,7 +16,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   // For demonstration, let's open the modal if email is 'block@test.com'
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsModalOpen(true);
   };
