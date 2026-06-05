@@ -35,8 +35,7 @@ class RegisterRequest(BaseModel):
  
     full_name: str
  
-    country_id: str
- 
+    country_id: Optional[str] = None
  
     email: Optional[EmailStr] = None
  
@@ -46,13 +45,13 @@ class RegisterRequest(BaseModel):
  
     confirm_password: str
  
- 
-    role: UserRole
+    role: Optional[UserRole] = "student"
  
     security_question: SecurityQuestion
  
     security_answer: str
-    
+ 
+    agree_to_terms: bool
  
     @field_validator("full_name")
     @classmethod
@@ -62,6 +61,14 @@ class RegisterRequest(BaseModel):
  
         if len(value) < 3:
             raise ValueError("Full name must be at least 3 characters")
+ 
+        return value
+
+    @field_validator("agree_to_terms")
+    @classmethod
+    def validate_agree_to_terms(cls, value):
+        if not value:
+            raise ValueError("You must agree to the terms and conditions")
  
         return value
  

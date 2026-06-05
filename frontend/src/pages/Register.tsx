@@ -5,6 +5,8 @@ import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { registerUser } from '../services/emaillRegister';
+
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 
 const Register = () => {
@@ -14,9 +16,67 @@ const Register = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate('/select-role');
+    if (registrationType === 'email') {
+      const form = e.currentTarget;
+      try {
+        const response =
+          await registerUser({
+            full_name: (
+              form.elements.namedItem(
+                "fullName"
+              ) as HTMLInputElement
+            ).value,
+
+            email: (
+              form.elements.namedItem(
+                "email"
+              ) as HTMLInputElement
+            ).value,
+
+            password: (
+              form.elements.namedItem(
+                "password"
+              ) as HTMLInputElement
+            ).value,
+
+            confirm_password: (
+              form.elements.namedItem(
+                "confirmPassword"
+              ) as HTMLInputElement
+            ).value,
+
+            security_question: (
+              form.elements.namedItem(
+                "securityQuestion"
+              ) as HTMLSelectElement
+            ).value,
+
+            security_answer: (
+              form.elements.namedItem(
+                "securityAnswer"
+              ) as HTMLInputElement
+            ).value,
+
+            country_id:
+              "000598e6-f176-4f88-a1ab-34f82184aa9f",
+
+            role: "student",
+          });
+          console.log("Response:", response);
+          if (response.status === 201) {
+            alert("Registration successful! Please select your role.");
+            navigate('/select-role', {state: {user_id: response.data.data.id}});
+          }
+      } catch (error: any) {
+        if (error.response.status === 409) {
+          alert(error.response.data.detail);
+        } else {
+          console.error('Registration error:', error);
+        }
+      }
+    }
   };
 
   return (
@@ -66,11 +126,9 @@ const Register = () => {
               </div>
               <input
                 type="text"
+                name="fullName"
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="John Doe"
-                onInput={(e) => {
-                  e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
-                }}
+                placeholder="you@institution.edu"
               />
             </div>
           </div>
@@ -87,6 +145,7 @@ const Register = () => {
                   </div>
                   <input
                     type="email"
+                    name="email"
                     className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                     placeholder="you@institution.edu"
                     onInput={(e) => {
@@ -121,6 +180,7 @@ const Register = () => {
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -143,6 +203,7 @@ const Register = () => {
                 </div>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -162,11 +223,14 @@ const Register = () => {
               Security Question
             </label>
             <div className="relative">
-              <select className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
+              <select
+                name="securityQuestion"
+                className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white"
+              >
                 <option>Select a Security Question</option>
-                <option>What is your Favorite Food?</option>
-                <option>What is your Favorite Country?</option>
-                <option>What is your favorte Sport?</option>
+                <option value="favorite_food">What is your Favorite Food?</option>
+                <option value="favorite_country">What is your Favorite Country?</option>
+                <option value="favorite_sport">What is your favorite Sport?</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
                 <ChevronDown className="w-4 h-4" />
@@ -177,8 +241,9 @@ const Register = () => {
           <div className="mb-6">
             <input
               type="text"
+              name="securityAnswer"
               className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-              placeholder="Enter your Security Answer"
+              placeholder="Kumar Gandham"
             />
           </div>
 

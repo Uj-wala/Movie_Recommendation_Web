@@ -129,7 +129,8 @@ from app.utils.sms_utils import send_sms_otp, verify_sms_otp
 from app.utils.token_utils import hash_token
 from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
-
+from app.services.password_days_validate import check_password_reset_policy
+import asyncio
 # client = Client(
    # settings.TWILIO_ACCOUNT_SID,
    # settings.TWILIO_AUTH_TOKEN
@@ -197,68 +198,132 @@ from app.core.enums import OTPType, OTPChannel
  
  
  
-def login_user(db: Session, payload: LoginRequest):
-    user = get_user_by_identifier(db, payload.email_or_phone)
- 
+def login_user(
+    db: Session,
+    payload: LoginRequest
+):
+    user = get_user_by_identifier(
+        db,
+        payload.email_or_phone
+    )
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            status_code=
+            status.HTTP_401_UNAUTHORIZED,
+            detail=
+            "Invalid credentials"
         )
- 
-    blocked_until = getattr(user, "blocked_until", None)
- 
-    if user.is_blocked or (
-        blocked_until and blocked_until > datetime.now(timezone.utc)
+
+    blocked_until = getattr(
+        user,
+        "blocked_until",
+        None
+    )
+
+    # Blocked user check
+    if (
+        user.is_blocked
+        or (
+            blocked_until
+            and blocked_until
+            > datetime.now(
+                timezone.utc
+            )
+        )
     ):
         raise_account_blocked_error()
- 
+
+    # Active check
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is inactive"
+            status_code=
+            status.HTTP_403_FORBIDDEN,
+            detail=
+            "User is inactive"
         )
- 
+
+    # Verification check
     if not user.is_verified:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is not verified"
+            status_code=
+            status.HTTP_403_FORBIDDEN,
+            detail=
+            "User is not verified"
         )
- 
-    if not verify_password(payload.password, user.password_hash):
+    
+    check_password_reset_policy(
+        user=user,
+        db=db
+    )
+    # Password validation
+    if not verify_password(
+        payload.password,
+        user.password_hash
+    ):
         user.failed_login_attempts += 1
- 
-        if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS:
+
+        if (
+            user.failed_login_attempts
+            >= settings
+            .MAX_LOGIN_ATTEMPTS
+        ):
             user.is_blocked = True
+
             db.commit()
- 
+
             raise_account_blocked_error()
- 
+
         db.commit()
- 
+
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            status_code=
+            status.HTTP_401_UNAUTHORIZED,
+            detail=
+            "Invalid credentials"
         )
- 
+
+    # Reset failed attempts
     user.failed_login_attempts = 0
-    user.last_login_at = datetime.now(timezone.utc)
- 
-    refresh_token, expires_at = create_refresh_token(user.id)
- 
+
+    # Update login timestamp
+    user.last_login_at = (
+        datetime.now(
+            timezone.utc
+        )
+    )
+
+    # Generate refresh token
+    refresh_token, expires_at = (
+        create_refresh_token(
+            user.id
+        )
+    )
+
     create_refresh_token_record(
         db=db,
         user_id=user.id,
-        token_hash=hash_token(refresh_token),
-        expires_at=expires_at
+        token_hash=hash_token(
+            refresh_token
+        ),
+        expires_at=
+        expires_at
     )
- 
+
     db.commit()
- 
+
     return {
-        "access_token": create_access_token(user.id, user.role),
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
+        "access_token":
+        create_access_token(
+            user.id,
+            user.role
+        ),
+
+        "refresh_token":
+        refresh_token,
+
+        "token_type":
+        "bearer",
     }
  
  
