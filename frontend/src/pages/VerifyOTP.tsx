@@ -3,11 +3,28 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import { useNavigate, useLocation } from "react-router-dom";
+import { verifyOTP } from "../services/authService";
+import {
+  forgotPassword
+} from "../services/authService";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const navigate = useNavigate();
+
+  const location = useLocation();
+
+  const { email, phone_number } =
+    location.state || {};
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -21,14 +38,36 @@ const VerifyOTP = () => {
     };
   }, [timer]);
 
-  const handleResend = () => {
-    setTimer(30);
-    setOtp(['', '', '', '', '', '']);
-  };
+  const handleResend =
+    async () => {
+
+      try {
+
+        await forgotPassword(
+          email,
+          phone_number
+        );
+
+        setTimer(30);
+
+        setOtp([
+          '',
+          '',
+          '',
+          '',
+          '',
+          ''
+        ]);
+
+      } catch (error) {
+
+        console.error(error);
+      }
+    };
 
   const handleChange = (index: number, value: string) => {
     const digit = value.replace(/\D/g, '');
-    
+
     const newOtp = [...otp];
     newOtp[index] = digit.slice(0, 1);
     setOtp(newOtp);
@@ -43,6 +82,62 @@ const VerifyOTP = () => {
       inputRefs.current[index - 1]?.focus();
     }
   };
+
+  const handleVerifyOtp =
+    async (
+      e: React.FormEvent
+    ) => {
+
+      e.preventDefault();
+
+      setError("");
+
+      const otpCode =
+        otp.join("");
+
+      if (
+        otpCode.length !== 6
+      ) {
+
+        setError(
+          "Please enter a valid OTP"
+        );
+
+        return;
+      }
+
+      try {
+
+        setLoading(true);
+
+        await verifyOTP(
+          email,
+          phone_number,
+          otpCode
+        );
+
+        navigate(
+          "/reset-password",
+          {
+            state: {
+              email,
+              phone_number,
+            },
+          }
+        );
+
+      } catch (error: any) {
+
+        setError(
+          error?.response?.data?.detail ||
+          "OTP verification failed"
+        );
+
+      } finally {
+
+        setLoading(false);
+      }
+    };
 
   return (
     <SplitScreenLayout>
@@ -67,7 +162,7 @@ const VerifyOTP = () => {
           Enter your received OTP to reset your Password
         </p>
 
-        <form className="w-full text-left" onSubmit={(e) => e.preventDefault()}>
+        <form className="w-full text-left" onSubmit={handleVerifyOtp}>
           <label className="block text-base font-bold text-[#1a123f] mb-4">
             Enter OTP Received
           </label>
@@ -86,6 +181,13 @@ const VerifyOTP = () => {
               />
             ))}
           </div>
+          {error && (
+            <div className="mb-4">
+              <p className="text-red-500 text-sm">
+                {error}
+              </p>
+            </div>
+          )}
 
           <p className="text-sm text-gray-500 mb-6 mt-2">
             Didn't Receive any code?{' '}
@@ -100,12 +202,17 @@ const VerifyOTP = () => {
             {timer > 0 && <span className="text-gray-500"> in 00:{timer.toString().padStart(2, '0')}</span>}
           </p>
 
-          <Link
-            to="/reset-password"
-            className="w-full block text-center bg-[#299555] hover:bg-[#238148] text-white font-semibold py-3 px-4 rounded-lg transition-colors mt-2"
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#299555] hover:bg-[#238148] text-white font-semibold py-3 px-4 rounded-lg transition-colors mt-2 disabled:opacity-50"
           >
-            Reset Password
-          </Link>
+            {
+              loading
+                ? "Verifying..."
+                : "Verify OTP"
+            }
+          </button>
         </form>
       </div>
     </SplitScreenLayout>

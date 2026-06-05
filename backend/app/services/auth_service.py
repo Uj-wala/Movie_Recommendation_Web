@@ -12,7 +12,7 @@ from app.core.jwt_handler import (
     create_refresh_token,
     decode_token,
 )
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password, verify_security_answer
  
 from app.models.otp_verification_model import OTPVerification
 from app.models.user_model import User
@@ -131,6 +131,8 @@ from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
 from app.services.password_days_validate import check_password_reset_policy
 import asyncio
+from app.models.user_model import User
+
 # client = Client(
    # settings.TWILIO_ACCOUNT_SID,
    # settings.TWILIO_AUTH_TOKEN
@@ -428,7 +430,7 @@ def forgot_password(db: Session, payload):
         phone = payload.phone_number
 
     if not phone.startswith("+"):
-        phone = f"+91{phone}"
+        phone = f"+{phone}"
 
     send_sms_otp(phone)
 
@@ -473,7 +475,7 @@ def verify_forgot_password_otp(db: Session, payload):
         phone = payload.phone_number
 
         if not phone.startswith("+"):
-            phone = f"+91{phone}"
+            phone = f"+{phone}"
 
         verified = verify_sms_otp(
             phone,
@@ -539,7 +541,7 @@ def reset_blocked_account_password(
             detail="Invalid security question or answer"
         )
  
-    if not verify_password(
+    if not verify_security_answer(
         payload.security_answer.strip(),
         user.security_answer_hash
     ):
@@ -548,7 +550,6 @@ def reset_blocked_account_password(
             detail="Invalid security question or answer"
         )
  
-    user.password_hash = hash_password(payload.new_password)
     user.failed_login_attempts = 0
     user.is_blocked = False
  
@@ -558,8 +559,9 @@ def reset_blocked_account_password(
     db.commit()
  
     return {
-        "message": "Password reset successfully. Account has been unblocked."
-    }
+    "verified": True,
+    "message": "Security question verified successfully"
+}
  
  
 def logout_user(db: Session, payload: LogoutRequest):

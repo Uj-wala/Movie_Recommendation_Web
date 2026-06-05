@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { createNewPassword } from '../services/authService';
 import { ArrowLeft, Lock, EyeOff, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
@@ -9,10 +11,68 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const {
+    email,
+    phone_number
+  } = location.state || {};
+
+  const [password, setPassword] =
+    useState("");
+
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
+
     e.preventDefault();
-    setIsModalOpen(true);
+
+    setError("");
+
+    if (password !== confirmPassword) {
+
+      setError(
+        "Passwords do not match"
+      );
+
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const email_or_phone =
+        email || phone_number;
+
+      await createNewPassword(
+        email_or_phone,
+        password,
+        confirmPassword
+      );
+
+      setIsModalOpen(true);
+
+    } catch (error: any) {
+
+      setError(
+        error?.response?.data?.detail ||
+        "Failed to reset password"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,7 +107,17 @@ const ResetPassword = () => {
                   <Lock className="h-4 w-4 text-gray-400" strokeWidth={2} />
                 </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={
+                    showPassword
+                      ? 'text'
+                      : 'password'
+                  }
+                  value={password}
+                  onChange={(e) =>
+                    setPassword(
+                      e.target.value
+                    )
+                  }
                   className="block w-full pl-11 pr-10 py-3.5 border border-gray-100 bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.25em]"
                   placeholder="••••••••"
                 />
@@ -75,7 +145,17 @@ const ResetPassword = () => {
                   <Lock className="h-4 w-4 text-gray-400" strokeWidth={2} />
                 </div>
                 <input
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={
+                    showConfirmPassword
+                      ? 'text'
+                      : 'password'
+                  }
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword(
+                      e.target.value
+                    )
+                  }
                   className="block w-full pl-11 pr-10 py-3.5 border border-gray-100 bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.25em]"
                   placeholder="••••••••"
                 />
@@ -93,12 +173,23 @@ const ResetPassword = () => {
               </div>
             </div>
             <p className="text-[11px] text-gray-500 mb-8">Both Passwords must Match.</p>
-
+            {error && (
+              <div className="mb-4">
+                <p className="text-red-500 text-sm">
+                  {error}
+                </p>
+              </div>
+            )}
             <button
               type="submit"
-              className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3.5 px-4 rounded-lg transition-colors"
+              disabled={loading}
+              className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3.5 px-4 rounded-lg transition-colors disabled:opacity-50"
             >
-              Reset Password
+              {
+                loading
+                  ? "Updating..."
+                  : "Reset Password"
+              }
             </button>
           </form>
         </div>

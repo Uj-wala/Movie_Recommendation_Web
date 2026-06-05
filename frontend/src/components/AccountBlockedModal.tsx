@@ -1,16 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { X, AlertTriangle, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { verifyBlockedAccount } from "../services/authService";
 
 interface AccountBlockedModalProps {
   isOpen: boolean;
   onClose: () => void;
+  identifier: string;
+  blockedData: any;
 }
 
 const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
   isOpen,
   onClose,
+  identifier,
 }) => {
+  const [securityQuestion, setSecurityQuestion] =
+    useState("");
+
+  const [securityAnswer, setSecurityAnswer] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -42,10 +57,64 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
 
           <form
             className="w-full text-left"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
+
               e.preventDefault();
-              navigate('/forgot-password');
-              onClose();
+
+              if (!securityQuestion) {
+                setError(
+                  "Please select a security question"
+                );
+                return;
+              }
+
+              if (!securityAnswer.trim()) {
+                setError(
+                  "Please enter your security answer"
+                );
+                return;
+              }
+
+              try {
+
+                setLoading(true);
+                setError("");
+
+                const response =
+                  await verifyBlockedAccount(
+                    identifier,
+                    securityQuestion,
+                    securityAnswer
+                  );
+
+                console.log(
+                  "Verification Success:",
+                  response
+                );
+
+                navigate(
+                  "/forgot-password",
+                  {
+                    state: {
+                      email_or_phone: identifier,
+                      fromBlockedAccount: true
+                    }
+                  }
+                );
+
+                onClose();
+
+              } catch (error: any) {
+
+                setError(
+                  error?.response?.data?.detail ||
+                  "Verification failed"
+                );
+
+              } finally {
+
+                setLoading(false);
+              }
             }}
           >
             <div className="mb-4">
@@ -53,11 +122,28 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
                 Security Question
               </label>
               <div className="relative">
-                <select className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-200 rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
-                  <option>Select a Security Question</option>
-                  <option>What is your Favorite Food?</option>
-                  <option>What is your Favorite Country?</option>
-                  <option>What is your favorite Sport?</option>
+                <select
+                  value={securityQuestion}
+                  onChange={(e) =>
+                    setSecurityQuestion(e.target.value)
+                  }
+                  className="block w-full appearance-none px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+                >
+                  <option value="">
+                    Select a Security Question
+                  </option>
+
+                  <option value="favorite_food">
+                    What is your Favorite Food?
+                  </option>
+
+                  <option value="favorite_country">
+                    What is your Favorite Country?
+                  </option>
+
+                  <option value="favorite_sport">
+                    What is your Favorite Sport?
+                  </option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
                   <ChevronDown className="w-4 h-4" />
@@ -71,17 +157,32 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
               </label>
               <input
                 type="text"
+                value={securityAnswer}
+                onChange={(e) =>
+                  setSecurityAnswer(
+                    e.target.value
+                  )
+                }
                 className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                 placeholder="Type your answer here"
               />
             </div>
-
+            {error && (
+              <div className="mb-4">
+                <p className="text-red-500 text-sm">
+                  {error}
+                </p>
+              </div>
+            )}
             <button
               type="submit"
               className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors mb-4"
             >
-              Verify & Reset Password
-            </button>
+              {
+                loading
+                  ? "Verifying..."
+                  : "Verify & Reset Password"
+              }            </button>
 
             <div className="text-center text-sm">
               <span className="text-gray-400">
