@@ -51,7 +51,7 @@ class User(Base, BaseModel):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
  
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
- 
+
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
  
     failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
@@ -93,10 +93,10 @@ class User(Base, BaseModel):
         cascade="all, delete-orphan",
     )
  
- 
+
     country = relationship("Country", back_populates="users")
-   
- 
+    
+
     refresh_tokens = relationship(
     "RefreshToken",
     back_populates="user",

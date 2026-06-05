@@ -9,7 +9,7 @@ PASSWORD_REGEX = re.compile(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,
  
  
 PHONE_REGEX = re.compile(r"^[0-9]{10,15}$")
-from app.core.enums import UserRole, SecurityQuestion 
+from app.core.enums import UserRole, SecurityQuestion
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -22,8 +22,8 @@ from pydantic import (
 PASSWORD_REGEX = re.compile(
     r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
 )
-UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$") 
-
+UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+ 
 PHONE_REGEX = re.compile(
     r"^[0-9]{10,15}$"
 )
@@ -36,16 +36,16 @@ class RegisterRequest(BaseModel):
     full_name: str
  
     country_id: str
-
+ 
  
     email: Optional[EmailStr] = None
  
     phone_number: Optional[str] = None
  
     password: str
-
+ 
     confirm_password: str
-
+ 
  
     role: UserRole
  
@@ -64,7 +64,7 @@ class RegisterRequest(BaseModel):
             raise ValueError("Full name must be at least 3 characters")
  
         return value
-
+ 
     @field_validator("country_id")
     @classmethod
     def validate_country_id(cls, value):
@@ -98,7 +98,7 @@ class RegisterRequest(BaseModel):
             )
  
         return value
-
+ 
     @field_validator("confirm_password")
     @classmethod
     def validate_confirm_password(cls, value):
@@ -118,7 +118,7 @@ class RegisterRequest(BaseModel):
  
         return value
  
-
+ 
     @field_validator("role")
     @classmethod
     def validate_role(cls, value):
@@ -139,7 +139,7 @@ class RegisterRequest(BaseModel):
             if self.password != self.confirm_password:
                 raise ValueError("Password and confirm password do not match")
         return self
-
+ 
     @model_validator(mode="after")
     def validate_email_or_phone(self):
  
@@ -190,10 +190,6 @@ class LoginRequest(BaseModel):
     @classmethod
     def validate_password(cls, value):
  
-        if not value.strip():
-            raise ValueError("Password is required")
- 
-        return value
         if not value or not value.strip():
             raise ValueError(
                 "Password is required"
@@ -239,7 +235,7 @@ class RefreshTokenRequest(BaseModel):
  
  
 class ForgotPasswordRequest(BaseModel):
-    
+   
     email: Optional[EmailStr] = None
  
     phone_number: Optional[str] = None
@@ -274,7 +270,7 @@ class ForgotPasswordRequest(BaseModel):
             )
  
         return self
-
+ 
 class VerifyForgotPasswordOtpRequest(BaseModel):
     email: str | None = None
     phone_number: str | None = None
@@ -385,7 +381,7 @@ class UserResponse(BaseModel):
     is_verified: bool
  
     profile_completed: bool
-
+ 
     model_config = ConfigDict(
         from_attributes=True
      )
@@ -393,48 +389,48 @@ class UserResponse(BaseModel):
  
  
 class CreateNewPasswordRequest(BaseModel):
-
+ 
     email_or_phone: str
-
+ 
     new_password: str
-
+ 
     confirm_password: str
-
+ 
     @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, value):
-
+ 
         if not PASSWORD_REGEX.match(value):
             raise ValueError(
                 "Password must contain uppercase, lowercase, number and special character"
             )
-
+ 
         return value
-
+ 
     @model_validator(mode="after")
     def validate_password_match(self):
-
+ 
         if self.new_password != self.confirm_password:
             raise ValueError(
                 "Passwords do not match"
             )
-
-        return self
-    
  
-
-
-
+        return self
+   
+ 
+ 
+ 
+ 
 class UserRegisterResponse(BaseModel):
     data: UserResponse
     message: str
-
+ 
 class ConfirmRoleRequest(BaseModel):
-
+ 
     user_id: str
-
+ 
     role: UserRole
-
+ 
     @field_validator("user_id")
     @classmethod
     def validate_user_id(cls, value):
@@ -442,7 +438,7 @@ class ConfirmRoleRequest(BaseModel):
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid user ID format")
         return value
-
+ 
     @field_validator("role")
     @classmethod
     def validate_role(cls, value):
@@ -450,27 +446,27 @@ class ConfirmRoleRequest(BaseModel):
         if value not in allowed:
             raise ValueError("Role must be student, teacher or parent")
         return value
-
-
+ 
+ 
 class ConfirmRoleResponse(BaseModel):
-
+ 
     message: str
-
+ 
     user_id: str
-
+ 
     role: str
-
-
+ 
+ 
 class StudentDetailsRequest(BaseModel):
-
+ 
     user_id: str
-
+ 
     grade: str
-
+ 
     work_place: Optional[str] = None
-
+ 
     school_name: Optional[str] = None
-
+ 
     @field_validator("user_id")
     @classmethod
     def validate_user_id(cls, value):
@@ -478,7 +474,7 @@ class StudentDetailsRequest(BaseModel):
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid user ID format")
         return value
-
+ 
     @field_validator("grade")
     @classmethod
     def validate_grade(cls, value):
@@ -504,7 +500,7 @@ class StudentDetailsRequest(BaseModel):
         if value not in allowed:
             raise ValueError("Invalid grade selected")
         return value
-
+ 
     @field_validator("work_place")
     @classmethod
     def validate_work_place(cls, value):
@@ -516,7 +512,7 @@ class StudentDetailsRequest(BaseModel):
         if len(value) > 255:
             raise ValueError("Work place must not exceed 255 characters")
         return value
-
+ 
     @field_validator("school_name")
     @classmethod
     def validate_school_name(cls, value):
@@ -528,31 +524,31 @@ class StudentDetailsRequest(BaseModel):
         if len(value) > 255:
             raise ValueError("School name must not exceed 255 characters")
         return value
-
+ 
     @model_validator(mode="after")
     def validate_work_or_school(self):
         if not self.work_place and not self.school_name:
             raise ValueError("Either work place or school name is required")
         return self
-
-
+ 
+ 
 class StudentDetailsResponse(BaseModel):
-
+ 
     message: str
-
+ 
     user_id: str
-
-
+ 
+ 
 class ParentVerificationRequest(BaseModel):
-
+ 
     user_id: str
-
+ 
     child_name: str
-
+ 
     child_grade: str
-
+ 
     student_reference_id: Optional[str] = None
-
+ 
     @field_validator("user_id")
     @classmethod
     def validate_user_id(cls, value):
@@ -560,7 +556,7 @@ class ParentVerificationRequest(BaseModel):
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid user ID format")
         return value
-
+ 
     @field_validator("child_name")
     @classmethod
     def validate_child_name(cls, value):
@@ -573,12 +569,12 @@ class ParentVerificationRequest(BaseModel):
         if not pattern.match(value):
             raise ValueError("Child name can only contain letters and spaces")
         return value
-
+ 
     @field_validator("child_grade")
     @classmethod
     def validate_child_grade(cls, value):
         allowed = [
-        
+       
             "Grade 1",
             "Grade 2",
             "Grade 3",
@@ -600,7 +596,7 @@ class ParentVerificationRequest(BaseModel):
         if value not in allowed:
             raise ValueError("Invalid grade selected")
         return value
-
+ 
     @field_validator("student_reference_id")
     @classmethod
     def validate_student_reference_id(cls, value):
@@ -610,23 +606,23 @@ class ParentVerificationRequest(BaseModel):
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid student reference ID format")
         return value
-
-
+ 
+ 
 class ParentVerificationResponse(BaseModel):
-
+ 
     message: str
-
+ 
     user_id: str
-
-
+ 
+ 
 class TeacherVerificationRequest(BaseModel):
-
+ 
     user_id: str
-
+ 
     school_name: str
-
+ 
     subject: str
-
+ 
     @field_validator("user_id")
     @classmethod
     def validate_user_id(cls, value):
@@ -634,7 +630,7 @@ class TeacherVerificationRequest(BaseModel):
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid user ID format")
         return value
-
+ 
     @field_validator("school_name")
     @classmethod
     def validate_school_name(cls, value):
@@ -644,7 +640,7 @@ class TeacherVerificationRequest(BaseModel):
         if len(value) > 255:
             raise ValueError("School name must not exceed 255 characters")
         return value
-
+ 
     @field_validator("subject")
     @classmethod
     def validate_subject(cls, value):
@@ -657,14 +653,11 @@ class TeacherVerificationRequest(BaseModel):
         if not pattern.match(value):
             raise ValueError("Subject can only contain letters and spaces")
         return value
-
-
+ 
+ 
 class TeacherVerificationResponse(BaseModel):
-
+ 
     message: str
-
+ 
     user_id: str
-
-
-
  

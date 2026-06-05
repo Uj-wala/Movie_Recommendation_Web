@@ -7,12 +7,20 @@ from jose import JWTError, jwt
 from app.core.config import settings
  
  
+
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+
+from app.core.config import settings
+
+
 def create_access_token(user_id: str, role: str) -> str:
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
  
+
     payload = {
         "sub": str(user_id),
         "role": str(role),
@@ -22,6 +30,7 @@ def create_access_token(user_id: str, role: str) -> str:
         "exp": expires_at,
     }
  
+
     return jwt.encode(
         payload,
         settings.JWT_SECRET_KEY,
@@ -29,12 +38,15 @@ def create_access_token(user_id: str, role: str) -> str:
     )
  
  
+
+
 def create_refresh_token(user_id: str) -> tuple[str, datetime]:
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(
         days=settings.REFRESH_TOKEN_EXPIRE_DAYS
     )
  
+
     payload = {
         "sub": str(user_id),
         "type": "refresh",
@@ -43,6 +55,7 @@ def create_refresh_token(user_id: str) -> tuple[str, datetime]:
         "exp": expires_at,
     }
  
+
     token = jwt.encode(
         payload,
         settings.JWT_SECRET_KEY,
@@ -52,6 +65,10 @@ def create_refresh_token(user_id: str) -> tuple[str, datetime]:
     return token, expires_at
  
  
+
+    return token, expires_at
+
+
 def decode_token(token: str) -> dict:
     try:
         return jwt.decode(
@@ -65,3 +82,4 @@ def decode_token(token: str) -> dict:
             detail="Invalid or expired token"
         )
  
+

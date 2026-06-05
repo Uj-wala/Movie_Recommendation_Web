@@ -1,47 +1,98 @@
-from fastapi import HTTPException
+from datetime import datetime, timezone, timedelta
+import random
+ 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+ 
+from app.core.config import settings
+from app.core.enums import OTPChannel, OTPType
+from app.core.jwt_handler import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
+from app.core.security import hash_password, verify_password
+ 
+from app.models.otp_verification_model import OTPVerification
+from app.models.user_model import User
+ 
+from app.repository.refresh_token_repository import (
+    create_refresh_token_record,
+    get_refresh_token_by_hash,
+    revoke_refresh_token,
+)
+from app.repository.user_repository import (
+    UserRepository,
+    get_user_by_id,
+    get_user_by_identifier,
+)
+ 
 from app.schemas.user_schema import (
     RegisterRequest,
     ResetPasswordRequest,
-    CreateNewPasswordRequest
+    CreateNewPasswordRequest,
+    BlockedAccountResetRequest,
+    LoginRequest,
+    LogoutRequest,
+    RefreshTokenRequest,
 )
-from app.repository.user_repository import UserRepository
-from app.core.security import hash_password
-
-
+ 
+from app.utils.email_utils import send_email_otp
+from app.utils.sms_utils import send_sms_otp, verify_sms_otp
+from app.utils.token_utils import hash_token
+ 
+ 
+ACCOUNT_BLOCKED_DETAIL = {
+    "title": "Account Blocked",
+    "message": "Your account has been temporarily Locked due to multiple failed login attempts. To reset your password, Please answer your security Question",
+    "action": "RESET_BLOCKED_ACCOUNT",
+    "security_questions": [
+        "Which is your favourite country?",
+        "Which is your favorite Sport?",
+        "Which is your favorite Food?"
+    ]
+}
+ 
+ 
+def raise_account_blocked_error():
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail=ACCOUNT_BLOCKED_DETAIL
+    )
+ 
 class AuthService:
-
+ 
     @staticmethod
     def register(
         db: Session,
         request: RegisterRequest
     ):
-
+ 
         if request.email:
-
+ 
             existing_email = (
                 UserRepository.get_by_email(
                     db,
                     request.email
                 )
             )
-
+ 
             if existing_email:
                 raise HTTPException(
                     status_code=400,
                     detail="Email already exists"
                 )
-
+ 
         if request.phone_number:
-
+ 
             existing_phone = (
                 UserRepository.get_by_phone(
                     db,
                     request.phone_number
                 )
             )
-
+ 
             if existing_phone:
                 raise HTTPException(
                     status_code=400,
@@ -94,24 +145,56 @@ from app.core.enums import OTPType, OTPChannel
 
     #return verification_check.status == "approved"
  
+"""user = User(
+    full_name=request.full_name,
+    email=request.email,
+    phone_number=request.phone_number,
+    password_hash=hash_password(
+        request.password
+    ),
+    role=request.role,
+    ecurity_question=request.security_question,
+    security_answer_hash=hash_password(
+        request.security_answer
+            )
+        )
  
-ACCOUNT_BLOCKED_DETAIL = {
-    "title": "Account Blocked",
-    "message": "Your account has been temporarily Locked due to multiple failed login attempts. To reset your password, Please answer your security Question",
-    "action": "RESET_BLOCKED_ACCOUNT",
-    "security_questions": [
-        "Which is your favourite country?",
-        "Which is your favorite Sport?",
-        "Which is your favorite Food?"
-    ]
-}
+        return UserRepository.create_user(
+            db,
+            user
+        )
+ 
+    @staticmethod
+    def reset_password(
+        db: Session,
+        request: ResetPasswordRequest
+    ):
+ 
+        user = UserRepository.get_by_id(
+            db,
+            request.user_id
+        )
+ 
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="User not found"
+            )
+ 
+        user.password_hash = hash_password(
+            request.new_password
+        )
+ 
+        UserRepository.update_user(
+            db,
+            user
+        )
+ 
+        return {
+            "message": "Password reset successful"
+        }"""
  
  
-def raise_account_blocked_error():
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail=ACCOUNT_BLOCKED_DETAIL
-    )
  
  
 def login_user(db: Session, payload: LoginRequest):
@@ -276,42 +359,29 @@ def forgot_password(db: Session, payload):
  
         return {"message": "OTP sent to email"}
  
-    """phone = payload.phone_number
- 
-    if not phone:
-        raise HTTPException(status_code=400, detail="Phone number required")
- 
+    if payload.phone_number:
+        phone = payload.phone_number
+
     if not phone.startswith("+"):
         phone = f"+91{phone}"
- 
+
     send_sms_otp(phone)
- 
-    otp_record = OTPVerification(
-        user_id=user.id,
-        otp_code=otp,
-        otp_type=OTPType.PASSWORD_RESET,
-        channel=OTPChannel.SMS,
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
-        is_used=False,
-        attempts=0
-    )
- 
-    db.add(otp_record)
-   # db.commit()
- 
-    #return {"message": "OTP sent via SMS"}"""
+
+    return {
+        "message": "OTP sent via SMS"
+    }
  
  
 def verify_forgot_password_otp(db: Session, payload):
-
+ 
     identifier = payload.email or payload.phone_number
     user = get_user_by_identifier(db, identifier)
-
+ 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
+ 
     if payload.email:
-
+ 
         otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.channel == OTPChannel.EMAIL,
@@ -319,58 +389,67 @@ def verify_forgot_password_otp(db: Session, payload):
             OTPVerification.is_used == False,
             OTPVerification.expires_at > datetime.now(timezone.utc)
         ).order_by(OTPVerification.created_at.desc()).first()
-
+ 
         if not otp_record:
             raise HTTPException(status_code=400, detail="OTP expired or not found")
-
+ 
         if otp_record.otp_code != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
-
+ 
         otp_record.is_used = True
         db.commit()
-
+ 
         return {
             "message": "Email OTP verified successfully",
             "verified": True
         }
 
-    """phone = payload.phone_number
-    if phone and not phone.startswith("+"):
-        phone = f"+91{phone}"
+    if payload.phone_number:
+        phone = payload.phone_number
 
-    verified = verify_sms_otp(phone, payload.otp)
+        if not phone.startswith("+"):
+            phone = f"+91{phone}"
 
-    if not verified:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+        verified = verify_sms_otp(
+            phone,
+            payload.otp
+        )
 
-    return {
-        "message": "SMS OTP verified successfully",
-        "verified": True
-    }"""
+        if not verified:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid OTP"
+            )
 
+        return {
+            "message": "SMS OTP verified successfully",
+            "verified": True
+        }
+
+ 
 def create_new_password(db: Session, payload):
-
+ 
     user = get_user_by_identifier(
         db,
         payload.email_or_phone
     )
-
+ 
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found"
         )
-
+ 
     user.password_hash = hash_password(
         payload.new_password
     )
-
+ 
     db.commit()
-
+ 
     return {
         "message": "Password changed successfully"
     }
-
+ 
 def reset_blocked_account_password(
     db: Session,
     payload: BlockedAccountResetRequest
