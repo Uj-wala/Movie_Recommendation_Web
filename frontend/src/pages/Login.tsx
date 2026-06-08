@@ -15,8 +15,6 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [identifier, setIdentifier] =
     useState("");
 
@@ -213,6 +211,8 @@ const Login = () => {
                 <input
                   type={showPassword ? "text" : "password"}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />

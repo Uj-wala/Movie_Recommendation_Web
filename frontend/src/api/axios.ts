@@ -16,7 +16,7 @@ const api = axios.create({
  * Adds token automatically
  */
 api.interceptors.request.use(
-  (config) => {
+  (config: any) => {
     const token = localStorage.getItem("access_token");
 
     if (token && config.headers) {
@@ -26,7 +26,7 @@ api.interceptors.request.use(
     return config;
   },
 
-  (error) => {
+  (error: any) => {
     return Promise.reject(
       error
     );
@@ -37,8 +37,8 @@ api.interceptors.request.use(
 /**
  * Handle common errors
  */
-api.interceptors.response.use((response) => response,
- async (error) => {
+api.interceptors.response.use((response: any) => response,
+ async (error: any) => {
     if (error.response?.status === 401) {
       console.log("Unauthorized");
       // logout or refresh token logic here

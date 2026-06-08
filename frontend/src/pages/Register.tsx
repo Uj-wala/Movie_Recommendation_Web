@@ -181,6 +181,8 @@ const Register = () => {
               <input
                 type="text"
                 required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                 placeholder="Enter the full name "
                 onInput={(e) => {
@@ -205,6 +207,8 @@ const Register = () => {
                   <input
                     type="email"
                     required={registrationType === 'email'}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                     placeholder="you@institution.edu"
                   />
@@ -226,9 +230,7 @@ const Register = () => {
                     containerClass="!w-full !h-full"
                     inputClass="!w-full !h-full !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
                     buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
-                    inputProps={{
-                      required: registrationType === 'phone'
-                    }}
+                  
                   />
                 </div>
               )}
@@ -249,6 +251,8 @@ const Register = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -280,6 +284,8 @@ const Register = () => {
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -305,7 +311,7 @@ const Register = () => {
             </label>
 
             <div className="relative">
-              <select required className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
+              <select required value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
                 <option value="">Select a Security Question</option>
                 <option value="food">What is your Favorite Food?</option>
                 <option value="country">What is your Favorite Country?</option>
@@ -322,6 +328,8 @@ const Register = () => {
             <input
               type="text"
               required
+              value={securityAnswer}
+              onChange={(e) => setSecurityAnswer(e.target.value)}
               className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
               placeholder="Enter your answer"
             />
@@ -332,6 +340,8 @@ const Register = () => {
               id="terms"
               type="checkbox"
               required
+              checked={agreeToTerms}
+              onChange={(e) => setAgreeToTerms(e.target.checked)}
               className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"
             />
 
