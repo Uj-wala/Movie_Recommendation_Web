@@ -66,8 +66,9 @@ const Register = () => {
               </div>
               <input
                 type="text"
+                required
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="John Doe"
+                placeholder="Enter the full name "
                 onInput={(e) => {
                   e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
                 }}
@@ -87,6 +88,7 @@ const Register = () => {
                   </div>
                   <input
                     type="email"
+                    required={registrationType === 'email'}
                     className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                     placeholder="you@institution.edu"
                     onInput={(e) => {
@@ -104,6 +106,9 @@ const Register = () => {
                     containerClass="!w-full !h-full"
                     inputClass="!w-full !h-full !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
                     buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
+                    inputProps={{
+                      required: registrationType === 'phone'
+                    }}
                   />
                 </div>
               )}
@@ -121,6 +126,7 @@ const Register = () => {
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  required
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -143,6 +149,7 @@ const Register = () => {
                 </div>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
+                  required
                   className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
@@ -162,11 +169,11 @@ const Register = () => {
               Security Question
             </label>
             <div className="relative">
-              <select className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
-                <option>Select a Security Question</option>
-                <option>What is your Favorite Food?</option>
-                <option>What is your Favorite Country?</option>
-                <option>What is your favorte Sport?</option>
+              <select required className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
+                <option value="">Select a Security Question</option>
+                <option value="food">What is your Favorite Food?</option>
+                <option value="country">What is your Favorite Country?</option>
+                <option value="sport">What is your favorte Sport?</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
                 <ChevronDown className="w-4 h-4" />
@@ -177,6 +184,7 @@ const Register = () => {
           <div className="mb-6">
             <input
               type="text"
+              required
               className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
               placeholder="Enter your Security Answer"
             />
@@ -186,6 +194,7 @@ const Register = () => {
             <input
               id="terms"
               type="checkbox"
+              required
               className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"
             />
             <label htmlFor="terms" className="ml-2 block text-xs text-gray-700">

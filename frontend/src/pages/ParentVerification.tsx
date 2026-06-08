@@ -42,7 +42,7 @@ const ParentVerification = () => {
                 <input
                   type="text"
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="John Cena"
+                  placeholder="Enter child name"
                   onInput={(e) => {
                     e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
                   }}

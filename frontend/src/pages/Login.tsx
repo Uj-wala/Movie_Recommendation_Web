@@ -12,6 +12,7 @@ const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -55,14 +56,11 @@ const Login = () => {
                 </div>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value.replace(/[^a-zA-Z0-9@._-]/g, ""))}
+                  required={!phoneNumber}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                   placeholder="example@gmail.com"
-                  onInput={(e) => {
-                    e.currentTarget.value = e.currentTarget.value.replace(
-                      /[^a-zA-Z0-9@._-]/g,
-                      "",
-                    );
-                  }}
                 />
               </div>
             </div>
@@ -91,6 +89,9 @@ const Login = () => {
                   containerClass="!w-full !h-full"
                   inputClass="!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
                   buttonClass="!bg-gray-50 !border-gray-200 !rounded-l-md"
+                  inputProps={{
+                    required: !email
+                  }}
                 />
               </div>
             </div>
@@ -105,6 +106,7 @@ const Login = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
+                  required
                   className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
                   placeholder="••••••••"
                 />
