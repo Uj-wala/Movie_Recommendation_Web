@@ -51,7 +51,9 @@ class User(Base, BaseModel):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
  
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
-
+    
+    agree_to_terms: Mapped[bool] = mapped_column(Boolean, default=False)  
+    
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
  
     failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
@@ -59,7 +61,6 @@ class User(Base, BaseModel):
     blocked_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
- 
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

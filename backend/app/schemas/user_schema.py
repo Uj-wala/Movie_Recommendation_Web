@@ -25,7 +25,7 @@ PASSWORD_REGEX = re.compile(
 UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
  
 PHONE_REGEX = re.compile(
-    r"^[0-9]{10,15}$"
+    r"^\+?[0-9]{10,15}$"
 )
  
 EMAIL_VALIDATOR = TypeAdapter(EmailStr)
@@ -35,8 +35,7 @@ class RegisterRequest(BaseModel):
  
     full_name: str
  
-    country_id: str
- 
+    country_id: Optional[str] = None
  
     email: Optional[EmailStr] = None
  
@@ -46,13 +45,13 @@ class RegisterRequest(BaseModel):
  
     confirm_password: str
  
- 
-    role: UserRole
+    role: Optional[UserRole] = "student"
  
     security_question: SecurityQuestion
  
     security_answer: str
-    
+ 
+    agree_to_terms: bool
  
     @field_validator("full_name")
     @classmethod
@@ -64,6 +63,14 @@ class RegisterRequest(BaseModel):
             raise ValueError("Full name must be at least 3 characters")
  
         return value
+
+    @field_validator("agree_to_terms")
+    @classmethod
+    def validate_agree_to_terms(cls, value):
+        if not value:
+            raise ValueError("You must agree to the terms and conditions")
+ 
+        return value
  
     @field_validator("country_id")
     @classmethod
@@ -71,6 +78,7 @@ class RegisterRequest(BaseModel):
         value = value.strip()
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid country ID format")
+        return value    
  
     @field_validator("phone_number")
     @classmethod
@@ -244,8 +252,8 @@ class ForgotPasswordRequest(BaseModel):
     @classmethod
     def validate_phone_number(cls, value):
  
-        if value is None:
-            return value
+        if value in [None, ""]:
+           return None
  
         value = value.strip()
  
@@ -299,70 +307,37 @@ class ResetPasswordRequest(BaseModel):
    
  
 class BlockedAccountResetRequest(BaseModel):
- 
+
     email_or_phone: str
- 
+
     security_question: SecurityQuestion
- 
+
     security_answer: str
- 
-    new_password: str
- 
+
     @field_validator("email_or_phone")
     @classmethod
     def validate_email_or_phone(cls, value):
- 
+
         value = value.strip()
- 
+
         if not value:
             raise ValueError(
                 "Email or phone number is required"
             )
- 
-        if len(value) > 254:
-            raise ValueError(
-                "Email or phone number is too long"
-            )
- 
-        if "@" in value:
-            try:
-                EMAIL_VALIDATOR.validate_python(value)
-            except ValidationError:
-                raise ValueError(
-                    "Invalid email format"
-                )
- 
-            return value.lower()
- 
-        if not PHONE_REGEX.match(value):
-            raise ValueError(
-                "Invalid phone number format"
-            )
- 
+
         return value
- 
+
     @field_validator("security_answer")
     @classmethod
     def validate_security_answer(cls, value):
- 
+
         value = value.strip()
- 
+
         if len(value) < 2:
             raise ValueError(
                 "Security answer is too short"
             )
- 
-        return value
- 
-    @field_validator("new_password")
-    @classmethod
-    def validate_new_password(cls, value):
- 
-        if not PASSWORD_REGEX.match(value):
-            raise ValueError(
-                "Password must contain uppercase, lowercase, number and special character"
-            )
- 
+
         return value
  
  

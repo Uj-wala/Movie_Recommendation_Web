@@ -5,11 +5,82 @@ import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { useNavigate } from "react-router-dom";
+import { forgotPassword } from "../services/authService";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
+  const navigate = useNavigate();
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  const handleForgotPassword =
+    async (
+      e: React.FormEvent
+    ) => {
+
+      e.preventDefault();
+
+      setError("");
+      setSuccess("");
+
+      try {
+
+        setLoading(true);
+
+        const payload: any = {};
+
+        if (email.trim()) {
+          payload.email =
+            email.trim();
+        }
+
+        if (mobile.trim()) {
+          payload.phone_number =
+            mobile.trim();
+        }
+
+        const response =
+          await forgotPassword(
+            payload.email,
+            payload.phone_number
+          );
+
+        setSuccess(
+          response.message
+        );
+
+        navigate(
+          "/verify-otp",
+          {
+            state: {
+              email,
+              phone_number: mobile,
+            },
+          }
+        );
+
+      } catch (error: any) {
+
+        setError(
+          error?.response?.data?.detail ||
+          "Failed to send OTP"
+        );
+
+      } finally {
+
+        setLoading(false);
+      }
+    };
 
   return (
     <SplitScreenLayout>
@@ -34,7 +105,7 @@ const ForgotPassword = () => {
           Enter your registered email id to reset your Password
         </p>
 
-        <form className="w-full" onSubmit={(e) => e.preventDefault()}>
+        <form className="w-full" onSubmit={handleForgotPassword}>
           <div className="mb-6">
             <label className="block text-xs font-bold text-gray-900 mb-2">
               Email Address
@@ -49,7 +120,6 @@ const ForgotPassword = () => {
                 placeholder="you@institution.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value.replace(/[^a-zA-Z0-9@._-]/g, ''))}
-                required
               />
             </div>
           </div>
@@ -71,8 +141,9 @@ const ForgotPassword = () => {
               <PhoneInput
                 country={'in'}
                 value={mobile}
-                onChange={(phone: string) => setMobile(phone)}
-                enableSearch={true}
+                onChange={(phone: string) =>
+                  setMobile(`+${phone}`)
+                } enableSearch={true}
                 containerClass="!w-full !h-full"
                 inputClass="!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
                 buttonClass="!bg-gray-50 !border-gray-200 !rounded-l-md"
@@ -80,12 +151,33 @@ const ForgotPassword = () => {
             </div>
           </div>
 
-          <Link
-            to="/verify-otp"
-            className="w-full block text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
+          {error && (
+            <div className="mb-4">
+              <p className="text-red-500 text-sm">
+                {error}
+              </p>
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4">
+              <p className="text-green-600 text-sm">
+                {success}
+              </p>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors disabled:opacity-50"
           >
-            Reset Password
-          </Link>
+            {
+              loading
+                ? "Sending OTP..."
+                : "Reset Password"
+            }
+          </button>
         </form>
       </div>
     </SplitScreenLayout>

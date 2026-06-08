@@ -20,7 +20,9 @@ class EmailRegister:
                 password_hash=hash_password(data.password),
                 role=UserRole(data.role),
                 security_question=data.security_question,
-                security_answer_hash=hash_security_answer(data.security_answer))
+                security_answer_hash=hash_security_answer(data.security_answer),
+                agree_to_terms=data.agree_to_terms
+            )
             db.add(user)
             db.commit()
             db.refresh(user)

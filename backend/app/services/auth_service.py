@@ -12,7 +12,7 @@ from app.core.jwt_handler import (
     create_refresh_token,
     decode_token,
 )
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password, verify_security_answer
  
 from app.models.otp_verification_model import OTPVerification
 from app.models.user_model import User
@@ -129,6 +129,9 @@ from app.utils.sms_utils import send_sms_otp, verify_sms_otp
 from app.utils.token_utils import hash_token
 from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
+from app.services.password_days_validate import check_password_reset_policy
+import asyncio
+from app.models.user_model import User
 
 # client = Client(
    # settings.TWILIO_ACCOUNT_SID,
@@ -197,68 +200,132 @@ from app.core.enums import OTPType, OTPChannel
  
  
  
-def login_user(db: Session, payload: LoginRequest):
-    user = get_user_by_identifier(db, payload.email_or_phone)
- 
+def login_user(
+    db: Session,
+    payload: LoginRequest
+):
+    user = get_user_by_identifier(
+        db,
+        payload.email_or_phone
+    )
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            status_code=
+            status.HTTP_401_UNAUTHORIZED,
+            detail=
+            "Invalid credentials"
         )
- 
-    blocked_until = getattr(user, "blocked_until", None)
- 
-    if user.is_blocked or (
-        blocked_until and blocked_until > datetime.now(timezone.utc)
+
+    blocked_until = getattr(
+        user,
+        "blocked_until",
+        None
+    )
+
+    # Blocked user check
+    if (
+        user.is_blocked
+        or (
+            blocked_until
+            and blocked_until
+            > datetime.now(
+                timezone.utc
+            )
+        )
     ):
         raise_account_blocked_error()
- 
+
+    # Active check
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is inactive"
+            status_code=
+            status.HTTP_403_FORBIDDEN,
+            detail=
+            "User is inactive"
         )
- 
+
+    # Verification check
     if not user.is_verified:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is not verified"
+            status_code=
+            status.HTTP_403_FORBIDDEN,
+            detail=
+            "User is not verified"
         )
- 
-    if not verify_password(payload.password, user.password_hash):
+    
+    check_password_reset_policy(
+        user=user,
+        db=db
+    )
+    # Password validation
+    if not verify_password(
+        payload.password,
+        user.password_hash
+    ):
         user.failed_login_attempts += 1
- 
-        if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS:
+
+        if (
+            user.failed_login_attempts
+            >= settings
+            .MAX_LOGIN_ATTEMPTS
+        ):
             user.is_blocked = True
+
             db.commit()
- 
+
             raise_account_blocked_error()
- 
+
         db.commit()
- 
+
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+            status_code=
+            status.HTTP_401_UNAUTHORIZED,
+            detail=
+            "Invalid credentials"
         )
- 
+
+    # Reset failed attempts
     user.failed_login_attempts = 0
-    user.last_login_at = datetime.now(timezone.utc)
- 
-    refresh_token, expires_at = create_refresh_token(user.id)
- 
+
+    # Update login timestamp
+    user.last_login_at = (
+        datetime.now(
+            timezone.utc
+        )
+    )
+
+    # Generate refresh token
+    refresh_token, expires_at = (
+        create_refresh_token(
+            user.id
+        )
+    )
+
     create_refresh_token_record(
         db=db,
         user_id=user.id,
-        token_hash=hash_token(refresh_token),
-        expires_at=expires_at
+        token_hash=hash_token(
+            refresh_token
+        ),
+        expires_at=
+        expires_at
     )
- 
+
     db.commit()
- 
+
     return {
-        "access_token": create_access_token(user.id, user.role),
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
+        "access_token":
+        create_access_token(
+            user.id,
+            user.role
+        ),
+
+        "refresh_token":
+        refresh_token,
+
+        "token_type":
+        "bearer",
     }
  
  
@@ -363,7 +430,7 @@ def forgot_password(db: Session, payload):
         phone = payload.phone_number
 
     if not phone.startswith("+"):
-        phone = f"+91{phone}"
+        phone = f"+{phone}"
 
     send_sms_otp(phone)
 
@@ -408,7 +475,7 @@ def verify_forgot_password_otp(db: Session, payload):
         phone = payload.phone_number
 
         if not phone.startswith("+"):
-            phone = f"+91{phone}"
+            phone = f"+{phone}"
 
         verified = verify_sms_otp(
             phone,
@@ -443,6 +510,12 @@ def create_new_password(db: Session, payload):
     user.password_hash = hash_password(
         payload.new_password
     )
+
+    user.failed_login_attempts = 0
+    user.is_blocked = False
+
+    if hasattr(user, "blocked_until"):
+        user.blocked_until = None
  
     db.commit()
  
@@ -474,7 +547,7 @@ def reset_blocked_account_password(
             detail="Invalid security question or answer"
         )
  
-    if not verify_password(
+    if not verify_security_answer(
         payload.security_answer.strip(),
         user.security_answer_hash
     ):
@@ -483,18 +556,10 @@ def reset_blocked_account_password(
             detail="Invalid security question or answer"
         )
  
-    user.password_hash = hash_password(payload.new_password)
-    user.failed_login_attempts = 0
-    user.is_blocked = False
- 
-    if hasattr(user, "blocked_until"):
-        user.blocked_until = None
- 
-    db.commit()
- 
     return {
-        "message": "Password reset successfully. Account has been unblocked."
-    }
+    "verified": True,
+    "message": "Security question verified successfully. Reset your password to unblock the account"
+}
  
  
 def logout_user(db: Session, payload: LogoutRequest):

@@ -7,6 +7,7 @@ import AccountBlockedModal from "../components/AccountBlockedModal";
 import Captcha from "../components/Captcha";
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { loginUser } from "../services/authService";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 
 const Login = () => {
@@ -14,12 +15,111 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [identifier, setIdentifier] =
+    useState("");
+
+  const [blockedData, setBlockedData] =
+    useState<any>(null);
+
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
   const navigate = useNavigate();
 
   // For demonstration, let's open the modal if email is 'block@test.com'
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsModalOpen(true);
+
+    setError("");
+
+    const identifier =
+      email.trim() ||
+      phoneNumber.trim();
+
+    setIdentifier(identifier);
+
+    if (!identifier) {
+
+      setError(
+        "Email or phone number is required"
+      );
+
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      console.log(
+        "Login Identifier:",
+        identifier
+      );
+
+      const response =
+        await loginUser(
+          identifier,
+          password
+        );
+
+      localStorage.setItem(
+        "access_token",
+        response.access_token
+      );
+
+      localStorage.setItem(
+        "refresh_token",
+        response.refresh_token
+      );
+
+      alert("Login successful.");
+
+      navigate("/dashboard");
+
+    } catch (error: any) {
+
+      const detail =
+        error?.response?.data?.detail;
+
+      if (
+        detail?.action ===
+        "RESET_BLOCKED_ACCOUNT"
+      ) {
+
+        setBlockedData(detail);
+
+        setIsModalOpen(true);
+
+        return;
+      }
+
+      if (
+        Array.isArray(detail)
+      ) {
+
+        setError(
+          detail[0]?.msg ||
+          "Validation failed"
+        );
+
+        return;
+      }
+
+      setError(
+        detail || "Login failed"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,7 +184,13 @@ const Login = () => {
                 <PhoneInput
                   country={'in'}
                   value={phoneNumber}
-                  onChange={(phone: string) => setPhoneNumber(phone)}
+                  onChange={(phone: string) => {
+
+                    const formattedPhone =
+                      `+${phone}`;
+
+                    setPhoneNumber(formattedPhone);
+                  }}
                   enableSearch={true}
                   containerClass="!w-full !h-full"
                   inputClass="!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
@@ -124,6 +230,14 @@ const Login = () => {
               </div>
             </div>
 
+            {error && (
+              <div className="mb-4">
+                <p className="text-red-500 text-sm">
+                  {error}
+                </p>
+              </div>
+            )}
+
             <p className="text-xs text-[#ffb700] font-bold mb-5">
               Note : Password will be Valid for 45 days only.
             </p>
@@ -158,9 +272,14 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors mb-6"
+              disabled={loading}
+              className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors mb-6 disabled:opacity-50"
             >
-              Login to Your Account
+              {
+                loading
+                  ? "Signing In..."
+                  : "Login to Your Account"
+              }
             </button>
 
             <div className="text-center text-sm mb-6">
@@ -249,6 +368,8 @@ const Login = () => {
       <AccountBlockedModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        identifier={identifier}
+        blockedData={blockedData}
       />
     </>
   );

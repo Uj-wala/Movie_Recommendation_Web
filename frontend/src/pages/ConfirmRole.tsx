@@ -1,23 +1,50 @@
 
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import { confirmRole, getApiErrorMessage } from '../services/PhoneRegistrationService';
 
 const ConfirmRole = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const role = searchParams.get('role') || 'Student';
   // Capitalize the role
   const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+  
+const getNextRoute = () => {
+  return `/verify-account?role=${role.toLowerCase()}`;
+};
 
-  const getNextRoute = () => {
-    switch (role.toLowerCase()) {
-      case 'student': return `/verify-account?role=${role.toLowerCase()}`;
-      case 'teacher': return `/verify-account?role=${role.toLowerCase()}`;
-      case 'parent': return `/verify-account?role=${role.toLowerCase()}`;
-      default: return '/login';
+const handleConfirmDetails = async () => {
+  try {
+    setError('');
+    setLoading(true);
+
+    const selectedRole = role.toLowerCase();
+    const userId = localStorage.getItem('user_id');
+
+    if (!userId) {
+      setError('User session not found. Please register again.');
+      return;
     }
-  };
+
+    await confirmRole({
+      user_id: userId,
+      role: selectedRole,
+    });
+
+    localStorage.setItem('selected_role', selectedRole);
+    navigate(getNextRoute());
+  } catch (error: any) {
+    setError(getApiErrorMessage(error));
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SplitScreenLayout>
@@ -57,6 +84,10 @@ const ConfirmRole = () => {
             </p>
           </div>
 
+          {error && (
+            <p className="text-red-500 text-sm mb-4">{error}</p>
+          )}
+
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               to="/select-role"
@@ -64,12 +95,14 @@ const ConfirmRole = () => {
             >
               Change Role
             </Link>
-            <Link
-              to={getNextRoute()}
+            <button
+              type="button"
+              onClick={handleConfirmDetails}
+              disabled={loading}
               className="flex-1 text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
             >
-              Confirm Details
-            </Link>
+              {loading ? 'Please wait...' : 'Confirm Details'}
+            </button>
           </div>
         </div>
       </div>

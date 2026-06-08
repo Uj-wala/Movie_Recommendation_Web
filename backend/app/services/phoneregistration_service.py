@@ -22,10 +22,14 @@ def register_by_phone(data: RegisterRequest, db: Session):
             status_code=400,
             detail="Passwords do not match"
         )
-
-
+ 
+   
+    phone = data.phone_number
+    if phone and not phone.startswith("+"):
+        phone = f"+{phone}"
+ 
     existing_user = db.query(User).filter(
-        User.phone_number == data.phone_number
+        User.phone_number == phone
     ).first()
  
     if existing_user:
@@ -36,12 +40,12 @@ def register_by_phone(data: RegisterRequest, db: Session):
  
     new_user = User(
         full_name=data.full_name,
-        phone_number=data.phone_number,
+        phone_number=phone,
         email=None,
         password_hash=hash_password(data.password),
         security_question=SecurityQuestion(data.security_question),
         security_answer_hash=hash_security_answer(data.security_answer),
-        role=UserRole(data.role),
+        role=UserRole(data.role)if data.role else None,
         failed_login_attempts=0,
         is_active=True,
         is_verified=False,
@@ -193,3 +197,4 @@ def save_teacher_verification(data: TeacherVerificationRequest, db: Session):
         "message": "Registration successful! You can now access the Dashboard.",
         "user_id": data.user_id
     }
+ 

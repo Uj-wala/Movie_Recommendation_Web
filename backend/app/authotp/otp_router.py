@@ -31,13 +31,20 @@ def resend_otp(
     payload: ResendOTPRequest,
     db: Session = Depends(get_db)
 ):
-    
-    response = OTPService.resend_otp(
-    db,
-    payload.phone_number
-)
+    success, message = OTPService.resend_otp(
+        db,
+        payload.phone_number
+    )
 
-    return response
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail=message
+        )
+
+    return {
+        "message": message
+    }
 
 
 @router.post("/verify-otp")
@@ -68,14 +75,22 @@ def verify_otp(
 
 @router.post("/send-email-otp")
 def send_email_otp_route(
-    payload: SendEmailOTPRequest
+    payload: SendEmailOTPRequest,
+    db: Session = Depends(get_db)
 ):
-    OTPService.send_email_otp(
+    success, message = OTPService.send_email_otp(
+        db,
         payload.email
     )
 
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail=message
+        )
+
     return {
-        "message": "Email OTP sent successfully"
+        "message": message
     }
 
 
