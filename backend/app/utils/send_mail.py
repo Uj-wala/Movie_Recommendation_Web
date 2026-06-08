@@ -7,6 +7,7 @@ import random
 SENDER_EMAIL = settings.EMAIL_USERNAME
 SENDER_PASSWORD = settings.EMAIL_PASSWORD
 
+
 def send_email(to: str, subject: str, body: str):
 
     try:

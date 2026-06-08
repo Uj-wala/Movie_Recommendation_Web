@@ -2,19 +2,19 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import SuccessModal from '../components/SuccessModal';
 import { saveParentVerification } from "../services/PhoneRegistrationService";
  
 const ParentVerification = () => {
-  const navigate = useNavigate();
- 
   const [childName,          setChildName]          = useState('');
   const [childGrade,         setChildGrade]         = useState('');
   const [studentReferenceId, setStudentReferenceId] = useState('');
   const [loading,            setLoading]            = useState(false);
   const [error,              setError]              = useState('');
+  const [isModalOpen,        setIsModalOpen]        = useState(false);
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +37,7 @@ const ParentVerification = () => {
     });
     
      
-      navigate('/verify-account?role=parent');
+      setIsModalOpen(true);
  
     } catch (err: any) {
       if (err.response?.data?.detail) {
@@ -148,6 +148,15 @@ const ParentVerification = () => {
           </div>
         </div>
       </SplitScreenLayout>
+
+      <SuccessModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Registration Successful!!!"
+        message="Your parent verification has been submitted successfully."
+        buttonText="Go to Login"
+        redirectUrl="/login"
+      />
     </>
   );
 };

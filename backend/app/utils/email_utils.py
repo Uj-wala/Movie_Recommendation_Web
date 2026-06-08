@@ -22,6 +22,8 @@ This OTP will expire in 10 minutes.
 """
 
     try:
+        print(f"Email OTP for {email}: {otp}", flush=True)
+
         msg = MIMEMultipart()
         msg["From"] = SENDER_EMAIL
         msg["To"] = email

@@ -22,7 +22,7 @@ def send_sms_otp(phone_number: str):
  
     otp_store[phone_number] = otp
  
-    print(f"SMS OTP for {phone_number}: {otp}")
+    print(f"SMS OTP for {phone_number}: {otp}", flush=True)
  
     return otp
  

@@ -510,6 +510,12 @@ def create_new_password(db: Session, payload):
     user.password_hash = hash_password(
         payload.new_password
     )
+
+    user.failed_login_attempts = 0
+    user.is_blocked = False
+
+    if hasattr(user, "blocked_until"):
+        user.blocked_until = None
  
     db.commit()
  
@@ -550,17 +556,9 @@ def reset_blocked_account_password(
             detail="Invalid security question or answer"
         )
  
-    user.failed_login_attempts = 0
-    user.is_blocked = False
- 
-    if hasattr(user, "blocked_until"):
-        user.blocked_until = None
- 
-    db.commit()
- 
     return {
     "verified": True,
-    "message": "Security question verified successfully"
+    "message": "Security question verified successfully. Reset your password to unblock the account"
 }
  
  

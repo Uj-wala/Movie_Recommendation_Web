@@ -39,8 +39,6 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use((response) => response,
  async (error) => {
-    const originalRequest = error.config;
-
     if (error.response?.status === 401) {
       console.log("Unauthorized");
       // logout or refresh token logic here

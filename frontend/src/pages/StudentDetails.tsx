@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import SuccessModal from '../components/SuccessModal';
 import { saveStudentDetails } from "../services/PhoneRegistrationService";
 
 const StudentDetails = () => {
-  const navigate = useNavigate();
   const [isGradeOpen, setIsGradeOpen] = useState(false);
   
   // State elements
@@ -15,6 +15,7 @@ const StudentDetails = () => {
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const grades = [
     { value: "Grade 1", label: "grade 1" },
@@ -62,7 +63,7 @@ const StudentDetails = () => {
         school_name: schoolName,
       });
 
-      navigate('/verify-account?role=student');
+      setIsModalOpen(true);
 
     } catch (err: any) {
       console.error(err);
@@ -72,7 +73,7 @@ const StudentDetails = () => {
         typeof detail === 'string' &&
         detail.toLowerCase().includes('already exists')
       ) {
-        navigate('/verify-account?role=student');
+        setIsModalOpen(true);
         return;
       }
 
@@ -200,6 +201,15 @@ const StudentDetails = () => {
           </div>
         </div>
       </SplitScreenLayout>
+
+      <SuccessModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Registration Successful!!!"
+        message="Your student profile has been submitted successfully."
+        buttonText="Go to Login"
+        redirectUrl="/login"
+      />
     </>
   );
 };

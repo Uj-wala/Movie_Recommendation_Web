@@ -77,6 +77,8 @@ const Login = () => {
         response.refresh_token
       );
 
+      alert("Login successful.");
+
       navigate("/dashboard");
 
     } catch (error: any) {

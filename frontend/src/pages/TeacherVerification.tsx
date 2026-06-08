@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import SuccessModal from '../components/SuccessModal';
 import Logo from '../components/Logo';
@@ -9,8 +9,6 @@ import {
 } from '../services/PhoneRegistrationService';
  
 const TeacherVerification = () => {
-  const navigate = useNavigate();
- 
   const [schoolName,   setSchoolName]   = useState('');
   const [subject,      setSubject]      = useState('');
   const [loading,      setLoading]      = useState(false);
@@ -37,7 +35,7 @@ const TeacherVerification = () => {
       });
  
      
-      navigate('/verify-account?role=teacher');
+      setIsModalOpen(true);
  
     } catch (err: any) {
       if (err.response?.data?.detail) {
@@ -142,7 +140,8 @@ const TeacherVerification = () => {
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
         message="You can now access the platform"
-        buttonText="Go to Dashboard"
+        buttonText="Go to Login"
+        redirectUrl="/login"
       />
     </>
   );
