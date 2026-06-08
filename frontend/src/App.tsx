@@ -11,12 +11,13 @@ import ConfirmRole from "./pages/ConfirmRole";
 import StudentDetails from "./pages/StudentDetails";
 import TeacherVerification from "./pages/TeacherVerification";
 import ParentVerification from "./pages/ParentVerification";
+import Home from "./pages/Home";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Register />} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
