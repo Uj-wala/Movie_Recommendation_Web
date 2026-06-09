@@ -313,9 +313,9 @@ const Register = () => {
             <div className="relative">
               <select required value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
                 <option value="">Select a Security Question</option>
-                <option value="food">What is your Favorite Food?</option>
-                <option value="country">What is your Favorite Country?</option>
-                <option value="sport">What is your favorte Sport?</option>
+                <option value="favorite_food">What is your Favorite Food?</option>
+                <option value="favorite_country">What is your Favorite Country?</option>
+                <option value="favorite_sport">What is your Favorite Sport?</option>
               </select>
 
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
