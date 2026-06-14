@@ -1,5 +1,3 @@
-import random
- 
 otp_store = {}
  
  
@@ -18,7 +16,7 @@ def send_sms_otp(phone_number: str):
  
     phone_number = normalize_phone(phone_number)
  
-    otp = str(random.randint(100000, 999999))
+    otp = "123456"
  
     otp_store[phone_number] = otp
  

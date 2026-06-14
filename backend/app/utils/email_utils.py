@@ -1,42 +1,25 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
-
-from app.utils.sms_utils import send_sms_otp
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from app.schemas.user_schema import ForgotPasswordRequest
-from app.utils.user_utils import get_user_by_identifier
-import random
-SENDER_EMAIL = settings.EMAIL_USERNAME
-SENDER_PASSWORD = settings.EMAIL_PASSWORD
+from app.utils.resend_mailer import send_resend_email
+from app.utils.smtp_mailer import send_smtp_email
 
 def send_email_otp(email: str, otp: str):
     subject = "AI Tutoring App - Email OTP"
-    
     body = f"""
-Your OTP for verification is: {otp}
-
-This OTP will expire in 10 minutes.
+<h2>Your OTP for verification is: {otp}</h2>
+<p>This OTP will expire in 10 minutes.</p>
 """
 
     try:
         print(f"Email OTP for {email}: {otp}", flush=True)
 
-        msg = MIMEMultipart()
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = email
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "plain"))
+        if settings.RESEND_API_KEY and send_resend_email(email, subject, body):
+            return True
 
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        server.sendmail(SENDER_EMAIL, email, msg.as_string())
-        server.quit()
+        if settings.SMTP_PASSWORD or settings.EMAIL_PASSWORD:
+            return send_smtp_email(email, subject, f"Your OTP for verification is: {otp}\n\nThis OTP will expire in 10 minutes.")
 
-        return True
+        print("EMAIL ERROR: No email provider is configured", flush=True)
+        return False
 
     except Exception as e:
         print("EMAIL ERROR:", str(e))

@@ -1,6 +1,9 @@
+from pathlib import Path
 from urllib.parse import quote_plus
 
 from pydantic_settings import BaseSettings
+
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -20,8 +23,18 @@ class Settings(BaseSettings):
     MAX_LOGIN_ATTEMPTS: int = 3
 
    
-    EMAIL_USERNAME: str
-    EMAIL_PASSWORD: str
+    EMAIL_USERNAME: str = ""
+    EMAIL_PASSWORD: str = ""
+    RESEND_API_KEY: str | None = None
+    EMAIL_FROM: str = "AI Tutoring App <onboarding@resend.dev>"
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_FROM_NAME: str = "AI Tutoring App"
+    SMTP_USE_TLS: bool = True
+    SMTP_USE_SSL: bool = False
 
     """Twilio settings
     TWILIO_ACCOUNT_SID: str
@@ -31,7 +44,7 @@ class Settings(BaseSettings):
     
 
     class Config:
-        env_file = ".env"
+        env_file = BASE_DIR / ".env"
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -52,7 +65,7 @@ class Settings(BaseSettings):
         )
 
     class Config:
-        env_file = ".env"
+        env_file = BASE_DIR / ".env"
         extra = "ignore"
 
 
