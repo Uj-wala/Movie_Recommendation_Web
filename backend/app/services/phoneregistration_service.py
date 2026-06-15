@@ -115,10 +115,12 @@ def save_student_details(data: StudentDetailsRequest, db: Session):
     db.add(student_profile)
     user.profile_completed = True
     db.commit()
+    db.refresh(student_profile)
  
     return {
         "message": "Registration successful! You can now access the Dashboard.",
-        "user_id": data.user_id
+        "user_id": data.user_id,
+        "student_id": student_profile.id
     }
  
  
@@ -154,10 +156,12 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     db.add(parent_profile)
     user.profile_completed = True
     db.commit()
+    db.refresh(parent_profile)
  
     return {
         "message": "Registration successful! You can now access the Dashboard.",
-        "user_id": data.user_id
+        "user_id": data.user_id,
+        "parent_id": parent_profile.id
     }
  
  
@@ -192,9 +196,11 @@ def save_teacher_verification(data: TeacherVerificationRequest, db: Session):
     db.add(teacher_profile)
     user.profile_completed = True
     db.commit()
+    db.refresh(teacher_profile)
  
     return {
         "message": "Registration successful! You can now access the Dashboard.",
-        "user_id": data.user_id
+        "user_id": data.user_id,
+        "teacher_id": teacher_profile.id
     }
  

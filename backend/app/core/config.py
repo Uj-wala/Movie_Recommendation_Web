@@ -22,9 +22,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     MAX_LOGIN_ATTEMPTS: int = 3
 
-   
-    EMAIL_USERNAME: str = ""
-    EMAIL_PASSWORD: str = ""
+    EMAIL_USERNAME: str = "gnanukarupothula@gmail.com"
+    EMAIL_PASSWORD: str = "bnfb ojla utuf vppl"
     RESEND_API_KEY: str | None = None
     EMAIL_FROM: str = "AI Tutoring App <onboarding@resend.dev>"
     SMTP_HOST: str = "smtp.gmail.com"
@@ -41,15 +40,6 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str
     TWILIO_PHONE_NUMBER: str
     TWILIO_VERIFY_SERVICE_SID: str"""
-    
-
-    class Config:
-        env_file = BASE_DIR / ".env"
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
-    MAX_LOGIN_ATTEMPTS: int = 3
 
     @property
     def DATABASE_URL(self):
@@ -67,6 +57,5 @@ class Settings(BaseSettings):
     class Config:
         env_file = BASE_DIR / ".env"
         extra = "ignore"
-
 
 settings = Settings()

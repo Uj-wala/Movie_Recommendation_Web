@@ -29,6 +29,12 @@ export interface StudentDetailsData {
   school_name?: string | null;
 }
 
+export interface StudentDetailsResponse {
+  message: string;
+  user_id: string;
+  student_id: string;
+}
+
 export interface ParentVerificationData {
   user_id: string;
   child_name: string;
@@ -36,10 +42,22 @@ export interface ParentVerificationData {
   student_reference_id: string;
 }
 
+export interface ParentVerificationResponse {
+  message: string;
+  user_id: string;
+  parent_id: string;
+}
+
 export interface TeacherVerificationData {
   user_id: string;
   school_name: string;
   subject: string;
+}
+
+export interface TeacherVerificationResponse {
+  message: string;
+  user_id: string;
+  teacher_id: string;
 }
 
 export const getApiErrorMessage = (error: any): string => {
@@ -193,20 +211,20 @@ export const verifyPhoneOtpWithFallback = async (
 };
 
 export const saveStudentDetails = async (data: StudentDetailsData) => {
-  const response = await api.post("/auth/student-verification", data);
+  const response = await api.post<StudentDetailsResponse>("/auth/student-verification", data);
   return response.data;
 };
 
 export const saveParentVerification = async (
   data: ParentVerificationData
 ) => {
-  const response = await api.post("/auth/parent-verification", data);
+  const response = await api.post<ParentVerificationResponse>("/auth/parent-verification", data);
   return response.data;
 };
 
 export const saveTeacherVerification = async (
   data: TeacherVerificationData
 ) => {
-  const response = await api.post("/auth/teacher-verification", data);
+  const response = await api.post<TeacherVerificationResponse>("/auth/teacher-verification", data);
   return response.data;
 };

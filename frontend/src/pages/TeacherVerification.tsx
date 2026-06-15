@@ -14,6 +14,7 @@ const TeacherVerification = () => {
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState('');
   const [isModalOpen,  setIsModalOpen]  = useState(false);
+  const [teacherId,    setTeacherId]    = useState('');
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +29,13 @@ const TeacherVerification = () => {
       }
  
      
-      await saveTeacherVerification({
+      const response = await saveTeacherVerification({
         user_id:     userId,
         school_name: schoolName,
         subject:     subject,
       });
  
-     
+      setTeacherId(response.teacher_id);
       setIsModalOpen(true);
  
     } catch (err: any) {
@@ -139,7 +140,7 @@ const TeacherVerification = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
-        message="You can now access the platform"
+        message={`You can now access the platform${teacherId ? `\nTeacher ID: ${teacherId}` : ''}`}
         buttonText="Go to Login"
         redirectUrl="/login"
       />

@@ -512,6 +512,8 @@ class StudentDetailsResponse(BaseModel):
     message: str
  
     user_id: str
+
+    student_id: str
  
  
 class ParentVerificationRequest(BaseModel):
@@ -588,6 +590,8 @@ class ParentVerificationResponse(BaseModel):
     message: str
  
     user_id: str
+
+    parent_id: str
  
  
 class TeacherVerificationRequest(BaseModel):
@@ -635,4 +639,6 @@ class TeacherVerificationResponse(BaseModel):
     message: str
  
     user_id: str
+
+    teacher_id: str
  

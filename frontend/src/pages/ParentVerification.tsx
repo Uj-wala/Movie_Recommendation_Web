@@ -15,6 +15,7 @@ const ParentVerification = () => {
   const [loading,            setLoading]            = useState(false);
   const [error,              setError]              = useState('');
   const [isModalOpen,        setIsModalOpen]        = useState(false);
+  const [parentId,           setParentId]           = useState('');
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,14 +30,14 @@ const ParentVerification = () => {
       }
  
    
-      await saveParentVerification({
+      const response = await saveParentVerification({
       user_id: userId,
       child_name: childName,
       child_grade: childGrade,
       student_reference_id: studentReferenceId,
     });
     
-     
+      setParentId(response.parent_id);
       setIsModalOpen(true);
  
     } catch (err: any) {
@@ -153,7 +154,7 @@ const ParentVerification = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
-        message="Your parent verification has been submitted successfully."
+        message={`Your parent verification has been submitted successfully.${parentId ? `\nParent ID: ${parentId}` : ''}`}
         buttonText="Go to Login"
         redirectUrl="/login"
       />

@@ -16,6 +16,7 @@ const StudentDetails = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentId, setStudentId] = useState('');
 
   const grades = [
     { value: "Grade 1", label: "grade 1" },
@@ -56,13 +57,14 @@ const StudentDetails = () => {
         return;
       }
 
-      await saveStudentDetails({
+      const response = await saveStudentDetails({
         user_id: userId,
         grade,
         work_place: workPlace || null,
         school_name: schoolName,
       });
 
+      setStudentId(response.student_id);
       setIsModalOpen(true);
 
     } catch (err: any) {
@@ -206,7 +208,7 @@ const StudentDetails = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
-        message="Your student profile has been submitted successfully."
+        message={`Your student profile has been submitted successfully.${studentId ? `\nStudent ID: ${studentId}` : ''}`}
         buttonText="Go to Login"
         redirectUrl="/login"
       />
