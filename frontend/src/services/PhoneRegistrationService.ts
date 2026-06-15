@@ -8,13 +8,13 @@ export interface PhoneRegistrationData {
   confirm_password: string;
   security_question: string;
   security_answer: string;
-  role: string;
+  // role_id: string;
   agree_to_terms: boolean;
 }
 
 export interface ConfirmRoleData {
   user_id: string;
-  role: string;
+  role_id: string;
 }
 
 export interface EmailOtpData {
@@ -51,7 +51,7 @@ export interface ParentVerificationResponse {
 export interface TeacherVerificationData {
   user_id: string;
   school_name: string;
-  subject: string;
+  subject_ids: string[];
 }
 
 export interface TeacherVerificationResponse {

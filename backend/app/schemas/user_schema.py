@@ -3,13 +3,13 @@ from typing import Optional
  
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, ConfigDict
  
-from app.core.enums import UserRole, SecurityQuestion
+from app.core.enums import SecurityQuestion
  
 PASSWORD_REGEX = re.compile(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
  
  
 PHONE_REGEX = re.compile(r"^[0-9]{10,15}$")
-from app.core.enums import UserRole, SecurityQuestion
+
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -45,7 +45,7 @@ class RegisterRequest(BaseModel):
  
     confirm_password: str
  
-    role: Optional[UserRole] = "student"
+    role_id: Optional[str] = None
  
     security_question: SecurityQuestion
  
@@ -127,19 +127,16 @@ class RegisterRequest(BaseModel):
         return value
  
  
-    @field_validator("role")
+    @field_validator("role_id")
     @classmethod
-    def validate_role(cls, value):
-        allowed = [UserRole.STUDENT, UserRole.TEACHER, UserRole.PARENT]
-        if value not in allowed:
-            raise ValueError("Role must be student, teacher or parent")
- 
-        value = value.strip()
- 
-        if len(value) < 2:
-            raise ValueError("Security answer is too short")
- 
-        return value
+    def validate_role_id(cls, value):
+
+      value = value.strip()
+
+      if not UUID_REGEX.match(value.lower()):
+        raise ValueError("Invalid role ID format")
+
+      return value
  
     @model_validator(mode="after")
     def validate_passwords_match(self):
@@ -351,7 +348,7 @@ class UserResponse(BaseModel):
  
     phone_number: Optional[str]
  
-    role: UserRole
+    role_id: str
  
     is_verified: bool
  
@@ -404,7 +401,7 @@ class ConfirmRoleRequest(BaseModel):
  
     user_id: str
  
-    role: UserRole
+    role_id: str
  
     @field_validator("user_id")
     @classmethod
@@ -414,12 +411,15 @@ class ConfirmRoleRequest(BaseModel):
             raise ValueError("Invalid user ID format")
         return value
  
-    @field_validator("role")
+    @field_validator("role_id")
     @classmethod
-    def validate_role(cls, value):
-        allowed = [UserRole.STUDENT, UserRole.TEACHER, UserRole.PARENT]
-        if value not in allowed:
-            raise ValueError("Role must be student, teacher or parent")
+    def validate_role_id(cls, value):
+
+        value = value.strip()
+
+        if not UUID_REGEX.match(value.lower()):
+            raise ValueError("Invalid role ID format")
+
         return value
  
  
@@ -429,7 +429,7 @@ class ConfirmRoleResponse(BaseModel):
  
     user_id: str
  
-    role: str
+    role_id: str
  
  
 class StudentDetailsRequest(BaseModel):
@@ -594,51 +594,51 @@ class ParentVerificationResponse(BaseModel):
     parent_id: str
  
  
-class TeacherVerificationRequest(BaseModel):
+# class TeacherVerificationRequest(BaseModel):
  
-    user_id: str
+#     user_id: str
  
-    school_name: str
+#     school_name: str
  
-    subject: str
+#     subject: str
  
-    @field_validator("user_id")
-    @classmethod
-    def validate_user_id(cls, value):
-        value = value.strip()
-        if not UUID_REGEX.match(value.lower()):
-            raise ValueError("Invalid user ID format")
-        return value
+#     @field_validator("user_id")
+#     @classmethod
+#     def validate_user_id(cls, value):
+#         value = value.strip()
+#         if not UUID_REGEX.match(value.lower()):
+#             raise ValueError("Invalid user ID format")
+#         return value
  
-    @field_validator("school_name")
-    @classmethod
-    def validate_school_name(cls, value):
-        value = value.strip()
-        if len(value) < 3:
-            raise ValueError("School name must be at least 3 characters")
-        if len(value) > 255:
-            raise ValueError("School name must not exceed 255 characters")
-        return value
+#     @field_validator("school_name")
+#     @classmethod
+#     def validate_school_name(cls, value):
+#         value = value.strip()
+#         if len(value) < 3:
+#             raise ValueError("School name must be at least 3 characters")
+#         if len(value) > 255:
+#             raise ValueError("School name must not exceed 255 characters")
+#         return value
  
-    @field_validator("subject")
-    @classmethod
-    def validate_subject(cls, value):
-        value = value.strip()
-        if len(value) < 2:
-            raise ValueError("Subject must be at least 2 characters")
-        if len(value) > 100:
-            raise ValueError("Subject must not exceed 100 characters")
-        pattern = re.compile(r"^[a-zA-Z\s]+$")
-        if not pattern.match(value):
-            raise ValueError("Subject can only contain letters and spaces")
-        return value
+#     @field_validator("subject")
+#     @classmethod
+#     def validate_subject(cls, value):
+#         value = value.strip()
+#         if len(value) < 2:
+#             raise ValueError("Subject must be at least 2 characters")
+#         if len(value) > 100:
+#             raise ValueError("Subject must not exceed 100 characters")
+#         pattern = re.compile(r"^[a-zA-Z\s]+$")
+#         if not pattern.match(value):
+#             raise ValueError("Subject can only contain letters and spaces")
+#         return value
  
  
-class TeacherVerificationResponse(BaseModel):
+# class TeacherVerificationResponse(BaseModel):
  
-    message: str
+#     message: str
  
-    user_id: str
+    # user_id: str
 
-    teacher_id: str
+    # teacher_id: str
  

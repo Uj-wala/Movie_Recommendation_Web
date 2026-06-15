@@ -1,6 +1,7 @@
 from sqlalchemy import (
     String,
-    ForeignKey
+    ForeignKey,
+    Text
 )
 # from sqlalchemy import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -31,6 +32,16 @@ class StudentProfile(Base, BaseModel):
 
     workplace: Mapped[str | None] = mapped_column(
         String(255),
+        nullable=True
+    )
+    
+    learning_interests: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
+
+    preferred_learning_style: Mapped[str | None] = mapped_column(
+        String(100),
         nullable=True
     )
 

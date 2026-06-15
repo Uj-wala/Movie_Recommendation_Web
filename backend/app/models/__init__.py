@@ -8,3 +8,10 @@ from app.models.student_profile_model import StudentProfile
 from app.models.teacher_profile_model import TeacherProfile
 from app.models.parent_profile_model import ParentProfile
 from app.models.country_model import Country
+from app.models.parent_child_model import ParentChild
+from app.models.subject_model import Subject
+from app.models.teacher_subject_model import TeacherSubject
+from app.models.user_permission_model import UserPermission
+from app.models.role_model import Role
+from app.models.permission_model import Permission
+from app.models.role_permission_model import RolePermission

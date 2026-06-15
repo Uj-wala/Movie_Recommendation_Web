@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
  
 from app.core.database import Base
 from app.core.base_model import BaseModel
-from app.core.enums import UserRole, SecurityQuestion
+from app.core.enums import SecurityQuestion
  
  
 class User(Base, BaseModel):
@@ -38,8 +38,10 @@ class User(Base, BaseModel):
  
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
  
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
- 
+    role_id: Mapped[str] = mapped_column(
+        ForeignKey("roles.id"),
+        nullable=False
+    ) 
     security_question: Mapped[SecurityQuestion] = mapped_column(
         Enum(SecurityQuestion), nullable=False
     )
@@ -52,7 +54,29 @@ class User(Base, BaseModel):
  
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
     
-    agree_to_terms: Mapped[bool] = mapped_column(Boolean, default=False)  
+    agree_to_terms: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+    profile_image_url: Mapped[str | None] = mapped_column(
+    String(500),
+    nullable=True
+    )
+
+    preferred_language: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True
+    )
+
+    email_notifications: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
+
+    sms_notifications: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )  
     
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
  
@@ -102,6 +126,17 @@ class User(Base, BaseModel):
     "RefreshToken",
     back_populates="user",
     cascade="all, delete-orphan"
-)
+    )
+    
+    role = relationship(
+    "Role",
+    back_populates="users"
+    )
+    
+    user_permissions = relationship(
+    "UserPermission",
+    back_populates="user",
+    cascade="all, delete-orphan"
+    )
  
  

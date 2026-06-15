@@ -318,7 +318,7 @@ def login_user(
         "access_token":
         create_access_token(
             user.id,
-            user.role
+            user.role_id
         ),
 
         "refresh_token":
@@ -388,7 +388,7 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
     db.commit()
  
     return {
-        "access_token": create_access_token(user.id, user.role),
+        "access_token": create_access_token(user.id, user.role_id),
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
     }

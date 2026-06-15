@@ -1,12 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import { fetchDropdownData } from '../services/ListApiService';
 
 const SelectRole = () => {
-  const [selectedRole, setSelectedRole] = useState('Student');
-  const roles = ['Student', 'Parent', 'Teacher'];
+  // const roles = ['Student', 'Parent', 'Teacher'];
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRole, setSelectedRole] = useState(roles[1] || '');
+
+  const fetchRoles = async () => {
+    try {
+      const data = await fetchDropdownData('/dropdowns/roles');
+      setRoles(data);
+      setSelectedRole(data[1] || '');
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   return (
     <SplitScreenLayout>
@@ -33,25 +49,25 @@ const SelectRole = () => {
           <label className="block text-sm font-bold text-[#1a123f] mb-4">
             Choose Your Role
           </label>
-          
+
           <div className="flex flex-col gap-4 mb-8">
             {roles.map(role => (
-              <label key={role} className="flex items-center cursor-pointer">
+              <label key={role.id} className="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="role"
-                  value={role}
-                  checked={selectedRole === role}
-                  onChange={(e) => setSelectedRole(e.target.value)}
+                  value={role.id}
+                  checked={selectedRole.id === role.id}
+                  onChange={(e) => setSelectedRole(roles.find(r => r.id === e.target.value) || roles[1])}
                   className="w-4 h-4 text-brand-green border-gray-300 focus:ring-brand-green"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-900">{role}</span>
+                <span className="ml-3 text-sm font-semibold text-gray-900">{role.name}</span>
               </label>
             ))}
           </div>
 
           <Link
-            to={`/confirm-role?role=${selectedRole.toLowerCase()}`}
+            to={`/confirm-role?role=${selectedRole?.name?.toLowerCase()}&role_id=${selectedRole?.id}`}
             className="w-full block text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
           >
             Create Account

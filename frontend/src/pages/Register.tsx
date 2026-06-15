@@ -72,7 +72,7 @@ const Register = () => {
       confirm_password: confirmPassword,
       security_question: securityQuestion,
       security_answer: securityAnswer,
-      role: "student",
+      // role_id: "student",
       agree_to_terms: agreeToTerms,
     };
 
@@ -134,11 +134,10 @@ const Register = () => {
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-10 justify-between w-full">
           <button
             type="button"
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${
-              registrationType === "email"
-                ? "border-brand-green text-brand-green"
-                : "border-transparent text-gray-900"
-            }`}
+            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "email"
+              ? "border-brand-green text-brand-green"
+              : "border-transparent text-gray-900"
+              }`}
             onClick={() => setRegistrationType("email")}
           >
             Email Registration
@@ -146,11 +145,10 @@ const Register = () => {
 
           <button
             type="button"
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${
-              registrationType === "phone"
-                ? "border-brand-green text-brand-green"
-                : "border-transparent text-gray-900"
-            }`}
+            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "phone"
+              ? "border-brand-green text-brand-green"
+              : "border-transparent text-gray-900"
+              }`}
             onClick={() => setRegistrationType("phone")}
           >
             Phone Registration
@@ -230,7 +228,7 @@ const Register = () => {
                     containerClass="!w-full !h-full"
                     inputClass="!w-full !h-full !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
                     buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
-                  
+
                   />
                 </div>
               )}

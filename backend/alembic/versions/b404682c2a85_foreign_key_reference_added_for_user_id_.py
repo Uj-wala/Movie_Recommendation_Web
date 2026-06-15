@@ -1,8 +1,8 @@
-"""create auth tables
+"""Foreign key reference added for user id in roles table.
 
-Revision ID: 4226fe6b2ab6
-Revises: 12490eab187c
-Create Date: 2026-05-29 14:56:31.854459
+Revision ID: b404682c2a85
+Revises: e0b540a131ee
+Create Date: 2026-06-12 17:44:17.481304
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4226fe6b2ab6'
-down_revision: Union[str, Sequence[str], None] = '9f1883e7ad4c'
+revision: str = 'b404682c2a85'
+down_revision: Union[str, Sequence[str], None] = 'e0b540a131ee'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

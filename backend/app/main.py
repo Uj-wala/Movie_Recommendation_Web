@@ -14,6 +14,11 @@ from app.models.parent_profile_model import ParentProfile
 from app.authotp.otp_router import router as otp_router
 from app.api.phone_registration import router as phone_router
 from app.api.auth_login import router as auth_login
+from app.api.dropdown_router import router as dropdown_router
+from app.scripts.seed_roles import seed_roles
+from app.scripts.seed_countries import seed_countries
+from app.scripts.seed_subjects import seed_subjects
+from app.scripts.seed_permissions import seed_permissions
 
 
 Base.metadata.create_all(bind=engine)
@@ -34,6 +39,12 @@ app.include_router(auth_routes.router)
 app.include_router(phone_router)
 app.include_router(otp_router)
 app.include_router(auth_login)
+app.include_router(dropdown_router)
+
+seed_countries();   
+seed_roles();
+seed_subjects();
+seed_permissions();
 
 @app.get("/")
 def root():
