@@ -54,17 +54,6 @@ class StudentProfile(Base, BaseModel):
         nullable=True
     )
 
-    learning_interests: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    preferred_learning_style: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True,
-    )
-
-
     user: Mapped["User"] = relationship(
         "User",
         back_populates="student_profile",

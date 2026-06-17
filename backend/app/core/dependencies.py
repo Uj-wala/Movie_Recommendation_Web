@@ -179,8 +179,6 @@ def has_permission(
 
     return checker
 
-    return role_checker
-
 
 def get_current_active_student(
     current_user: User = Depends(get_current_user),
