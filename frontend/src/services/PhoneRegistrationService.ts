@@ -63,16 +63,20 @@ export interface TeacherVerificationResponse {
 export const getApiErrorMessage = (error: any): string => {
   const detail = error?.response?.data?.detail;
   const message = error?.response?.data?.message;
+  const cleanMessage = (value: any): string => {
+    if (typeof value !== "string") return "";
+    return value.replace(/^Value error,\s*/i, "");
+  };
 
-  if (typeof detail === "string") return detail;
-  if (typeof message === "string") return message;
+  if (typeof detail === "string") return cleanMessage(detail);
+  if (typeof message === "string") return cleanMessage(message);
 
   if (Array.isArray(detail)) {
     return detail
       .map((item) => {
-        const field = item?.loc?.join(".");
-        return field ? `${field}: ${item?.msg}` : item?.msg;
+        return cleanMessage(item?.msg);
       })
+      .filter(Boolean)
       .join(", ");
   }
 

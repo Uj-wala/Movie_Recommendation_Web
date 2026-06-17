@@ -23,6 +23,8 @@ PASSWORD_REGEX = re.compile(
     r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$"
 )
 UUID_REGEX = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+SECURITY_ANSWER_MIN_LENGTH = 2
+SECURITY_ANSWER_MAX_LENGTH = 100
  
 PHONE_REGEX = re.compile(
     r"^\+?[0-9]{10,15}$"
@@ -121,8 +123,18 @@ class RegisterRequest(BaseModel):
  
         value = value.strip()
  
-        if len(value) < 2:
-            raise ValueError("Security answer is too short")
+        if len(value) < SECURITY_ANSWER_MIN_LENGTH:
+            raise ValueError(
+                f"Security answer must be at least {SECURITY_ANSWER_MIN_LENGTH} characters"
+            )
+
+        if len(value) > SECURITY_ANSWER_MAX_LENGTH:
+            raise ValueError(
+                f"Security answer must not exceed {SECURITY_ANSWER_MAX_LENGTH} characters"
+            )
+
+        if any(char.isspace() for char in value):
+            raise ValueError("Security answer must not contain spaces")
  
         return value
  
@@ -333,10 +345,18 @@ class BlockedAccountResetRequest(BaseModel):
 
         value = value.strip()
 
-        if len(value) < 2:
+        if len(value) < SECURITY_ANSWER_MIN_LENGTH:
             raise ValueError(
-                "Security answer is too short"
+                f"Security answer must be at least {SECURITY_ANSWER_MIN_LENGTH} characters"
             )
+
+        if len(value) > SECURITY_ANSWER_MAX_LENGTH:
+            raise ValueError(
+                f"Security answer must not exceed {SECURITY_ANSWER_MAX_LENGTH} characters"
+            )
+
+        if any(char.isspace() for char in value):
+            raise ValueError("Security answer must not contain spaces")
 
         return value
  

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { RefreshCw, Volume2, HelpCircle, Check, X } from 'lucide-react';
 
 type CaptchaStatus = 'default' | 'error' | 'success';
+type CaptchaProps = {
+  onValidationChange?: (isValid: boolean) => void;
+};
 
 const generateCaptcha = () => {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -12,7 +15,7 @@ const generateCaptcha = () => {
   return result;
 };
 
-const Captcha = () => {
+const Captcha = ({ onValidationChange }: CaptchaProps) => {
   const [value, setValue] = useState('');
   const [status, setStatus] = useState<CaptchaStatus>('default');
   const [captchaText, setCaptchaText] = useState('oisdykss');
@@ -26,12 +29,15 @@ const Captcha = () => {
     } else if (val.length >= captchaText.length) {
       if (val.toLowerCase() === captchaText.toLowerCase()) {
         setStatus('success');
+        onValidationChange?.(true);
       } else {
         setStatus('error');
+        onValidationChange?.(false);
       }
     } else {
       // While typing, stay in default state until full length is reached
       setStatus('default');
+      onValidationChange?.(false);
     }
   };
 
@@ -39,6 +45,7 @@ const Captcha = () => {
     setCaptchaText(generateCaptcha());
     setValue('');
     setStatus('default');
+    onValidationChange?.(false);
   };
 
   const getScribbleClass = (index: number) => {

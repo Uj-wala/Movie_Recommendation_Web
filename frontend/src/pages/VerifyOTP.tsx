@@ -9,9 +9,11 @@ import {
   forgotPassword
 } from "../services/authService";
 
+const OTP_EXPIRY_SECONDS = 300;
+
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(OTP_EXPIRY_SECONDS);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
 
@@ -42,13 +44,14 @@ const VerifyOTP = () => {
     async () => {
 
       try {
+        setError("");
 
         await forgotPassword(
           email,
           phone_number
         );
 
-        setTimer(30);
+        setTimer(OTP_EXPIRY_SECONDS);
 
         setOtp([
           '',
@@ -95,6 +98,14 @@ const VerifyOTP = () => {
       const otpCode =
         otp.join("");
 
+      if (timer <= 0) {
+        setError(
+          "OTP Expired"
+        );
+
+        return;
+      }
+
       if (
         otpCode.length !== 6
       ) {
@@ -139,6 +150,10 @@ const VerifyOTP = () => {
       }
     };
 
+  const formattedTimer = `${Math.floor(timer / 60)
+    .toString()
+    .padStart(2, "0")}:${(timer % 60).toString().padStart(2, "0")}`;
+
   return (
     <SplitScreenLayout>
       {/* Back Button */}
@@ -181,6 +196,11 @@ const VerifyOTP = () => {
               />
             ))}
           </div>
+          {timer === 0 && !error && (
+            <div className="mb-4">
+              <p className="text-red-500 text-sm">OTP Expired</p>
+            </div>
+          )}
           {error && (
             <div className="mb-4">
               <p className="text-red-500 text-sm">
@@ -199,7 +219,7 @@ const VerifyOTP = () => {
             >
               Request a new Code
             </button>
-            {timer > 0 && <span className="text-gray-500"> in 00:{timer.toString().padStart(2, '0')}</span>}
+            {timer > 0 && <span className="text-gray-500"> in {formattedTimer}</span>}
           </p>
 
           <button

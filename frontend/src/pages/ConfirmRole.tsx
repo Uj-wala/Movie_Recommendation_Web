@@ -11,9 +11,9 @@ const ConfirmRole = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const role = searchParams.get('role') || 'Student';
+  const role = searchParams.get('role') || '';
   // Capitalize the role
-  const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+  const displayRole = role ? role.charAt(0).toUpperCase() + role.slice(1) : '';
   
 const getNextRoute = () => {
   return `/verify-account?role=${role.toLowerCase()}`;
@@ -26,6 +26,11 @@ const handleConfirmDetails = async () => {
 
     const selectedRole = role.toLowerCase();
     const userId = localStorage.getItem('user_id');
+
+    if (!selectedRole) {
+      setError('Please select a role to continue.');
+      return;
+    }
 
     if (!userId) {
       setError('User session not found. Please register again.');
@@ -73,7 +78,7 @@ const handleConfirmDetails = async () => {
               Confirm your Role
             </label>
             <div className="bg-[#defaeb] border border-[#a3e9c4] rounded-md px-4 py-3 text-sm font-semibold text-gray-800">
-              {displayRole}
+              {displayRole || 'No role selected'}
             </div>
           </div>
 

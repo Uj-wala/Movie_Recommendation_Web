@@ -3,6 +3,8 @@ import { X, AlertTriangle, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { verifyBlockedAccount } from "../services/authService";
 
+const SECURITY_ANSWER_MAX_LENGTH = 100;
+
 interface AccountBlockedModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,6 +29,12 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
   const [error, setError] =
     useState("");
   const navigate = useNavigate();
+
+  const handleSecurityAnswerChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSecurityAnswer(e.target.value.replace(/\s/g, ""));
+  };
 
   if (!isOpen) return null;
 
@@ -71,6 +79,13 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
               if (!securityAnswer.trim()) {
                 setError(
                   "Please enter your security answer"
+                );
+                return;
+              }
+
+              if (/\s/.test(securityAnswer)) {
+                setError(
+                  "Security answer must not contain spaces"
                 );
                 return;
               }
@@ -158,13 +173,10 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
               <input
                 type="text"
                 value={securityAnswer}
-                onChange={(e) =>
-                  setSecurityAnswer(
-                    e.target.value
-                  )
-                }
+                onChange={handleSecurityAnswerChange}
+                maxLength={SECURITY_ANSWER_MAX_LENGTH}
                 className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="Type your answer here"
+                placeholder="Example: BlueSky"
               />
             </div>
             {error && (

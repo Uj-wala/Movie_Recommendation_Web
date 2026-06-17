@@ -5,6 +5,7 @@ import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import AccountBlockedModal from "../components/AccountBlockedModal";
 import Captcha from "../components/Captcha";
+import SuccessModal from "../components/SuccessModal";
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { loginUser } from "../services/authService";
@@ -15,6 +16,7 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [identifier, setIdentifier] =
     useState("");
 
@@ -29,6 +31,8 @@ const Login = () => {
 
   const [error, setError] =
     useState("");
+  const [isCaptchaValid, setIsCaptchaValid] =
+    useState(false);
   const navigate = useNavigate();
 
   // For demonstration, let's open the modal if email is 'block@test.com'
@@ -47,6 +51,14 @@ const Login = () => {
 
       setError(
         "Email or phone number is required"
+      );
+
+      return;
+    }
+
+    if (!isCaptchaValid) {
+      setError(
+        "Provided wrong captcha details."
       );
 
       return;
@@ -77,9 +89,7 @@ const Login = () => {
         response.refresh_token
       );
 
-      alert("Login successful.");
-
-      navigate("/dashboard");
+      setIsSuccessModalOpen(true);
 
     } catch (error: any) {
 
@@ -268,7 +278,15 @@ const Login = () => {
               </div>
             </div>
 
-            <Captcha />
+            <Captcha
+              onValidationChange={(isValid) => {
+                setIsCaptchaValid(isValid);
+
+                if (isValid) {
+                  setError("");
+                }
+              }}
+            />
 
             <button
               type="submit"
@@ -370,6 +388,15 @@ const Login = () => {
         onClose={() => setIsModalOpen(false)}
         identifier={identifier}
         blockedData={blockedData}
+      />
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Login Successful!!!"
+        message="You have logged in successfully."
+        buttonText="Go to Dashboard"
+        onConfirm={() => navigate("/dashboard")}
       />
     </>
   );

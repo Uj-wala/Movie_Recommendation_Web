@@ -14,6 +14,8 @@ from app.utils.sms_utils import (
 from app.utils.email_utils import send_email_otp
 from app.utils.otp_utils import generate_otp
 
+OTP_EXPIRY_MINUTES = 5
+
 
 class OTPService:
 
@@ -45,7 +47,7 @@ class OTPService:
             otp_code=otp,
             otp_type=OTPType.REGISTRATION,
             channel=OTPChannel.SMS,
-            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            expires_at=datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES),
             is_used=False,
             attempts=0
         )
@@ -70,13 +72,31 @@ class OTPService:
         if not user:
             return False, "User not found"
 
+        now = datetime.utcnow()
+
+        expired_otp_record = db.query(OTPVerification).filter(
+            OTPVerification.user_id == user.id,
+            OTPVerification.otp_code == otp_code,
+            OTPVerification.otp_type == OTPType.REGISTRATION,
+            OTPVerification.channel == OTPChannel.SMS,
+            OTPVerification.is_used == False,
+            OTPVerification.expires_at <= now
+        ).order_by(
+            OTPVerification.created_at.desc()
+        ).first()
+
+        if expired_otp_record:
+            expired_otp_record.is_used = True
+            db.commit()
+            return False, "OTP Expired"
+
         otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.otp_code == otp_code,
             OTPVerification.otp_type == OTPType.REGISTRATION,
             OTPVerification.channel == OTPChannel.SMS,
             OTPVerification.is_used == False,
-            OTPVerification.expires_at > datetime.utcnow()
+            OTPVerification.expires_at > now
         ).order_by(
             OTPVerification.created_at.desc()
         ).first()
@@ -121,7 +141,7 @@ class OTPService:
             otp_code=otp,
             otp_type=OTPType.REGISTRATION,
             channel=OTPChannel.EMAIL,
-            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            expires_at=datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES),
             is_used=False,
             attempts=0
         )
@@ -149,13 +169,31 @@ class OTPService:
         if not user:
             return False, "User not found"
 
+        now = datetime.utcnow()
+
+        expired_otp_record = db.query(OTPVerification).filter(
+            OTPVerification.user_id == user.id,
+            OTPVerification.otp_code == otp_code,
+            OTPVerification.otp_type == OTPType.REGISTRATION,
+            OTPVerification.channel == OTPChannel.EMAIL,
+            OTPVerification.is_used == False,
+            OTPVerification.expires_at <= now
+        ).order_by(
+            OTPVerification.created_at.desc()
+        ).first()
+
+        if expired_otp_record:
+            expired_otp_record.is_used = True
+            db.commit()
+            return False, "OTP Expired"
+
         otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.otp_code == otp_code,
             OTPVerification.otp_type == OTPType.REGISTRATION,
             OTPVerification.channel == OTPChannel.EMAIL,
             OTPVerification.is_used == False,
-            OTPVerification.expires_at > datetime.utcnow()
+            OTPVerification.expires_at > now
         ).order_by(
             OTPVerification.created_at.desc()
         ).first()

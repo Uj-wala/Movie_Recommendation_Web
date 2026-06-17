@@ -6,17 +6,15 @@ def send_email_otp(email: str, otp: str):
     subject = "AI Tutoring App - Email OTP"
     body = f"""
 <h2>Your OTP for verification is: {otp}</h2>
-<p>This OTP will expire in 10 minutes.</p>
+<p>This OTP will expire in 5 minutes.</p>
 """
 
     try:
-        print(f"Email OTP for {email}: {otp}", flush=True)
-
         if settings.RESEND_API_KEY and send_resend_email(email, subject, body):
             return True
 
         if settings.SMTP_PASSWORD or settings.EMAIL_PASSWORD:
-            return send_smtp_email(email, subject, f"Your OTP for verification is: {otp}\n\nThis OTP will expire in 10 minutes.")
+            return send_smtp_email(email, subject, f"Your OTP for verification is: {otp}\n\nThis OTP will expire in 5 minutes.")
 
         print("EMAIL ERROR: No email provider is configured", flush=True)
         return False

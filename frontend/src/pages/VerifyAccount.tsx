@@ -12,16 +12,19 @@ import {
   getApiErrorMessage,
 } from "../services/PhoneRegistrationService";
 
+const OTP_EXPIRY_SECONDS = 300;
+
 const VerifyAccount = () => {
   const navigate = useNavigate();
 
   const phoneNumber = localStorage.getItem("phone_number");
   const email = localStorage.getItem("email");
   const registrationType = localStorage.getItem("registration_type") || "phone";
-  const role = localStorage.getItem("selected_role") || "student";
+  const role = localStorage.getItem("selected_role") || "";
+  const backRoute = role ? `/confirm-role?role=${role}` : "/select-role";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(OTP_EXPIRY_SECONDS);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -122,7 +125,7 @@ const VerifyAccount = () => {
 
       setOtp(["", "", "", "", "", ""]);
       setOtpSent(true);
-      setTimer(30);
+      setTimer(OTP_EXPIRY_SECONDS);
       inputRefs.current[0]?.focus();
     } catch (error: any) {
       setError(getApiErrorMessage(error));
@@ -136,6 +139,12 @@ const VerifyAccount = () => {
       setError("");
 
       const otpCode = otp.join("");
+
+      if (timer <= 0) {
+        setOtpSent(false);
+        setError("OTP Expired");
+        return;
+      }
 
       if (otpCode.length !== 6) {
         setError("Please enter valid 6 digit OTP");
@@ -179,11 +188,15 @@ const VerifyAccount = () => {
     }
   };
 
+  const formattedTimer = `${Math.floor(timer / 60)
+    .toString()
+    .padStart(2, "0")}:${(timer % 60).toString().padStart(2, "0")}`;
+
   return (
     <SplitScreenLayout>
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
         <Link
-          to="/register"
+          to={backRoute}
           className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
         >
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
@@ -250,15 +263,19 @@ const VerifyAccount = () => {
             {timer > 0 && (
               <span className="text-gray-500">
                 {" "}
-                in 00:{timer.toString().padStart(2, "0")}
+                in {formattedTimer}
               </span>
             )}
           </p>
 
-          {otpSent && (
+          {otpSent && timer > 0 && !error && (
             <p className="text-green-600 text-sm mb-4">
-              OTP sent successfully. Check backend terminal.
+              OTP sent successfully.
             </p>
+          )}
+
+          {timer === 0 && !error && (
+            <p className="text-red-500 text-sm mb-4">OTP Expired</p>
           )}
 
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

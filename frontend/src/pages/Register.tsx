@@ -14,6 +14,7 @@ import {
 import type { PhoneRegistrationData } from "../services/PhoneRegistrationService";
 
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
+const SECURITY_ANSWER_MAX_LENGTH = 100;
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +34,12 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleSecurityAnswerChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSecurityAnswer(e.target.value.replace(/\s/g, ""));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,6 +63,11 @@ const Register = () => {
 
     if (password !== confirmPassword) {
       alert("Passwords do not match");
+      return;
+    }
+
+    if (/\s/.test(securityAnswer)) {
+      alert("Security answer must not contain spaces");
       return;
     }
 
@@ -102,15 +114,15 @@ const Register = () => {
 
       localStorage.setItem("registration_type", registrationType);
 
-      alert("Registration successful. Please select your role.");
+      const navigationState = {
+        user_id: userId,
+        phone_number: registrationType === "phone" ? registeredPhone : null,
+        email: registrationType === "email" ? registeredEmail : null,
+        registration_type: registrationType,
+      };
 
       navigate("/select-role", {
-        state: {
-          user_id: userId,
-          phone_number: registrationType === "phone" ? registeredPhone : null,
-          email: registrationType === "email" ? registeredEmail : null,
-          registration_type: registrationType,
-        },
+        state: navigationState,
       });
     } catch (error: any) {
       console.error(error);
@@ -121,14 +133,15 @@ const Register = () => {
   };
 
   return (
-    <SplitScreenLayout>
-      <button
-        type="button"
-        onClick={() => navigate("/")}
-        className="absolute top-6 left-6 sm:top-8 sm:left-8 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:bg-gray-50 transition-colors z-10"
-      >
-        <X className="w-5 h-5 text-gray-700" />
-      </button>
+    <>
+      <SplitScreenLayout>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 sm:top-8 sm:left-8 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:bg-gray-50 transition-colors z-10"
+        >
+          <X className="w-5 h-5 text-gray-700" />
+        </button>
 
       <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
         <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-10 justify-between w-full">
@@ -185,9 +198,6 @@ const Register = () => {
                 onChange={(e) => setFullName(e.target.value)}
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                 placeholder="Enter the full name "
-                onInput={(e) => {
-                  e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
-                }}
               />
             </div>
           </div>
@@ -328,10 +338,11 @@ const Register = () => {
             <input
               type="text"
               required
+              maxLength={SECURITY_ANSWER_MAX_LENGTH}
               value={securityAnswer}
-              onChange={(e) => setSecurityAnswer(e.target.value)}
+              onChange={handleSecurityAnswerChange}
               className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-              placeholder="Enter your answer"
+              placeholder="Example: BlueSky"
             />
           </div>
 
@@ -379,7 +390,9 @@ const Register = () => {
           </div>
         </form>
       </div>
-    </SplitScreenLayout>
+      </SplitScreenLayout>
+
+    </>
   );
 };
 

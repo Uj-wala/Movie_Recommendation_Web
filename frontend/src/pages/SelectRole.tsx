@@ -1,12 +1,26 @@
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 
 const SelectRole = () => {
-  const [selectedRole, setSelectedRole] = useState('Student');
+  const navigate = useNavigate();
+  const [selectedRole, setSelectedRole] = useState('');
+  const [error, setError] = useState('');
   const roles = ['Student', 'Parent', 'Teacher'];
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!selectedRole) {
+      setError('Please select a role to continue.');
+      return;
+    }
+
+    navigate(`/confirm-role?role=${selectedRole.toLowerCase()}`);
+  };
 
   return (
     <SplitScreenLayout>
@@ -29,7 +43,7 @@ const SelectRole = () => {
           Select a Role to continue with your account
         </p>
 
-        <form className="w-full text-left" onSubmit={(e) => e.preventDefault()}>
+        <form className="w-full text-left" onSubmit={handleSubmit}>
           <label className="block text-sm font-bold text-[#1a123f] mb-4">
             Choose Your Role
           </label>
@@ -42,7 +56,10 @@ const SelectRole = () => {
                   name="role"
                   value={role}
                   checked={selectedRole === role}
-                  onChange={(e) => setSelectedRole(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedRole(e.target.value);
+                    setError('');
+                  }}
                   className="w-4 h-4 text-brand-green border-gray-300 focus:ring-brand-green"
                 />
                 <span className="ml-3 text-sm font-semibold text-gray-900">{role}</span>
@@ -50,12 +67,16 @@ const SelectRole = () => {
             ))}
           </div>
 
-          <Link
-            to={`/confirm-role?role=${selectedRole.toLowerCase()}`}
+          {error && (
+            <p className="text-red-500 text-sm mb-4">{error}</p>
+          )}
+
+          <button
+            type="submit"
             className="w-full block text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
           >
             Create Account
-          </Link>
+          </button>
         </form>
       </div>
     </SplitScreenLayout>
