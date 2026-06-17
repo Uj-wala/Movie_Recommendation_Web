@@ -27,7 +27,6 @@ class OTPService:
         user = db.query(User).filter(
             User.phone_number == phone_number
         ).first()
-
         if not user:
             return False, "User not found"
 

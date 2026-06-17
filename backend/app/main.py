@@ -20,6 +20,9 @@ from app.scripts.seed_countries import seed_countries
 from app.scripts.seed_subjects import seed_subjects
 from app.scripts.seed_permissions import seed_permissions
 
+from app.api.student_routes import router as student_router
+from app.api.teacher_routes import router as teacher_router
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -41,6 +44,8 @@ app.include_router(auth_login)
 app.include_router(dropdown_router)
 app.include_router(admin_rbca.router)
 app.include_router(admin_manage_user.router)
+app.include_router(student_router)
+app.include_router(teacher_router)
 
 seed_countries();   
 seed_roles();

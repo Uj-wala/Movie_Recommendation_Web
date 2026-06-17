@@ -27,9 +27,9 @@ class TeacherProfile(Base, BaseModel):
     )
     
     # sprint 2 additions
-    years_of_experience: Mapped[int | None] = mapped_column(
-        Integer,
-        nullable=True
+    years_of_experience: Mapped[str | None] = mapped_column(
+    String(50),
+    nullable=True,
     )
 
     qualification: Mapped[str | None] = mapped_column(
