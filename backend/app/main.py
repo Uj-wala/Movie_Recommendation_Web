@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import Base, engine
-from app.api import auth_routes, auth_login, phone_registration
+from app.api import auth_routes, auth_login, phone_registration,admin_rbca,admin_manage_user
 
 
 from app.models.user_model import User
@@ -19,7 +19,6 @@ from app.scripts.seed_roles import seed_roles
 from app.scripts.seed_countries import seed_countries
 from app.scripts.seed_subjects import seed_subjects
 from app.scripts.seed_permissions import seed_permissions
-
 
 Base.metadata.create_all(bind=engine)
 
@@ -40,6 +39,8 @@ app.include_router(phone_router)
 app.include_router(otp_router)
 app.include_router(auth_login)
 app.include_router(dropdown_router)
+app.include_router(admin_rbca.router)
+app.include_router(admin_manage_user.router)
 
 seed_countries();   
 seed_roles();

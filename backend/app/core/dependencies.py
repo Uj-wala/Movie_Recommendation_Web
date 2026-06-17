@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.jwt_handler import decode_token
 from app.repository.user_repository import get_user_by_id
- 
+from app.services.permission_service import (
+    PermissionService
+)
  
 bearer_scheme = HTTPBearer()
  
@@ -82,15 +84,98 @@ def get_current_user(
  
 
 
-def require_roles(*roles: str):
-    def checker(current_user=Depends(get_current_user)):
-        if current_user.role not in roles:
+def required_role(
+    allowed_roles: list[str]
+):
+
+    def role_checker(
+        current_user=Depends(
+            get_current_user
+        )
+    ):
+
+        user_role = (
+            current_user.role.name
+            .lower()
+        )
+
+        allowed_roles_lower = [
+            role.lower()
+            for role in allowed_roles
+        ]
+
+        if (
+            user_role
+            not in allowed_roles_lower
+        ):
+
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Insufficient permissions"
+                status_code=
+                status.HTTP_403_FORBIDDEN,
+                detail=
+                "Access denied"
             )
- 
+
         return current_user
+
+    return role_checker
  
+
+def has_permission(
+    permission_name: str
+):
+
+    def checker(
+        current_user=Depends(
+            get_current_user
+        ),
+        db=Depends(get_db)
+    ):
+
+        permissions = (
+            PermissionService
+            .get_user_permissions(
+                db,
+                current_user.id
+            )
+        )
+
+        all_permissions = {
+            p["name"]
+            for p in (
+                permissions[
+                    "default_permissions"
+                ]
+                +
+                permissions[
+                    "granted_permissions"
+                ]
+            )
+        }
+
+        revoked = {
+            p["name"]
+            for p in (
+                permissions[
+                    "revoked_permissions"
+                ]
+            )
+        }
+
+        final_permissions = (
+            all_permissions
+            - revoked
+        )
+
+        if permission_name \
+            not in final_permissions:
+
+            raise HTTPException(
+                status_code=403,
+                detail=
+                "Permission denied"
+            )
+
+        return current_user
+
     return checker
- 
