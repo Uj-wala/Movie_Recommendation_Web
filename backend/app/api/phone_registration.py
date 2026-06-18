@@ -15,7 +15,7 @@ from app.schemas.user_schema import (
 
 from app.schemas.teacher_profile_schema import (
     TeacherProfileCreateRequest,
-    TeacherProfileResponse
+    TeacherVerificationResponse
 )
 
 from app.services.phoneregistration_service import (
@@ -83,7 +83,7 @@ def parent_verification(
 
 @router.post(
     "/teacher-verification",
-    response_model=TeacherProfileResponse,
+    response_model=TeacherVerificationResponse,
     status_code=201
 )
 def teacher_verification(
