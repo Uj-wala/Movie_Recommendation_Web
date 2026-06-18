@@ -40,7 +40,6 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
         )
-
     user_id = payload.get("sub")
 
     if not user_id:

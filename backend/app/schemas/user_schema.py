@@ -592,6 +592,7 @@ class ParentVerificationResponse(BaseModel):
     user_id: str
 
     parent_id: str
+
  
  
 # class TeacherVerificationRequest(BaseModel):

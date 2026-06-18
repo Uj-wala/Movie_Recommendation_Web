@@ -19,7 +19,7 @@ from app.scripts.seed_roles import seed_roles
 from app.scripts.seed_countries import seed_countries
 from app.scripts.seed_subjects import seed_subjects
 from app.scripts.seed_permissions import seed_permissions
-
+from app.api.parent_profile_router import router as parent_profile_router
 from app.api.student_routes import router as student_router
 from app.api.teacher_routes import router as teacher_router
 
@@ -46,6 +46,7 @@ app.include_router(admin_rbca.router)
 app.include_router(admin_manage_user.router)
 app.include_router(student_router)
 app.include_router(teacher_router)
+app.include_router(parent_profile_router)
 
 seed_countries();   
 seed_roles();
