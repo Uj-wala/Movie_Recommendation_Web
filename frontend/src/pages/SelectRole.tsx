@@ -1,40 +1,56 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-import { fetchDropdownData } from '../services/ListApiService';
+
+type RoleOption = { id: string; name: string };
+
+const enumRoles: RoleOption[] = [
+  { id: 'student', name: 'student' },
+  { id: 'parent', name: 'parent' },
+  { id: 'teacher', name: 'teacher' },
+];
+
+const roleDisplayOrder: Record<string, number> = {
+  student: 0,
+  parent: 1,
+  teacher: 2,
+};
+
+const getRoleKey = (roleName: string) => roleName.trim().toLowerCase();
+
+const formatRoleName = (roleName: string) => {
+  const normalizedRole = getRoleKey(roleName);
+
+  return normalizedRole
+    ? normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1)
+    : roleName;
+};
+
+const sortRolesByDisplayOrder = (roles: RoleOption[]) =>
+  [...roles].sort((firstRole, secondRole) => {
+    const firstOrder =
+      roleDisplayOrder[getRoleKey(firstRole.name)] ?? Number.MAX_SAFE_INTEGER;
+    const secondOrder =
+      roleDisplayOrder[getRoleKey(secondRole.name)] ?? Number.MAX_SAFE_INTEGER;
+
+    return firstOrder - secondOrder;
+  });
 
 const SelectRole = () => {
-  // const roles = ['Student', 'Parent', 'Teacher'];
-  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
-  const [selectedRole, setSelectedRole] = useState(roles[1] || '');
-
-  const fetchRoles = async () => {
-    try {
-      const data = await fetchDropdownData('/dropdowns/roles');
-      setRoles(data);
-      setSelectedRole(data[1] || '');
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoles();
-  }, []);
+  const location = useLocation();
+  const roles = sortRolesByDisplayOrder(enumRoles);
+  const successMessage =
+    typeof location.state?.successMessage === 'string'
+      ? location.state.successMessage
+      : '';
+  const [selectedRole, setSelectedRole] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   return (
-    <SplitScreenLayout>
-      {/* Back Button */}
-      <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-        <Link to="/register" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-          <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-            <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-          </div>
-          Back
-        </Link>
-      </div>
+    <SplitScreenLayout fitViewport>
 
       <div className="w-full max-w-md flex flex-col items-center">
         {/* Logo */}
@@ -44,6 +60,12 @@ const SelectRole = () => {
         <p className="text-gray-500 mb-8 text-xs sm:text-sm self-start text-left w-full">
           Select a Role to continue with your account
         </p>
+
+        {successMessage && (
+          <div className="w-full mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3">
+            <p className="text-sm font-medium text-green-700">{successMessage}</p>
+          </div>
+        )}
 
         <form className="w-full text-left" onSubmit={(e) => e.preventDefault()}>
           <label className="block text-sm font-bold text-[#1a123f] mb-4">
@@ -57,17 +79,31 @@ const SelectRole = () => {
                   type="radio"
                   name="role"
                   value={role.id}
-                  checked={selectedRole.id === role.id}
-                  onChange={(e) => setSelectedRole(roles.find(r => r.id === e.target.value) || roles[1])}
+                  checked={selectedRole?.id === role.id}
+                  onChange={(e) => {
+                    const nextRole = roles.find(r => r.id === e.target.value) || null;
+                    setSelectedRole(nextRole);
+
+                    if (nextRole) {
+                      localStorage.setItem('selected_role_id', nextRole.id);
+                      localStorage.setItem('selected_role', nextRole.name.toLowerCase());
+                    }
+                  }}
                   className="w-4 h-4 text-brand-green border-gray-300 focus:ring-brand-green"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-900">{role.name}</span>
+                <span className="ml-3 text-sm font-semibold text-gray-900">{formatRoleName(role.name)}</span>
               </label>
             ))}
           </div>
 
           <Link
-            to={`/confirm-role?role=${selectedRole?.name?.toLowerCase()}&role_id=${selectedRole?.id}`}
+            to={selectedRole ? `/confirm-role?role=${selectedRole.name.toLowerCase()}&role_id=${selectedRole.id}` : "#"}
+            onClick={() => {
+              if (selectedRole) {
+                localStorage.setItem('selected_role_id', selectedRole.id);
+                localStorage.setItem('selected_role', selectedRole.name.toLowerCase());
+              }
+            }}
             className="w-full block text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
           >
             Create Account

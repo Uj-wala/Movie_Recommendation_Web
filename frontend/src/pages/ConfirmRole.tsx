@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
@@ -11,10 +11,19 @@ const ConfirmRole = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const role = searchParams.get('role') || 'Student';
-  const roleId = searchParams.get('role_id');
+  const storedRole = localStorage.getItem('selected_role');
+  const storedRoleId = localStorage.getItem('selected_role_id');
+  const role = searchParams.get('role') || storedRole || 'Student';
+  const roleId = searchParams.get('role_id') || storedRoleId;
   // Capitalize the role
   const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
+
+  useEffect(() => {
+    if (roleId) {
+      localStorage.setItem('selected_role_id', roleId);
+      localStorage.setItem('selected_role', role.toLowerCase());
+    }
+  }, [role, roleId]);
 
   const getNextRoute = () => {
     return `/verify-account?role=${role.toLowerCase()}&role_id=${roleId}`;
@@ -40,10 +49,11 @@ const ConfirmRole = () => {
 
       await confirmRole({
         user_id: userId,
-        role_id: roleId,
+        role: selectedRole,
       });
 
       localStorage.setItem('selected_role', selectedRole);
+      localStorage.setItem('selected_role_id', roleId);
       navigate(getNextRoute());
     } catch (error: any) {
       setError(getApiErrorMessage(error));
@@ -53,10 +63,19 @@ const ConfirmRole = () => {
   };
 
   return (
-    <SplitScreenLayout>
+    <SplitScreenLayout fitViewport>
       {/* Back Button */}
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-        <Link to="/select-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
+        <Link
+          to="/select-role"
+          onClick={() => {
+            if (roleId) {
+              localStorage.setItem('selected_role_id', roleId);
+              localStorage.setItem('selected_role', role.toLowerCase());
+            }
+          }}
+          className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
+        >
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
             <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
           </div>
@@ -97,6 +116,12 @@ const ConfirmRole = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               to="/select-role"
+              onClick={() => {
+                if (roleId) {
+                  localStorage.setItem('selected_role_id', roleId);
+                  localStorage.setItem('selected_role', role.toLowerCase());
+                }
+              }}
               className="flex-1 text-center bg-white border border-brand-green text-brand-green hover:bg-green-50 font-bold py-3 px-4 rounded-md transition-colors"
             >
               Change Role

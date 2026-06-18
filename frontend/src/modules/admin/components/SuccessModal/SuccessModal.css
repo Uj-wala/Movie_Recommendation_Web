@@ -1,0 +1,434 @@
+/* Overlay */
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.3s ease-out;
+  /* Ensure it's always centered */
+  min-height: 100vh;
+  min-height: 100dvh; /* For mobile browsers */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Container */
+.figma-modal-container {
+  background: white;
+  border-radius: 20px;
+  padding: clamp(24px, 4vw, 40px);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.4s ease-out;
+  position: relative;
+  /* Ensure it stays centered */
+  margin: auto;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.figma-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: clamp(20px, 3vw, 32px);
+}
+
+.figma-text-group {
+  flex: 1;
+  padding-right: 16px;
+}
+
+.figma-title {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.figma-subtitle {
+  font-size: clamp(13px, 1.8vw, 15px);
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Close Button */
+.figma-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.figma-close-btn:hover {
+  background-color: #f0f0f0;
+  transform: rotate(90deg);
+}
+
+.figma-close-btn:active {
+  background-color: #e0e0e0;
+  transform: rotate(90deg) scale(0.95);
+}
+
+.figma-close-icon {
+  font-size: 18px;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.figma-close-btn:hover .figma-close-icon {
+  color: #333;
+}
+
+/* Illustration Container */
+.figma-illustration-group {
+  margin: clamp(24px, 4vw, 40px) 0;
+}
+
+.illustration-container {
+  position: relative;
+  width: 100%;
+  min-height: clamp(180px, 30vw, 250px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Single Thumbs Up */
+.thumbsup-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.thumbsup-icon {
+  font-size: clamp(48px, 8vw, 72px);
+  color: #238B45;
+  filter: drop-shadow(0 4px 12px rgba(35, 139, 69, 0.4));
+}
+
+/* Thumbs Up Animation */
+.animate-thumbsup {
+  animation: thumbsUpBounce 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s both;
+}
+
+@keyframes thumbsUpBounce {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(0.9) rotate(-2deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* SVG Illustration */
+.illustration-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* SVG Path Animations */
+.svg-path {
+  transform-origin: center;
+  opacity: 0;
+}
+
+/* Path 1 - Main Paper - Zoom and Bounce */
+.path-1 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.1s forwards;
+  transform-origin: 140px 140px;
+}
+
+/* Path 2 - Left Vertical Paper - Slide from Left */
+.path-2 {
+  animation: pathSlideLeft 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.2s forwards;
+  transform-origin: 100px 150px;
+}
+
+/* Path 3 - Top Left - Zoom */
+.path-3 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.15s forwards;
+  transform-origin: 30px 35px;
+}
+
+/* Path 4 - Top Right - Zoom */
+.path-4 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.25s forwards;
+  transform-origin: 255px 75px;
+}
+
+/* Path 5 - Bottom Center - Zoom */
+.path-5 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s forwards;
+  transform-origin: 150px 45px;
+}
+
+/* Path 6 - Bottom Left - Zoom */
+.path-6 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.35s forwards;
+  transform-origin: 110px 70px;
+}
+
+/* Path 7 - Orange Element - Rotate and Zoom */
+.path-7 {
+  animation: pathRotateZoom 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.4s forwards;
+  transform-origin: 75px 30px;
+}
+
+/* Path 8 - Purple Element - Rotate and Zoom */
+.path-8 {
+  animation: pathRotateZoom 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.45s forwards;
+  transform-origin: 60px 90px;
+}
+
+/* Path 9 - Small Orange - Zoom */
+.path-9 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s forwards;
+  transform-origin: 80px 55px;
+}
+
+/* Path 10 - Small Purple - Zoom */
+.path-10 {
+  animation: pathZoomBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.55s forwards;
+  transform-origin: 220px 60px;
+}
+
+/* Path 11 - Decorative Dots - Fade In */
+.path-11 {
+  animation: pathFadeIn 0.8s ease-out 0.6s forwards;
+}
+
+/* Path 12 - Additional Elements - Fade In */
+.path-12 {
+  animation: pathFadeIn 0.8s ease-out 0.65s forwards;
+}
+
+/* Path 13 - More Elements - Fade In */
+.path-13 {
+  animation: pathFadeIn 0.8s ease-out 0.7s forwards;
+}
+
+/* Path 14 - Final Element - Fade In */
+.path-14 {
+  animation: pathFadeIn 0.8s ease-out 0.75s forwards;
+}
+
+/* Zoom and Bounce Animation */
+@keyframes pathZoomBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Rotate and Zoom Animation */
+@keyframes pathRotateZoom {
+  0% {
+    transform: scale(0) rotate(-30deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1.15) rotate(5deg);
+  }
+  80% {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Slide from Left Animation */
+@keyframes pathSlideLeft {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(5px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Fade In Animation */
+@keyframes pathFadeIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Bottom Actions */
+.figma-bottom-actions {
+  margin-top: clamp(16px, 2vw, 24px);
+}
+
+.figma-btn {
+  background: #238B45;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: clamp(12px, 2vw, 16px) clamp(20px, 3vw, 32px);
+  font-size: clamp(14px, 1.8vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.figma-btn:hover {
+  background: #1a6b35;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(35, 139, 69, 0.3);
+}
+
+.figma-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(35, 139, 69, 0.2);
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .figma-modal-container {
+    margin: 16px;
+    border-radius: 16px;
+    /* Ensure vertical centering on tablets */
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .illustration-svg {
+    max-width: 260px;
+  }
+}
+
+@media (max-width: 480px) {
+  .success-modal-overlay {
+    padding: 16px;
+    align-items: center !important; /* Force center on mobile */
+  }
+  
+  .figma-modal-container {
+    border-radius: 16px;
+    margin: 0 auto !important; /* Force center on mobile */
+    /* Prevent bottom sheet behavior */
+    position: relative;
+    top: auto;
+    bottom: auto;
+    transform: none;
+  }
+  
+  .illustration-container {
+    min-height: 160px;
+  }
+  
+  .illustration-svg {
+    max-width: 230px;
+  }
+  
+  .figma-close-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .figma-close-icon {
+    font-size: 16px;
+  }
+}
+
+/* Handle very small screens */
+@media (max-height: 600px) {
+  .figma-modal-container {
+    max-height: 95vh;
+    overflow-y: auto;
+    padding: 16px;
+  }
+  
+  .figma-illustration-group {
+    margin: 12px 0;
+  }
+  
+  .illustration-container {
+    min-height: 140px;
+  }
+}

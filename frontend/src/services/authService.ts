@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/env";
 
+export type SocialAuthProvider = "microsoft" | "google" | "apple";
 
 const API = axios.create({
   baseURL: API_BASE_URL,
@@ -32,6 +33,15 @@ export const loginUser = async (
   );
 
   return response.data;
+};
+
+export const getSocialAuthUrl = (provider: SocialAuthProvider) => {
+  const callbackUrl = `${window.location.origin}/auth/social/callback`;
+  const authUrl = new URL(`/auth/social/${provider}`, API_BASE_URL);
+
+  authUrl.searchParams.set("redirect_uri", callbackUrl);
+
+  return authUrl.toString();
 };
 
 export const forgotPassword = async (

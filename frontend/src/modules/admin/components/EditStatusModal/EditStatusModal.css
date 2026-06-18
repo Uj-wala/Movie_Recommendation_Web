@@ -1,0 +1,152 @@
+.status-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.5); /* #0F172A with 50% opacity */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.status-modal-content {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 780px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+  box-shadow: 0px 4px 24px rgba(0, 0, 0, 0.05);
+}
+
+.status-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-modal-title {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 24px;
+  color: #0F172A;
+}
+
+.status-modal-close {
+  cursor: pointer;
+  color: #0F172A;
+}
+
+.status-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-input-label {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 14px;
+  color: #0F172A;
+}
+
+.status-text-input {
+  background: #F8F8F8;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 16px;
+  font-family: 'Poppins';
+  font-size: 14px;
+  color: #8C94A3;
+  outline: none;
+  width: 50%;
+}
+
+.status-dropdown {
+  width: 240px;
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 1px solid #D9D9D9;
+  border-radius: 8px;
+  font-family: 'Poppins';
+  font-size: 14px;
+  color: #0F172A;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%230F172A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+.status-radio-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+}
+
+.status-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.status-radio-input {
+  width: 18px;
+  height: 18px;
+  accent-color: #238B45;
+  cursor: pointer;
+}
+
+.status-radio-label {
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.status-radio-label.active-text {
+  color: #238B45;
+}
+
+.status-radio-label.deactive-text {
+  color: #0F172A;
+}
+
+.status-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.status-btn-cancel {
+  padding: 12px 32px;
+  border: 1px solid #238B45;
+  border-radius: 8px;
+  background: transparent;
+  color: #238B45;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.status-btn-save {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 8px;
+  background: #238B45;
+  color: #FFFFFF;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}

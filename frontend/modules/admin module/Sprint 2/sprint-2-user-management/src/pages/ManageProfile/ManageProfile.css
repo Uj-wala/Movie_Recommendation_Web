@@ -1,0 +1,275 @@
+.manage-profile-page {
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-radius: 20px;
+  font-family: 'Poppins';
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-header {
+  margin-bottom: 32px;
+}
+
+.profile-title {
+  font-weight: 700;
+  font-size: 24px;
+  color: #0F172A;
+  margin: 0 0 8px 0;
+}
+
+.profile-subtitle {
+  font-weight: 400;
+  font-size: 14px;
+  color: #8B8B8B;
+}
+
+.profile-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.upload-box {
+  width: 110px;
+  height: 110px;
+  border: 1.5px dashed #8B8B8B;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  background: #F8F8F8;
+  cursor: pointer;
+}
+
+.upload-box span {
+  font-size: 10px;
+  font-weight: 500;
+  color: #4B4B4B;
+  line-height: 1.4;
+}
+
+.upload-text-info h3 {
+  font-weight: 600;
+  font-size: 16px;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+
+.upload-text-info p {
+  font-weight: 400;
+  font-size: 12px;
+  color: #8B8B8B;
+  margin: 0;
+}
+
+.form-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: #0F172A;
+  margin: 0 0 20px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0F172A;
+}
+
+.profile-input {
+  background: #F8F8F8;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 14px;
+  color: #4B4B4B;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.profile-input:focus {
+  background: #FFFFFF;
+  border-color: #238B45;
+}
+
+.profile-input::-webkit-input-placeholder {
+  font-family: 'Poppins' !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #8C94A3 !important;
+  opacity: 1 !important;
+  letter-spacing: normal !important;
+}
+
+.profile-input::-moz-placeholder {
+  font-family: 'Poppins' !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #8C94A3 !important;
+  opacity: 1 !important;
+  letter-spacing: normal !important;
+}
+
+.profile-input:-ms-input-placeholder {
+  font-family: 'Poppins' !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #8C94A3 !important;
+  opacity: 1 !important;
+  letter-spacing: normal !important;
+}
+
+.profile-input::placeholder {
+  font-family: 'Poppins' !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #8C94A3 !important;
+  opacity: 1 !important;
+  letter-spacing: normal !important;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 16px;
+}
+
+.icon-padded-left {
+  padding-left: 44px;
+}
+
+.input-icon-right {
+  position: absolute;
+  right: 16px;
+  cursor: pointer;
+}
+
+.icon-padded-right {
+  padding-right: 44px;
+  letter-spacing: 2px;
+}
+
+.input-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.link-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #238B45;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: 0.2s;
+}
+
+.link-text:hover {
+  text-decoration-color: #238B45;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.custom-select {
+  width: 100%;
+  appearance: none;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 14px;
+  color: #0F172A;
+  outline: none;
+  cursor: pointer;
+}
+
+.select-icon {
+  position: absolute;
+  right: 16px;
+  pointer-events: none;
+}
+
+.add-child-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #238B45;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-family: 'Poppins';
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 24px;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  background: #FFFFFF;
+  border: 1px solid #238B45;
+  color: #238B45;
+  border-radius: 6px;
+  padding: 12px 32px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.save-btn {
+  background: #238B45;
+  border: none;
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
