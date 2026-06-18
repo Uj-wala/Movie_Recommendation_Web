@@ -13,21 +13,6 @@ class ParentChild(Base, BaseModel):
         nullable=False
     )
 
-    child_name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
-
-    grade: Mapped[str | None] = mapped_column(
-        String(50),
-        nullable=True
-    )
-
-    school_name: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True
-    )
-
     student_reference_id: Mapped[str | None] = mapped_column(
         String(100),
         nullable=True

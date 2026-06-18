@@ -220,10 +220,7 @@ def add_child(
  
     child = ParentChild(
         parent_profile_id=parent_profile.id,
-        student_reference_id=student_user.id,
-        child_name=student_user.full_name,
-        grade=student_profile.grade,
-        school_name=student_profile.school_name
+        student_reference_id=student_user.id
     )
  
     db.add(child)
@@ -261,7 +258,7 @@ def remove_child(
     child = (
         db.query(ParentChild)
         .filter(
-            ParentChild.id == child_id,
+            ParentChild.student_reference_id == child_id,
             ParentChild.parent_profile_id
             == parent_profile.id
         )

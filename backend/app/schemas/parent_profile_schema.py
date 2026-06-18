@@ -117,6 +117,8 @@ class ParentProfileResponse(BaseModel):
     parent_profile_id: str
 
     relationship_type: str | None
+    
+    profile_image_url: str | None
 
     children: list[ChildResponse]
 
