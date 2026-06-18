@@ -1,8 +1,8 @@
-"""ReInitialize database.
+"""Initializing database
 
-Revision ID: 9f1883e7ad4c
+Revision ID: 7d14e3c0328b
 Revises: 
-Create Date: 2026-06-01 15:45:57.124327
+Create Date: 2026-06-18 15:45:57.200110
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9f1883e7ad4c'
+revision: str = '7d14e3c0328b'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -45,6 +45,8 @@ def upgrade() -> None:
     sa.Column('security_answer_hash', sa.String(length=255), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_blocked', sa.Boolean(), nullable=False),
+    sa.Column('agree_to_terms', sa.Boolean(), nullable=False),
     sa.Column('profile_completed', sa.Boolean(), nullable=False),
     sa.Column('failed_login_attempts', sa.Integer(), nullable=False),
     sa.Column('blocked_until', sa.DateTime(timezone=True), nullable=True),
@@ -63,6 +65,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('otp_code', sa.String(length=6), nullable=False),
     sa.Column('otp_type', sa.Enum('REGISTRATION', 'PASSWORD_RESET', name='otptype'), nullable=False),
+    sa.Column('channel', sa.Enum('EMAIL', 'SMS', name='otpchannel'), nullable=False),
     sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('is_used', sa.Boolean(), nullable=False),
     sa.Column('attempts', sa.Integer(), nullable=False),
@@ -77,9 +80,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_otp_verifications_user_id'), 'otp_verifications', ['user_id'], unique=False)
     op.create_table('parent_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
-    sa.Column('child_name', sa.String(length=255), nullable=False),
-    sa.Column('child_grade', sa.String(length=50), nullable=False),
-    sa.Column('student_reference_id', sa.String(length=255), nullable=True),
+    sa.Column('relationship_type', sa.String(length=50), nullable=True),
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -87,6 +88,22 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_parent_profiles')),
     sa.UniqueConstraint('user_id', name=op.f('uq_parent_profiles_user_id'))
     )
+    op.create_table('refresh_tokens',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.String(length=36), nullable=False),
+    sa.Column('token_hash', sa.String(length=64), nullable=False),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('revoked', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('revoked_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_refresh_tokens_user_id'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_refresh_tokens'))
+    )
+    op.create_index(op.f('ix_refresh_tokens_expires_at'), 'refresh_tokens', ['expires_at'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_id'), 'refresh_tokens', ['id'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_revoked'), 'refresh_tokens', ['revoked'], unique=False)
+    op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=True)
+    op.create_index(op.f('ix_refresh_tokens_user_id'), 'refresh_tokens', ['user_id'], unique=False)
     op.create_table('student_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('grade', sa.String(length=50), nullable=False),
@@ -102,7 +119,6 @@ def upgrade() -> None:
     op.create_table('teacher_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('school_name', sa.String(length=255), nullable=False),
-    sa.Column('subject', sa.String(length=255), nullable=False),
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -135,6 +151,12 @@ def downgrade() -> None:
     op.drop_table('user_sessions')
     op.drop_table('teacher_profiles')
     op.drop_table('student_profiles')
+    op.drop_index(op.f('ix_refresh_tokens_user_id'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_revoked'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_id'), table_name='refresh_tokens')
+    op.drop_index(op.f('ix_refresh_tokens_expires_at'), table_name='refresh_tokens')
+    op.drop_table('refresh_tokens')
     op.drop_table('parent_profiles')
     op.drop_index(op.f('ix_otp_verifications_user_id'), table_name='otp_verifications')
     op.drop_index(op.f('ix_otp_verifications_otp_code'), table_name='otp_verifications')

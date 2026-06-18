@@ -540,9 +540,7 @@ class ParentVerificationRequest(BaseModel):
  
     user_id: str
  
-    child_name: str
- 
-    child_grade: str
+   
  
     student_reference_id: Optional[str] = None
  
@@ -554,45 +552,7 @@ class ParentVerificationRequest(BaseModel):
             raise ValueError("Invalid user ID format")
         return value
  
-    @field_validator("child_name")
-    @classmethod
-    def validate_child_name(cls, value):
-        value = value.strip()
-        if len(value) < 3:
-            raise ValueError("Child name must be at least 3 characters")
-        if len(value) > 100:
-            raise ValueError("Child name must not exceed 100 characters")
-        pattern = re.compile(r"^[a-zA-Z\s]+$")
-        if not pattern.match(value):
-            raise ValueError("Child name can only contain letters and spaces")
-        return value
- 
-    @field_validator("child_grade")
-    @classmethod
-    def validate_child_grade(cls, value):
-        allowed = [
-       
-            "Grade 1",
-            "Grade 2",
-            "Grade 3",
-            "Grade 4",
-            "Grade 5",
-            "Grade 6",
-            "Grade 7",
-            "Grade 8",
-            "Grade 9",
-            "Grade 10",
-            "1st year university",
-            "2nd year university",
-            "3rd year university",
-            "4th year university",
-            "Graduate studies",
-            "Adult learner",
-            "Other",
-        ]
-        if value not in allowed:
-            raise ValueError("Invalid grade selected")
-        return value
+   
  
     @field_validator("student_reference_id")
     @classmethod
@@ -614,51 +574,5 @@ class ParentVerificationResponse(BaseModel):
     parent_id: str
  
  
-class TeacherVerificationRequest(BaseModel):
- 
-    user_id: str
- 
-    school_name: str
- 
-    subject: str
- 
-    @field_validator("user_id")
-    @classmethod
-    def validate_user_id(cls, value):
-        value = value.strip()
-        if not UUID_REGEX.match(value.lower()):
-            raise ValueError("Invalid user ID format")
-        return value
- 
-    @field_validator("school_name")
-    @classmethod
-    def validate_school_name(cls, value):
-        value = value.strip()
-        if len(value) < 3:
-            raise ValueError("School name must be at least 3 characters")
-        if len(value) > 255:
-            raise ValueError("School name must not exceed 255 characters")
-        return value
- 
-    @field_validator("subject")
-    @classmethod
-    def validate_subject(cls, value):
-        value = value.strip()
-        if len(value) < 2:
-            raise ValueError("Subject must be at least 2 characters")
-        if len(value) > 100:
-            raise ValueError("Subject must not exceed 100 characters")
-        pattern = re.compile(r"^[a-zA-Z\s]+$")
-        if not pattern.match(value):
-            raise ValueError("Subject can only contain letters and spaces")
-        return value
- 
- 
-class TeacherVerificationResponse(BaseModel):
- 
-    message: str
- 
-    user_id: str
 
-    teacher_id: str
  

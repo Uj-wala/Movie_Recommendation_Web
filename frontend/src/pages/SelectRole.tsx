@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-import { fetchDropdownData } from '../services/ListApiService';
 
 type RoleOption = { id: string; name: string };
+
+const enumRoles: RoleOption[] = [
+  { id: 'student', name: 'student' },
+  { id: 'parent', name: 'parent' },
+  { id: 'teacher', name: 'teacher' },
+];
 
 const roleDisplayOrder: Record<string, number> = {
   student: 0,
@@ -33,27 +38,16 @@ const sortRolesByDisplayOrder = (roles: RoleOption[]) =>
   });
 
 const SelectRole = () => {
-  // const roles = ['Student', 'Parent', 'Teacher'];
-  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const location = useLocation();
+  const roles = sortRolesByDisplayOrder(enumRoles);
+  const successMessage =
+    typeof location.state?.successMessage === 'string'
+      ? location.state.successMessage
+      : '';
   const [selectedRole, setSelectedRole] = useState<{
     id: string;
     name: string;
   } | null>(null);
-
-  const fetchRoles = async () => {
-    try {
-      const data = await fetchDropdownData('/dropdowns/roles');
-      const orderedRoles = sortRolesByDisplayOrder(data);
-      setRoles(orderedRoles);
-      setSelectedRole(null);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchRoles();
-  }, []);
 
   return (
     <SplitScreenLayout fitViewport>
@@ -66,6 +60,12 @@ const SelectRole = () => {
         <p className="text-gray-500 mb-8 text-xs sm:text-sm self-start text-left w-full">
           Select a Role to continue with your account
         </p>
+
+        {successMessage && (
+          <div className="w-full mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3">
+            <p className="text-sm font-medium text-green-700">{successMessage}</p>
+          </div>
+        )}
 
         <form className="w-full text-left" onSubmit={(e) => e.preventDefault()}>
           <label className="block text-sm font-bold text-[#1a123f] mb-4">

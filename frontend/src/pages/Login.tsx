@@ -154,7 +154,6 @@ const Login = () => {
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user_role", "admin");
       localStorage.setItem("userEmail", ADMIN_EMAIL);
-      alert("Login successful.");
       navigate("/admin/dashboard");
       return;
     }
@@ -183,8 +182,6 @@ const Login = () => {
         "refresh_token",
         response.refresh_token
       );
-
-      alert("Login successful.");
 
       navigate("/dashboard");
 

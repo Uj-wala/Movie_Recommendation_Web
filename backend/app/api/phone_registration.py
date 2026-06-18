@@ -10,10 +10,14 @@ from app.schemas.user_schema import (
     StudentDetailsRequest,
     StudentDetailsResponse,
     ParentVerificationRequest,
-    ParentVerificationResponse,
-    TeacherVerificationRequest,
-    TeacherVerificationResponse
+    ParentVerificationResponse
+    
 )
+
+from app.schemas.teacher_profile_schema import (
+    TeacherProfileCreateRequest,
+    TeacherVerificationResponse
+)   
 from app.services.phoneregistration_service import (
     register_by_phone,
     confirm_role,
@@ -79,11 +83,11 @@ def parent_verification(
 
 @router.post(
     "/teacher-verification",
-    response_model=TeacherVerificationResponse,
+    response_model= TeacherVerificationResponse,
     status_code=201
 )
 def teacher_verification(
-    data: TeacherVerificationRequest,
+    data: TeacherProfileCreateRequest,
     db: Session = Depends(get_db)
 ):
     return save_teacher_verification(data, db)

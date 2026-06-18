@@ -8,3 +8,5 @@ from app.models.student_profile_model import StudentProfile
 from app.models.teacher_profile_model import TeacherProfile
 from app.models.parent_profile_model import ParentProfile
 from app.models.country_model import Country
+from app.models.subject_model import Subject
+from app.models.teacher_subject_model import TeacherSubject
