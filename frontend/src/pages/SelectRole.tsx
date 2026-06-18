@@ -1,26 +1,42 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import { fetchDropdownData } from '../services/ListApiService';
 
 const SelectRole = () => {
-  const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState('');
-  const [error, setError] = useState('');
-  const roles = ['Student', 'Parent', 'Teacher'];
+  // const roles = ['Student', 'Parent', 'Teacher'];
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [selectedRole, setSelectedRole] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const fetchRoles = async () => {
+    try {
+      const data = await fetchDropdownData('/dropdowns/roles');
+      const storedRoleId = localStorage.getItem('selected_role_id');
+      const storedRoleName = localStorage.getItem('selected_role')?.trim().toLowerCase();
+      const restoredRole =
+        data.find((role: { id: string; name: string }) => role.id === storedRoleId) ||
+        data.find(
+          (role: { id: string; name: string }) =>
+            role.name.trim().toLowerCase() === storedRoleName
+        ) ||
+        data[1] ||
+        null;
 
-    if (!selectedRole) {
-      setError('Please select a role to continue.');
-      return;
+      setRoles(data);
+      setSelectedRole(restoredRole);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
     }
-
-    navigate(`/confirm-role?role=${selectedRole.toLowerCase()}`);
   };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   return (
     <SplitScreenLayout>
@@ -43,40 +59,47 @@ const SelectRole = () => {
           Select a Role to continue with your account
         </p>
 
-        <form className="w-full text-left" onSubmit={handleSubmit}>
+        <form className="w-full text-left" onSubmit={(e) => e.preventDefault()}>
           <label className="block text-sm font-bold text-[#1a123f] mb-4">
             Choose Your Role
           </label>
-          
+
           <div className="flex flex-col gap-4 mb-8">
             {roles.map(role => (
-              <label key={role} className="flex items-center cursor-pointer">
+              <label key={role.id} className="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="role"
-                  value={role}
-                  checked={selectedRole === role}
+                  value={role.id}
+                  checked={selectedRole?.id === role.id}
                   onChange={(e) => {
-                    setSelectedRole(e.target.value);
-                    setError('');
+                    const nextRole = roles.find(r => r.id === e.target.value) || roles[1] || null;
+                    setSelectedRole(nextRole);
+
+                    if (nextRole) {
+                      localStorage.setItem('selected_role_id', nextRole.id);
+                      localStorage.setItem('selected_role', nextRole.name.toLowerCase());
+                    }
                   }}
                   className="w-4 h-4 text-brand-green border-gray-300 focus:ring-brand-green"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-900">{role}</span>
+                <span className="ml-3 text-sm font-semibold text-gray-900">{role.name}</span>
               </label>
             ))}
           </div>
 
-          {error && (
-            <p className="text-red-500 text-sm mb-4">{error}</p>
-          )}
-
-          <button
-            type="submit"
+          <Link
+            to={`/confirm-role?role=${selectedRole?.name?.toLowerCase()}&role_id=${selectedRole?.id}`}
+            onClick={() => {
+              if (selectedRole) {
+                localStorage.setItem('selected_role_id', selectedRole.id);
+                localStorage.setItem('selected_role', selectedRole.name.toLowerCase());
+              }
+            }}
             className="w-full block text-center bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors"
           >
             Create Account
-          </button>
+          </Link>
         </form>
       </div>
     </SplitScreenLayout>

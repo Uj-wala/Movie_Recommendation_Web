@@ -9,8 +9,6 @@ import SuccessModal from '../components/SuccessModal';
 import { saveParentVerification } from "../services/PhoneRegistrationService";
  
 const ParentVerification = () => {
-  const [childName,          setChildName]          = useState('');
-  const [childGrade,         setChildGrade]         = useState('');
   const [studentReferenceId, setStudentReferenceId] = useState('');
   const [loading,            setLoading]            = useState(false);
   const [error,              setError]              = useState('');
@@ -32,8 +30,6 @@ const ParentVerification = () => {
    
       const response = await saveParentVerification({
       user_id: userId,
-      child_name: childName,
-      child_grade: childGrade,
       student_reference_id: studentReferenceId,
     });
     
@@ -89,39 +85,6 @@ const ParentVerification = () => {
  
             <form className="w-full" onSubmit={handleSubmit}>
  
-              {/* Child Name */}
-              <div className="mb-6">
-                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                  Enter Child Name:
-                </label>
-                <input
-                  type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="Enter child name"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  onInput={(e) => {
-                    e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
-                  }}
-                  required
-                />
-              </div>
- 
-              {/* Child Grade */}
-              <div className="mb-6">
-                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                  Child Grade
-                </label>
-                <input
-                  type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="Plus 2"
-                  value={childGrade}
-                  onChange={(e) => setChildGrade(e.target.value)}
-                  required
-                />
-              </div>
- 
               {/* Student ID */}
               <div className="mb-8">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
@@ -130,7 +93,7 @@ const ParentVerification = () => {
                 <input
                   type="text"
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="AI245836AP"
+                  placeholder="Enter Student ID"
                   value={studentReferenceId}
                   onChange={(e) => setStudentReferenceId(e.target.value)}
                   required

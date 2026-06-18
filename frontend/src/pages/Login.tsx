@@ -1,22 +1,78 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Mail, Lock, EyeOff, Eye, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import AccountBlockedModal from "../components/AccountBlockedModal";
 import Captcha from "../components/Captcha";
-import SuccessModal from "../components/SuccessModal";
+import type { CaptchaHandle } from "../components/Captcha";
+import LegalModal from "../components/LegalModal";
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { loginUser } from "../services/authService";
+import { getSocialAuthUrl, loginUser } from "../services/authService";
+import type { SocialAuthProvider } from "../services/authService";
+import {
+  EMAIL_FORMAT_ERROR,
+  PASSWORD_LENGTH_ERROR,
+  isValidEmailFormat,
+  isValidPasswordLength,
+} from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
+const TERMS_OF_USE_CONTENT = [
+  "By using Alcademy, you agree to use the platform responsibly and only for lawful educational purposes. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.",
+  "You agree not to misuse the service, attempt unauthorized access, interfere with platform security, upload harmful content, or use the platform in a way that disrupts learning experiences for other users.",
+  "Alcademy may update, suspend, or discontinue parts of the service when needed to maintain quality, security, or compliance. Continued use of the platform after updates means you accept the updated terms.",
+  "Educational content and platform materials are provided to support learning. They should not be copied, redistributed, sold, or used outside the platform unless permission is granted.",
+  "If you violate these terms, Alcademy may restrict or terminate access to protect users, data, and the integrity of the service.",
+];
+const PRIVACY_POLICY_CONTENT = [
+  "Alcademy collects the information required to create, manage, and secure your account, such as your email address or phone number, password, and profile details provided during registration.",
+  "We use this information to provide access to learning features, verify accounts, personalize the experience, communicate important updates, and improve platform reliability and security.",
+  "We do not sell your personal information. Information may be shared only with trusted service providers or when required to comply with legal obligations, protect users, or operate the platform safely.",
+  "Reasonable technical and organizational measures are used to protect user information. You should also keep your password secure and avoid sharing account access with others.",
+  "You may request support for account or privacy-related questions through the appropriate Alcademy support channel.",
+];
+const getLoginErrorMessage = (detail: any) => {
+  if (Array.isArray(detail)) {
+    return detail[0]?.msg || "Validation failed";
+  }
+
+  if (typeof detail !== "string") {
+    return "Login failed";
+  }
+
+  const normalizedDetail = detail.toLowerCase();
+
+  if (
+    normalizedDetail.includes("user not found") ||
+    normalizedDetail.includes("not found") ||
+    normalizedDetail.includes("does not exist") ||
+    normalizedDetail.includes("not registered")
+  ) {
+    return "Please sign in";
+  }
+
+  if (
+    normalizedDetail.includes("invalid credentials") ||
+    normalizedDetail.includes("incorrect password") ||
+    normalizedDetail.includes("wrong password") ||
+    normalizedDetail.includes("invalid password")
+  ) {
+    return "Incorrect password";
+  }
+
+  return detail;
+};
 
 const Login = () => {
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const isEmailDisabled = Boolean(phoneNumber.trim());
+  const isPhoneDisabled = Boolean(email.trim());
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [identifier, setIdentifier] =
     useState("");
 
@@ -25,21 +81,37 @@ const Login = () => {
 
   const [password, setPassword] =
     useState("");
+  const [passwordError, setPasswordError] =
+    useState("");
 
   const [loading, setLoading] =
     useState(false);
+  const [socialAuthLoading, setSocialAuthLoading] =
+    useState<SocialAuthProvider | null>(null);
 
   const [error, setError] =
     useState("");
-  const [isCaptchaValid, setIsCaptchaValid] =
-    useState(false);
+  const [activeLegalModal, setActiveLegalModal] = useState<
+    "terms" | "privacy" | null
+  >(null);
+  const captchaRef = useRef<CaptchaHandle>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const socialAuthError = location.state?.socialAuthError;
+
+    if (socialAuthError) {
+      setError(socialAuthError);
+    }
+  }, [location.state]);
 
   // For demonstration, let's open the modal if email is 'block@test.com'
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
+    setEmailError("");
+    setPasswordError("");
 
     const identifier =
       email.trim() ||
@@ -56,11 +128,18 @@ const Login = () => {
       return;
     }
 
-    if (!isCaptchaValid) {
-      setError(
-        "Provided wrong captcha details."
-      );
+    if (email.trim() && !isValidEmailFormat(email)) {
+      setEmailError(EMAIL_FORMAT_ERROR);
+      return;
+    }
 
+    if (!isValidPasswordLength(password)) {
+      setPasswordError(PASSWORD_LENGTH_ERROR);
+      return;
+    }
+
+    if (!captchaRef.current?.validate()) {
+      setError("Incorrect CAPTCHA.");
       return;
     }
 
@@ -89,7 +168,9 @@ const Login = () => {
         response.refresh_token
       );
 
-      setIsSuccessModalOpen(true);
+      alert("Login successful.");
+
+      navigate("/dashboard");
 
     } catch (error: any) {
 
@@ -108,26 +189,45 @@ const Login = () => {
         return;
       }
 
-      if (
-        Array.isArray(detail)
-      ) {
-
-        setError(
-          detail[0]?.msg ||
-          "Validation failed"
-        );
-
-        return;
-      }
-
-      setError(
-        detail || "Login failed"
-      );
+      setError(getLoginErrorMessage(detail));
 
     } finally {
 
       setLoading(false);
     }
+  };
+
+  const handleSocialLogin = (provider: SocialAuthProvider) => {
+    try {
+      setError("");
+      setSocialAuthLoading(provider);
+      window.location.assign(getSocialAuthUrl(provider));
+    } catch {
+      setSocialAuthLoading(null);
+      setError("Social authentication failed. Please try again.");
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+
+    if (value.trim() && !isValidEmailFormat(value)) {
+      setEmailError(EMAIL_FORMAT_ERROR);
+      return;
+    }
+
+    setEmailError("");
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+
+    if (value && !isValidPasswordLength(value)) {
+      setPasswordError(PASSWORD_LENGTH_ERROR);
+      return;
+    }
+
+    setPasswordError("");
   };
 
   return (
@@ -153,7 +253,7 @@ const Login = () => {
             Login to access your Alcademy account
           </p>
 
-          <form className="w-full" onSubmit={handleLogin}>
+          <form className="w-full" onSubmit={handleLogin} noValidate>
             <div className="mb-4">
               <label className="block text-xs font-bold text-gray-900 mb-2">
                 Email Address
@@ -165,12 +265,34 @@ const Login = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value.replace(/[^a-zA-Z0-9@._-]/g, ""))}
+                  disabled={isEmailDisabled}
+                  style={{
+                    backgroundColor: isEmailDisabled ? '#e5e7eb' : undefined,
+                    color: isEmailDisabled ? '#9ca3af' : undefined,
+                    opacity: isEmailDisabled ? 0.7 : undefined,
+                    cursor: isEmailDisabled ? 'not-allowed' : undefined,
+                  }}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   required={!phoneNumber}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                  placeholder="example@gmail.com"
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 ${
+                    emailError
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
+                  } ${
+                    isEmailDisabled
+                      ? 'bg-gray-200 text-gray-400 opacity-70 cursor-not-allowed'
+                      : 'bg-white'
+                  }`}
+                  placeholder="Enter Your Email Address"
+                  aria-invalid={Boolean(emailError)}
+                  aria-describedby={emailError ? "login-email-error" : undefined}
                 />
               </div>
+              {emailError && (
+                <p id="login-email-error" className="mt-2 text-sm text-red-600">
+                  {emailError}
+                </p>
+              )}
             </div>
 
             <div className="relative mb-4 mt-6">
@@ -192,6 +314,22 @@ const Login = () => {
                 <PhoneInput
                   country={'in'}
                   value={phoneNumber}
+                  disabled={isPhoneDisabled}
+                  inputProps={{
+                    required: !email,
+                    disabled: isPhoneDisabled
+                  }}
+                  inputStyle={{
+                    backgroundColor: isPhoneDisabled ? '#e5e7eb' : undefined,
+                    color: isPhoneDisabled ? '#9ca3af' : undefined,
+                    opacity: isPhoneDisabled ? 0.7 : undefined,
+                    cursor: isPhoneDisabled ? 'not-allowed' : undefined,
+                  }}
+                  buttonStyle={{
+                    backgroundColor: isPhoneDisabled ? '#e5e7eb' : undefined,
+                    opacity: isPhoneDisabled ? 0.7 : undefined,
+                    cursor: isPhoneDisabled ? 'not-allowed' : undefined,
+                  }}
                   onChange={(phone: string) => {
 
                     const formattedPhone =
@@ -201,11 +339,16 @@ const Login = () => {
                   }}
                   enableSearch={true}
                   containerClass="!w-full !h-full"
-                  inputClass="!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
-                  buttonClass="!bg-gray-50 !border-gray-200 !rounded-l-md"
-                  inputProps={{
-                    required: !email
-                  }}
+                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${
+                    isPhoneDisabled
+                      ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
+                      : '!bg-white'
+                  }`}
+                  buttonClass={`!border-gray-200 !rounded-l-md ${
+                    isPhoneDisabled
+                      ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
+                      : '!bg-gray-50'
+                  }`}
                 />
               </div>
             </div>
@@ -222,8 +365,12 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.2em] ${
+                    passwordError
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
+                  }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -238,6 +385,11 @@ const Login = () => {
                   )}
                 </button>
               </div>
+              {passwordError && (
+                <p id="login-password-error" className="mt-2 text-sm text-red-600">
+                  {passwordError}
+                </p>
+              )}
             </div>
 
             {error && (
@@ -279,13 +431,9 @@ const Login = () => {
             </div>
 
             <Captcha
-              onValidationChange={(isValid) => {
-                setIsCaptchaValid(isValid);
-
-                if (isValid) {
-                  setError("");
-                }
-              }}
+              ref={captchaRef}
+              onPrivacyClick={() => setActiveLegalModal("privacy")}
+              onTermsClick={() => setActiveLegalModal("terms")}
             />
 
             <button
@@ -326,26 +474,29 @@ const Login = () => {
             <div className="grid grid-cols-3 gap-3 sm:gap-4">
               <button
                 type="button"
-                className="flex justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
+                disabled={socialAuthLoading !== null}
+                onClick={() => handleSocialLogin("microsoft")}
+                className="flex items-center justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg
                   className="w-5 h-5"
-                  viewBox="0 0 21 21"
+                  viewBox="0 0 23 23"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    d="M10 0L0 1.4v8.5h10V0zM21 0l-10.1 1.4v8.5H21V0zM0 11.1v8.5L10 21v-9.9H0zm10.9 0V21l10.1-1.4v-8.5H10.9z"
-                    fill="#00a4ef"
+                    d="M1 1h10v10H1V1z"
+                    fill="#f25022"
                   />
-                  <path d="M0 1.4v8.5h10V0L0 1.4z" fill="#f25022" />
-                  <path d="M10.9 0v9.9H21V0l-10.1 0z" fill="#7fba00" />
-                  <path d="M0 11.1v8.5L10 21v-9.9H0z" fill="#00a4ef" />
-                  <path d="M10.9 11.1V21l10.1-1.4v-8.5H10.9z" fill="#ffb900" />
+                  <path d="M12 1h10v10H12V1z" fill="#7fba00" />
+                  <path d="M1 12h10v10H1V12z" fill="#00a4ef" />
+                  <path d="M12 12h10v10H12V12z" fill="#ffb900" />
                 </svg>
               </button>
               <button
                 type="button"
-                className="flex justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
+                disabled={socialAuthLoading !== null}
+                onClick={() => handleSocialLogin("google")}
+                className="flex items-center justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 48 48">
                   <path
@@ -368,7 +519,9 @@ const Login = () => {
               </button>
               <button
                 type="button"
-                className="flex justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
+                disabled={socialAuthLoading !== null}
+                onClick={() => handleSocialLogin("apple")}
+                className="flex items-center justify-center py-2 px-4 border border-[#a8b8e0] rounded-md shadow-sm bg-white hover:bg-gray-50 transition-colors"
               >
                 <svg
                   className="w-5 h-5"
@@ -389,14 +542,17 @@ const Login = () => {
         identifier={identifier}
         blockedData={blockedData}
       />
-
-      <SuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        title="Login Successful!!!"
-        message="You have logged in successfully."
-        buttonText="Go to Dashboard"
-        onConfirm={() => navigate("/dashboard")}
+      <LegalModal
+        isOpen={activeLegalModal === "privacy"}
+        title="Privacy Policy"
+        sections={PRIVACY_POLICY_CONTENT}
+        onClose={() => setActiveLegalModal(null)}
+      />
+      <LegalModal
+        isOpen={activeLegalModal === "terms"}
+        title="Terms of Use"
+        sections={TERMS_OF_USE_CONTENT}
+        onClose={() => setActiveLegalModal(null)}
       />
     </>
   );

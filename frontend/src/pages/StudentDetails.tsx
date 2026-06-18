@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
@@ -6,8 +6,13 @@ import Logo from '../components/Logo';
 import SuccessModal from '../components/SuccessModal';
 import { saveStudentDetails } from "../services/PhoneRegistrationService";
 
+const sanitizeInstitutionName = (value: string) =>
+  value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
+
 const StudentDetails = () => {
   const [isGradeOpen, setIsGradeOpen] = useState(false);
+  const [focusedGradeIndex, setFocusedGradeIndex] = useState(0);
+  const gradeDropdownRef = useRef<HTMLDivElement>(null);
   
   // State elements
   const [grade, setGrade] = useState('');
@@ -17,18 +22,20 @@ const StudentDetails = () => {
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [studentId, setStudentId] = useState('');
+  const isSchoolNameDisabled = Boolean(workPlace.trim());
+  const isWorkPlaceDisabled = Boolean(schoolName.trim());
 
   const grades = [
-    { value: "Grade 1", label: "grade 1" },
-    { value: "Grade 2", label: "grade 2" },
-    { value: "Grade 3", label: "grade 3" },
-    { value: "Grade 4", label: "grade 4" },
-    { value: "Grade 5", label: "grade 5" },
-    { value: "Grade 6", label: "grade 6" },
-    { value: "Grade 7", label: "grade 7" },
-    { value: "Grade 8", label: "grade 8" },
-    { value: "Grade 9", label: "grade 9" },
-    { value: "Grade 10", label: "grade 10" },
+    { value: "Grade 1", label: "Grade 1" },
+    { value: "Grade 2", label: "Grade 2" },
+    { value: "Grade 3", label: "Grade 3" },
+    { value: "Grade 4", label: "Grade 4" },
+    { value: "Grade 5", label: "Grade 5" },
+    { value: "Grade 6", label: "Grade 6" },
+    { value: "Grade 7", label: "Grade 7" },
+    { value: "Grade 8", label: "Grade 8" },
+    { value: "Grade 9", label: "Grade 9" },
+    { value: "Grade 10", label: "Grade 10" },
     { value: "1st year university", label: "1st year university" },
     { value: "2nd year university", label: "2nd year university" },
     { value: "3rd year university", label: "3rd year university" },
@@ -37,6 +44,65 @@ const StudentDetails = () => {
     { value: "Adult Learner", label: "Adult Learner" },
     { value: "Others", label: "Others" },
   ];
+
+  const selectGrade = (selectedGrade: string) => {
+    setGrade(selectedGrade);
+    setIsGradeOpen(false);
+  };
+
+  const handleGradeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const selectedGradeIndex = grades.findIndex((g) => g.value === grade);
+    const currentIndex =
+      focusedGradeIndex >= 0 ? focusedGradeIndex : Math.max(selectedGradeIndex, 0);
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+
+      if (isGradeOpen) {
+        selectGrade(grades[currentIndex]?.value || grades[0].value);
+      } else {
+        setFocusedGradeIndex(Math.max(selectedGradeIndex, 0));
+        setIsGradeOpen(true);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = isGradeOpen
+        ? Math.min(currentIndex + 1, grades.length - 1)
+        : Math.max(selectedGradeIndex, 0);
+
+      setFocusedGradeIndex(nextIndex);
+      setIsGradeOpen(true);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const nextIndex = Math.max(currentIndex - 1, 0);
+
+      setFocusedGradeIndex(nextIndex);
+      setIsGradeOpen(true);
+    } else if (e.key === 'Escape') {
+      setIsGradeOpen(false);
+    } else if (e.key === 'Tab') {
+      setIsGradeOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        gradeDropdownRef.current &&
+        !gradeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsGradeOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
 
   // Combined and Fixed Handle Submit Action
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,8 +126,8 @@ const StudentDetails = () => {
       const response = await saveStudentDetails({
         user_id: userId,
         grade,
-        work_place: workPlace || null,
-        school_name: schoolName,
+        work_place: workPlace.trim() || null,
+        school_name: schoolName.trim() || null,
       });
 
       setStudentId(response.student_id);
@@ -125,13 +191,24 @@ const StudentDetails = () => {
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Select Grade of Student
                 </label>
-                <div className="relative">
+                <div className="relative" ref={gradeDropdownRef}>
                   <div
-                    className="block w-full pl-4 pr-10 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 bg-white shadow-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943]"
-                    onClick={() => setIsGradeOpen(!isGradeOpen)}
+                    className="block w-full pl-4 pr-10 py-3.5 border border-gray-200 rounded-lg text-[14px] text-center text-gray-700 bg-white shadow-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943]"
+                    role="combobox"
+                    aria-expanded={isGradeOpen}
+                    aria-controls="grade-options"
+                    aria-activedescendant={
+                      isGradeOpen ? `grade-option-${focusedGradeIndex}` : undefined
+                    }
+                    onClick={() => {
+                      const selectedGradeIndex = grades.findIndex((g) => g.value === grade);
+                      setFocusedGradeIndex(Math.max(selectedGradeIndex, 0));
+                      setIsGradeOpen(!isGradeOpen);
+                    }}
+                    onKeyDown={handleGradeKeyDown}
                     tabIndex={0}
                   >
-                    {grade ? grades.find(g => g.value === grade)?.label : <span className="text-gray-500">Select Grade</span>}
+                    {grade ? grades.find(g => g.value === grade)?.label : <span className="font-bold text-black">Select Grade</span>}
                   </div>
                   
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -141,17 +218,20 @@ const StudentDetails = () => {
                   </div>
 
                   {isGradeOpen && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
-                      {grades.map((g) => (
+                    <div id="grade-options" role="listbox" className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+                      {grades.map((g, index) => (
                         <div
                           key={g.value}
-                          className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${grade === g.value
+                          id={`grade-option-${index}`}
+                          role="option"
+                          aria-selected={grade === g.value}
+                          className={`px-4 py-3 text-[14px] text-center cursor-pointer transition-colors ${grade === g.value || focusedGradeIndex === index
                               ? 'bg-[#248943] text-white'
                               : 'text-gray-700 hover:bg-green-50'
                             }`}
                           onClick={() => {
-                            setGrade(g.value);
-                            setIsGradeOpen(false);
+                            setFocusedGradeIndex(index);
+                            selectGrade(g.value);
                           }}
                         >
                           {g.label}
@@ -162,6 +242,30 @@ const StudentDetails = () => {
                 </div>
               </div>
 
+              {/* School Name */}
+              <div className="mb-6">
+                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
+                  School / University / Institute
+                </label>
+                <input
+                  type="text"
+                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${
+                    isSchoolNameDisabled
+                      ? 'bg-gray-200 text-gray-400 opacity-70'
+                      : 'text-gray-700'
+                  }`}
+                  placeholder="Enter your school Name"
+                  value={schoolName}
+                  disabled={isSchoolNameDisabled}
+                  onChange={(e) => setSchoolName(sanitizeInstitutionName(e.target.value))}
+                  required={!workPlace.trim()}
+                />
+              </div>
+
+              <div className="mb-6 text-center text-[14px] font-bold text-[#1F2937]">
+                Or
+              </div>
+
               {/* Work Place */}
               <div className="mb-6">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
@@ -169,25 +273,16 @@ const StudentDetails = () => {
                 </label>
                 <input
                   type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm"
-                  placeholder="public School"
+                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${
+                    isWorkPlaceDisabled
+                      ? 'bg-gray-200 text-gray-400 opacity-70'
+                      : 'text-gray-700'
+                  }`}
+                  placeholder="Enter your Work place"
                   value={workPlace}
+                  disabled={isWorkPlaceDisabled}
                   onChange={(e) => setWorkPlace(e.target.value)}
-                />
-              </div>
-
-              {/* School Name */}
-              <div className="mb-6">
-                <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                  School Name
-                </label>
-                <input
-                  type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm"
-                  placeholder="Enter school name"
-                  value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  required
+                  required={!schoolName.trim()}
                 />
               </div>
 

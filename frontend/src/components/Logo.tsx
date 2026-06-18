@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface LogoProps {
   className?: string;
@@ -7,9 +8,9 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ className = "mb-6 inline-block", imgClassName = "h-16 object-contain" }) => {
   return (
-    <div className={className}>
+    <Link to="/" className={className} aria-label="Go to Home Page">
       <img src="/Frame 1000002962.png" alt="Alcademy Logo" className={imgClassName} />
-    </div>
+    </Link>
   );
 };
 

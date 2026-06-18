@@ -12,6 +12,7 @@ import StudentDetails from "./pages/StudentDetails";
 import TeacherVerification from "./pages/TeacherVerification";
 import ParentVerification from "./pages/ParentVerification";
 import Home from "./pages/Home";
+import SocialAuthCallback from "./pages/SocialAuthCallback";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/auth/social/callback" element={<SocialAuthCallback />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<VerifyOTP />} />

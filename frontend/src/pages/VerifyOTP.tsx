@@ -9,11 +9,19 @@ import {
   forgotPassword
 } from "../services/authService";
 
-const OTP_EXPIRY_SECONDS = 300;
+const OTP_TIMER_SECONDS = 5 * 60;
+const formatTimer = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+    .toString()
+    .padStart(2, '0')}`;
+};
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(OTP_EXPIRY_SECONDS);
+  const [timer, setTimer] = useState(OTP_TIMER_SECONDS);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
 
@@ -27,6 +35,8 @@ const VerifyOTP = () => {
 
   const [error, setError] =
     useState("");
+  const [otpSent, setOtpSent] =
+    useState(Boolean(email || phone_number));
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -44,14 +54,15 @@ const VerifyOTP = () => {
     async () => {
 
       try {
-        setError("");
+
+        setOtpSent(false);
 
         await forgotPassword(
           email,
           phone_number
         );
 
-        setTimer(OTP_EXPIRY_SECONDS);
+        setTimer(OTP_TIMER_SECONDS);
 
         setOtp([
           '',
@@ -61,6 +72,8 @@ const VerifyOTP = () => {
           '',
           ''
         ]);
+
+        setOtpSent(true);
 
       } catch (error) {
 
@@ -97,14 +110,6 @@ const VerifyOTP = () => {
 
       const otpCode =
         otp.join("");
-
-      if (timer <= 0) {
-        setError(
-          "OTP Expired"
-        );
-
-        return;
-      }
 
       if (
         otpCode.length !== 6
@@ -150,10 +155,6 @@ const VerifyOTP = () => {
       }
     };
 
-  const formattedTimer = `${Math.floor(timer / 60)
-    .toString()
-    .padStart(2, "0")}:${(timer % 60).toString().padStart(2, "0")}`;
-
   return (
     <SplitScreenLayout>
       {/* Back Button */}
@@ -196,17 +197,22 @@ const VerifyOTP = () => {
               />
             ))}
           </div>
-          {timer === 0 && !error && (
-            <div className="mb-4">
-              <p className="text-red-500 text-sm">OTP Expired</p>
-            </div>
-          )}
           {error && (
             <div className="mb-4">
               <p className="text-red-500 text-sm">
                 {error}
               </p>
             </div>
+          )}
+          {otpSent && timer > 0 && (
+            <p className="text-green-600 text-sm mb-4">
+              OTP sent successfully.
+            </p>
+          )}
+          {timer === 0 && (
+            <p className="text-red-500 text-sm mb-4">
+              OTP expired.
+            </p>
           )}
 
           <p className="text-sm text-gray-500 mb-6 mt-2">
@@ -219,7 +225,7 @@ const VerifyOTP = () => {
             >
               Request a new Code
             </button>
-            {timer > 0 && <span className="text-gray-500"> in {formattedTimer}</span>}
+            {timer > 0 && <span className="text-gray-500"> in {formatTimer(timer)}</span>}
           </p>
 
           <button

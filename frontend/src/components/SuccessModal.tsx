@@ -8,7 +8,6 @@ interface SuccessModalProps {
   message?: string;
   buttonText?: string;
   redirectUrl?: string;
-  onConfirm?: () => void;
 }
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -16,8 +15,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   title = "Success!",
   message = "Your details have been submitted successfully.",
   buttonText = "Continue",
-  redirectUrl = "/",
-  onConfirm
+  redirectUrl = "/"
 }) => {
   if (!isOpen) return null;
 
@@ -38,22 +36,12 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             />
           </div>
 
-          {onConfirm ? (
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="w-full inline-block text-center bg-[#299555] hover:bg-[#238148] text-white font-bold py-4 px-4 rounded-xl text-[16px] transition-colors shadow-sm"
-            >
-              {buttonText}
-            </button>
-          ) : (
-            <Link
-              to={redirectUrl}
-              className="w-full inline-block text-center bg-[#299555] hover:bg-[#238148] text-white font-bold py-4 px-4 rounded-xl text-[16px] transition-colors shadow-sm"
-            >
-              {buttonText}
-            </Link>
-          )}
+          <Link
+            to={redirectUrl}
+            className="w-full inline-block text-center bg-[#299555] hover:bg-[#238148] text-white font-bold py-4 px-4 rounded-xl text-[16px] transition-colors shadow-sm"
+          >
+            {buttonText}
+          </Link>
         </div>
       </div>
     </div>

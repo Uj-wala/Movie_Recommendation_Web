@@ -12,7 +12,15 @@ import {
   getApiErrorMessage,
 } from "../services/PhoneRegistrationService";
 
-const OTP_EXPIRY_SECONDS = 300;
+const OTP_TIMER_SECONDS = 5 * 60;
+const formatTimer = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+};
 
 const VerifyAccount = () => {
   const navigate = useNavigate();
@@ -20,11 +28,10 @@ const VerifyAccount = () => {
   const phoneNumber = localStorage.getItem("phone_number");
   const email = localStorage.getItem("email");
   const registrationType = localStorage.getItem("registration_type") || "phone";
-  const role = localStorage.getItem("selected_role") || "";
-  const backRoute = role ? `/confirm-role?role=${role}` : "/select-role";
+  const role = localStorage.getItem("selected_role") || "student";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(OTP_EXPIRY_SECONDS);
+  const [timer, setTimer] = useState(OTP_TIMER_SECONDS);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -125,7 +132,7 @@ const VerifyAccount = () => {
 
       setOtp(["", "", "", "", "", ""]);
       setOtpSent(true);
-      setTimer(OTP_EXPIRY_SECONDS);
+      setTimer(OTP_TIMER_SECONDS);
       inputRefs.current[0]?.focus();
     } catch (error: any) {
       setError(getApiErrorMessage(error));
@@ -139,12 +146,6 @@ const VerifyAccount = () => {
       setError("");
 
       const otpCode = otp.join("");
-
-      if (timer <= 0) {
-        setOtpSent(false);
-        setError("OTP Expired");
-        return;
-      }
 
       if (otpCode.length !== 6) {
         setError("Please enter valid 6 digit OTP");
@@ -188,15 +189,11 @@ const VerifyAccount = () => {
     }
   };
 
-  const formattedTimer = `${Math.floor(timer / 60)
-    .toString()
-    .padStart(2, "0")}:${(timer % 60).toString().padStart(2, "0")}`;
-
   return (
     <SplitScreenLayout>
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
         <Link
-          to={backRoute}
+          to="/select-role"
           className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
         >
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
@@ -263,19 +260,21 @@ const VerifyAccount = () => {
             {timer > 0 && (
               <span className="text-gray-500">
                 {" "}
-                in {formattedTimer}
+                in {formatTimer(timer)}
               </span>
             )}
           </p>
 
-          {otpSent && timer > 0 && !error && (
+          {otpSent && timer > 0 && (
             <p className="text-green-600 text-sm mb-4">
               OTP sent successfully.
             </p>
           )}
 
-          {timer === 0 && !error && (
-            <p className="text-red-500 text-sm mb-4">OTP Expired</p>
+          {timer === 0 && (
+            <p className="text-red-500 text-sm mb-4">
+              OTP expired.
+            </p>
           )}
 
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
