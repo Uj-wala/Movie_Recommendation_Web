@@ -56,7 +56,7 @@ const ParentVerification = () => {
  
   return (
     <>
-      <SplitScreenLayout>
+      <SplitScreenLayout fitViewport>
         {/* Back Button */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
           <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">

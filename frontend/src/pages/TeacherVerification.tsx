@@ -13,6 +13,23 @@ const sanitizeInstitutionName = (value: string) =>
   value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
 
 const MAX_SCHOOL_NAME_LENGTH = 30;
+const visibleSubjectNames = [
+  'English',
+  'Computer Science',
+  'Data Analytics',
+  'AI Chart Tools',
+  'Data Science',
+];
+const defaultSelectedSubjectNames = ['English', 'AI Chart Tools'];
+
+const getSubjectKey = (subjectName: string) => subjectName.trim().toLowerCase();
+
+const filterVisibleSubjects = (subjectList: { id: string; name: string }[]) =>
+  visibleSubjectNames
+    .map((subjectName) =>
+      subjectList.find((subject) => getSubjectKey(subject.name) === getSubjectKey(subjectName))
+    )
+    .filter((subject): subject is { id: string; name: string } => Boolean(subject));
 
 const TeacherVerification = () => {
   const [schoolName, setSchoolName] = useState('');
@@ -28,8 +45,17 @@ const TeacherVerification = () => {
     const loadSubjects = async () => {
       try {
         const data = await fetchDropdownData('/dropdowns/subjects');
-        setSubjects(data);
-        setSubjectIds(data[0]?.id ? [data[0].id] : []);
+        const visibleSubjects = filterVisibleSubjects(data);
+        setSubjects(visibleSubjects);
+        setSubjectIds(
+          visibleSubjects
+            .filter((subject) =>
+              defaultSelectedSubjectNames.some(
+                (subjectName) => getSubjectKey(subject.name) === getSubjectKey(subjectName)
+              )
+            )
+            .map((subject) => subject.id)
+        );
       } catch {
         setError('Unable to load subjects. Please try again.');
       }
@@ -103,7 +129,7 @@ const TeacherVerification = () => {
 
   return (
     <>
-      <SplitScreenLayout>
+      <SplitScreenLayout fitViewport>
         {/* Back Button */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
           <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">

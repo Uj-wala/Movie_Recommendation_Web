@@ -63,7 +63,7 @@ const ConfirmRole = () => {
   };
 
   return (
-    <SplitScreenLayout>
+    <SplitScreenLayout fitViewport>
       {/* Back Button */}
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
         <Link

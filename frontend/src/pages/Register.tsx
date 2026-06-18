@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Mail, Lock, User, ChevronDown, Eye, EyeOff, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import LegalModal from "../components/LegalModal";
@@ -25,7 +25,7 @@ import {
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const FULL_NAME_MAX_LENGTH = 24;
 const PASSWORD_MAX_LENGTH = 12;
-const SECURITY_ANSWER_MAX_LENGTH = 8;
+const SECURITY_ANSWER_MAX_LENGTH = 10;
 type RegistrationFormDraft = {
   registrationType: "email" | "phone";
   phoneNumber: string;
@@ -38,7 +38,7 @@ type RegistrationFormDraft = {
   agreeToTerms: boolean;
 };
 const INITIAL_REGISTRATION_FORM_DRAFT: RegistrationFormDraft = {
-  registrationType: "phone",
+  registrationType: "email",
   phoneNumber: "",
   fullName: "",
   email: "",
@@ -108,8 +108,13 @@ const PRIVACY_POLICY_CONTENT = [
 ];
 
 const Register = () => {
+  const location = useLocation();
+  const shouldRestoreRegistrationDraft =
+    location.state?.preserveRegistrationDraft === true;
   const defaultRegistrationType =
-    hasRegistrationDraftValues() ? registrationFormDraft.registrationType : "phone";
+    shouldRestoreRegistrationDraft && hasRegistrationDraftValues()
+      ? registrationFormDraft.registrationType
+      : "email";
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registrationType, setRegistrationType] = useState<"email" | "phone">(
@@ -375,7 +380,7 @@ const Register = () => {
                 onContextMenu={blockClipboardAction}
                 onKeyDown={blockClipboardShortcut}
                 onChange={(e) => {
-                  const sanitizedName = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                  const sanitizedName = e.target.value.replace(/[^a-zA-Z\s\'.-]/g, "");
 
                   if (sanitizedName.length > FULL_NAME_MAX_LENGTH) {
                     setFullNameError(`Full Name cannot exceed ${FULL_NAME_MAX_LENGTH} characters`);
@@ -529,6 +534,11 @@ const Register = () => {
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
                   value={confirmPassword}
+                  onCopy={blockClipboardAction}
+                  onCut={blockClipboardAction}
+                  onPaste={blockClipboardAction}
+                  onContextMenu={blockClipboardAction}
+                  onKeyDown={blockClipboardShortcut}
                   onChange={(e) => {
                     const nextConfirmPassword = e.target.value;
 

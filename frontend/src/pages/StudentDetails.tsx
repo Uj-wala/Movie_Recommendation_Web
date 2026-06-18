@@ -13,6 +13,8 @@ const StudentDetails = () => {
   const [isGradeOpen, setIsGradeOpen] = useState(false);
   const [focusedGradeIndex, setFocusedGradeIndex] = useState(0);
   const gradeDropdownRef = useRef<HTMLDivElement>(null);
+  const gradeTriggerRef = useRef<HTMLDivElement>(null);
+  const gradeOptionRefs = useRef<Array<HTMLDivElement | null>>([]);
   
   // State elements
   const [grade, setGrade] = useState('');
@@ -48,6 +50,7 @@ const StudentDetails = () => {
   const selectGrade = (selectedGrade: string) => {
     setGrade(selectedGrade);
     setIsGradeOpen(false);
+    gradeTriggerRef.current?.focus();
   };
 
   const handleGradeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -104,6 +107,11 @@ const StudentDetails = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (isGradeOpen) {
+      gradeOptionRefs.current[focusedGradeIndex]?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [focusedGradeIndex, isGradeOpen]);
   // Combined and Fixed Handle Submit Action
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +167,7 @@ const StudentDetails = () => {
 
   return (
     <>
-      <SplitScreenLayout>
+      <SplitScreenLayout fitViewport>
         {/* Back Button */}
         <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
           <Link to="/verify-account?role=student" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
@@ -193,14 +201,17 @@ const StudentDetails = () => {
                 </label>
                 <div className="relative" ref={gradeDropdownRef}>
                   <div
+                    ref={gradeTriggerRef}
                     className="block w-full pl-4 pr-10 py-3.5 border border-gray-200 rounded-lg text-[14px] text-center text-gray-700 bg-white shadow-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943]"
                     role="combobox"
+                    aria-haspopup="listbox"
                     aria-expanded={isGradeOpen}
                     aria-controls="grade-options"
                     aria-activedescendant={
                       isGradeOpen ? `grade-option-${focusedGradeIndex}` : undefined
                     }
                     onClick={() => {
+                      gradeTriggerRef.current?.focus();
                       const selectedGradeIndex = grades.findIndex((g) => g.value === grade);
                       setFocusedGradeIndex(Math.max(selectedGradeIndex, 0));
                       setIsGradeOpen(!isGradeOpen);
@@ -222,6 +233,9 @@ const StudentDetails = () => {
                       {grades.map((g, index) => (
                         <div
                           key={g.value}
+                          ref={(element) => {
+                            gradeOptionRefs.current[index] = element;
+                          }}
                           id={`grade-option-${index}`}
                           role="option"
                           aria-selected={grade === g.value}
@@ -229,6 +243,7 @@ const StudentDetails = () => {
                               ? 'bg-[#248943] text-white'
                               : 'text-gray-700 hover:bg-green-50'
                             }`}
+                          onMouseEnter={() => setFocusedGradeIndex(index)}
                           onClick={() => {
                             setFocusedGradeIndex(index);
                             selectGrade(g.value);
@@ -254,7 +269,7 @@ const StudentDetails = () => {
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
                   }`}
-                  placeholder="Enter your school Name"
+                  placeholder="Enter your School / University / Institute"
                   value={schoolName}
                   disabled={isSchoolNameDisabled}
                   onChange={(e) => setSchoolName(sanitizeInstitutionName(e.target.value))}

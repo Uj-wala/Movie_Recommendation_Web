@@ -1,13 +1,40 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import { fetchDropdownData } from '../services/ListApiService';
 
+type RoleOption = { id: string; name: string };
+
+const roleDisplayOrder: Record<string, number> = {
+  student: 0,
+  parent: 1,
+  teacher: 2,
+};
+
+const getRoleKey = (roleName: string) => roleName.trim().toLowerCase();
+
+const formatRoleName = (roleName: string) => {
+  const normalizedRole = getRoleKey(roleName);
+
+  return normalizedRole
+    ? normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1)
+    : roleName;
+};
+
+const sortRolesByDisplayOrder = (roles: RoleOption[]) =>
+  [...roles].sort((firstRole, secondRole) => {
+    const firstOrder =
+      roleDisplayOrder[getRoleKey(firstRole.name)] ?? Number.MAX_SAFE_INTEGER;
+    const secondOrder =
+      roleDisplayOrder[getRoleKey(secondRole.name)] ?? Number.MAX_SAFE_INTEGER;
+
+    return firstOrder - secondOrder;
+  });
+
 const SelectRole = () => {
   // const roles = ['Student', 'Parent', 'Teacher'];
-  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
   const [selectedRole, setSelectedRole] = useState<{
     id: string;
     name: string;
@@ -16,19 +43,9 @@ const SelectRole = () => {
   const fetchRoles = async () => {
     try {
       const data = await fetchDropdownData('/dropdowns/roles');
-      const storedRoleId = localStorage.getItem('selected_role_id');
-      const storedRoleName = localStorage.getItem('selected_role')?.trim().toLowerCase();
-      const restoredRole =
-        data.find((role: { id: string; name: string }) => role.id === storedRoleId) ||
-        data.find(
-          (role: { id: string; name: string }) =>
-            role.name.trim().toLowerCase() === storedRoleName
-        ) ||
-        data[1] ||
-        null;
-
-      setRoles(data);
-      setSelectedRole(restoredRole);
+      const orderedRoles = sortRolesByDisplayOrder(data);
+      setRoles(orderedRoles);
+      setSelectedRole(null);
     } catch (error) {
       console.error('Error fetching roles:', error);
     }
@@ -39,16 +56,7 @@ const SelectRole = () => {
   }, []);
 
   return (
-    <SplitScreenLayout>
-      {/* Back Button */}
-      <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-        <Link to="/register" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-          <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-            <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-          </div>
-          Back
-        </Link>
-      </div>
+    <SplitScreenLayout fitViewport>
 
       <div className="w-full max-w-md flex flex-col items-center">
         {/* Logo */}
@@ -73,7 +81,7 @@ const SelectRole = () => {
                   value={role.id}
                   checked={selectedRole?.id === role.id}
                   onChange={(e) => {
-                    const nextRole = roles.find(r => r.id === e.target.value) || roles[1] || null;
+                    const nextRole = roles.find(r => r.id === e.target.value) || null;
                     setSelectedRole(nextRole);
 
                     if (nextRole) {
@@ -83,13 +91,13 @@ const SelectRole = () => {
                   }}
                   className="w-4 h-4 text-brand-green border-gray-300 focus:ring-brand-green"
                 />
-                <span className="ml-3 text-sm font-semibold text-gray-900">{role.name}</span>
+                <span className="ml-3 text-sm font-semibold text-gray-900">{formatRoleName(role.name)}</span>
               </label>
             ))}
           </div>
 
           <Link
-            to={`/confirm-role?role=${selectedRole?.name?.toLowerCase()}&role_id=${selectedRole?.id}`}
+            to={selectedRole ? `/confirm-role?role=${selectedRole.name.toLowerCase()}&role_id=${selectedRole.id}` : "#"}
             onClick={() => {
               if (selectedRole) {
                 localStorage.setItem('selected_role_id', selectedRole.id);
