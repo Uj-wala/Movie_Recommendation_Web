@@ -6,7 +6,10 @@ import { Link } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import SuccessModal from '../components/SuccessModal';
-import { saveParentVerification } from "../services/PhoneRegistrationService";
+import {
+  getApiErrorMessage,
+  saveParentVerification,
+} from "../services/PhoneRegistrationService";
  
 const ParentVerification = () => {
   const [studentReferenceId, setStudentReferenceId] = useState('');
@@ -18,6 +21,14 @@ const ParentVerification = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const trimmedStudentReferenceId = studentReferenceId.trim();
+
+    if (!trimmedStudentReferenceId) {
+      setError('Student ID is required.');
+      return;
+    }
+
     try {
       setLoading(true);
  
@@ -30,25 +41,15 @@ const ParentVerification = () => {
    
       const response = await saveParentVerification({
       user_id: userId,
-      student_reference_id: studentReferenceId,
+      student_reference_id: trimmedStudentReferenceId,
     });
     
       setParentId(response.parent_id);
       setIsModalOpen(true);
  
     } catch (err: any) {
-      if (err.response?.data?.detail) {
-        const detail = err.response.data.detail;
-        if (typeof detail === 'string') {
-          setError(detail);
-        } else if (Array.isArray(detail)) {
-          setError(detail.map((e: any) => e.msg).join(', '));
-        } else {
-          setError('Submission failed. Please try again.');
-        }
-      } else {
-        setError('Submission failed. Please try again.');
-      }
+      console.error('Parent verification failed:', err);
+      setError(getApiErrorMessage(err) || 'Submission failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ const ParentVerification = () => {
                   className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
                   placeholder="Enter Student ID"
                   value={studentReferenceId}
-                  onChange={(e) => setStudentReferenceId(e.target.value)}
+                  onChange={(e) => setStudentReferenceId(e.target.value.trim())}
                   required
                 />
               </div>

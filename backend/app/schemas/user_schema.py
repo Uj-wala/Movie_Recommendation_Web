@@ -542,7 +542,7 @@ class ParentVerificationRequest(BaseModel):
  
    
  
-    student_reference_id: Optional[str] = None
+    student_reference_id: str
  
     @field_validator("user_id")
     @classmethod
@@ -557,9 +557,9 @@ class ParentVerificationRequest(BaseModel):
     @field_validator("student_reference_id")
     @classmethod
     def validate_student_reference_id(cls, value):
-        if value is None:
-            return value
         value = value.strip()
+        if not value:
+            raise ValueError("Student ID is required")
         if not UUID_REGEX.match(value.lower()):
             raise ValueError("Invalid student reference ID format")
         return value
