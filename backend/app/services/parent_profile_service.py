@@ -57,13 +57,15 @@ def get_parent_profile(
 
                 "id": child.id,
 
-                "student_reference_id": child.student_reference_id,
+                "student_reference_id": child.student.id,
+                
+                "registration_number": child.student.registration_number,
 
-                "child_name": child.child_name,
+                "child_name": child.student.full_name,
 
-                "grade": child.grade,
+                "grade": child.student.student_profile.grade if child.student.student_profile else None,
 
-                "school_name": child.school_name
+                "school_name": child.student.student_profile.school_name if child.student.student_profile else None
 
             }
 
@@ -143,7 +145,7 @@ def add_child(
     student_user = (
         db.query(User)
         .filter(
-            User.id == data.student_reference_id
+            User.registration_number == data.student_registration_number
         )
         .first()
     )
@@ -190,7 +192,7 @@ def add_child(
     already_linked_parent = (
         db.query(ParentChild)
         .filter(
-            ParentChild.student_reference_id == student_user.id
+            ParentChild.student_id == student_user.id
         )
         .first()
     )
@@ -206,7 +208,7 @@ def add_child(
         .filter(
             ParentChild.parent_profile_id
             == parent_profile.id,
-            ParentChild.student_reference_id
+            ParentChild.student_id
             == student_user.id
         )
         .first()
@@ -220,7 +222,7 @@ def add_child(
  
     child = ParentChild(
         parent_profile_id=parent_profile.id,
-        student_reference_id=student_user.id
+        student_id=student_user.id
     )
  
     db.add(child)
@@ -258,7 +260,7 @@ def remove_child(
     child = (
         db.query(ParentChild)
         .filter(
-            ParentChild.student_reference_id == child_id,
+            ParentChild.student_id == child_id,
             ParentChild.parent_profile_id
             == parent_profile.id
         )

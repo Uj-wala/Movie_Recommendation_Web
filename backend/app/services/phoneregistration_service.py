@@ -193,7 +193,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     student_user = (
         db.query(User)
         .filter(
-            User.id == data.student_reference_id
+            User.registration_number == data.student_registration_number
         )
         .first()
     )
@@ -240,7 +240,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     already_linked_parent = (
         db.query(ParentChild)
         .filter(
-            ParentChild.student_reference_id == student_user.id
+            ParentChild.student_id == student_user.id
         )
         .first()
     )
@@ -260,7 +260,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
    
     parent_child = ParentChild(
     parent_profile_id=parent_profile.id,
-    student_reference_id=data.student_reference_id
+    student_id=student_user.id
     )
  
     db.add(parent_child)

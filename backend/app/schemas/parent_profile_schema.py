@@ -1,3 +1,4 @@
+import datetime
 import re
 
 from pydantic import (
@@ -10,56 +11,7 @@ UUID_REGEX = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 
 )
- 
-class ParentProfileCreateRequest(BaseModel):
-
-    child_name: str
-
-    child_grade: str
-
-    student_reference_id: str | None = None
-
-    @field_validator("child_name")
-    @classmethod
-    def validate_child_name(cls, value):
-
-        value = value.strip()
-
-        if len(value) < 2:
-            raise ValueError(
-                "Invalid child name"
-            )
-
-        return value
-
-    @field_validator("child_grade")
-    @classmethod
-    def validate_child_grade(cls, value):
-
-        value = value.strip()
-
-        if not value:
-            raise ValueError(
-                "Child grade is required"
-            )
-
-        return value
-
-
-class ParentProfileResponse(BaseModel):
-
-    id: str
-
-    child_name: str
-
-    child_grade: str
-
-    student_reference_id: str | None
-
-
-
-   
-   
+      
 class UpdateParentProfileRequest(BaseModel):
 
     relationship_type: str
@@ -85,19 +37,22 @@ class UpdateParentProfileRequest(BaseModel):
         return value
 
 
+REGISTRATION_NUMBER_REGEX = re.compile(
+    r"^STU-\d{4}-\d{6}$"
+)
+
 class AddChildRequest(BaseModel):
+    student_registration_number: str
 
-    student_reference_id: str
-
-    @field_validator("student_reference_id")
+    @field_validator("student_registration_number")
     @classmethod
-    def validate_student_reference_id(cls, value):
+    def validate_student_registration_number(cls, value):
+        value = value.strip().upper()
 
-        value = value.strip()
-
-        if not UUID_REGEX.match(value.lower()):
+        if not REGISTRATION_NUMBER_REGEX.match(value):
+            current_year = datetime.now().year
             raise ValueError(
-                "Invalid student reference ID"
+                f"Invalid student registration number format. Expected: STU-{current_year}-000001"
             )
 
         return value
@@ -107,6 +62,7 @@ class ChildResponse(BaseModel):
 
     id: str
     student_reference_id: str | None
+    registration_number: str | None
     child_name: str
     grade: str | None
     school_name: str | None

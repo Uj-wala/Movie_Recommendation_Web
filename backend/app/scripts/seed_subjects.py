@@ -3,28 +3,27 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.models.subject_model import Subject
 
-
 SUBJECTS = [
-    {
-        "name": "Mathematics",
-        "description": "Mathematics subject"
-    },
-    {
-        "name": "Science",
-        "description": "Science subject"
-    },
-    {
-        "name": "Physics",
-        "description": "Physics subject"
-    },
-    {
-        "name": "Chemistry",
-        "description": "Chemistry subject"
-    },
-    {
-        "name": "Biology",
-        "description": "Biology subject"
-    },
+    # {
+    #     "name": "Mathematics",
+    #     "description": "Mathematics subject"
+    # },
+    # {
+    #     "name": "Science",
+    #     "description": "Science subject"
+    # },
+    # {
+    #     "name": "Physics",
+    #     "description": "Physics subject"
+    # },
+    # {
+    #     "name": "Chemistry",
+    #     "description": "Chemistry subject"
+    # },
+    # {
+    #     "name": "Biology",
+    #     "description": "Biology subject"
+    # },
     {
         "name": "English",
         "description": "English language subject"
@@ -33,18 +32,18 @@ SUBJECTS = [
         "name": "Computer Science",
         "description": "Computer Science subject"
     },
-    {
-        "name": "History",
-        "description": "History subject"
-    },
-    {
-        "name": "Geography",
-        "description": "Geography subject"
-    },
-    {
-        "name": "Economics",
-        "description": "Economics subject"
-    },
+    # {
+    #     "name": "History",
+    #     "description": "History subject"
+    # },
+    # {
+    #     "name": "Geography",
+    #     "description": "Geography subject"
+    # },
+    # {
+    #     "name": "Economics",
+    #     "description": "Economics subject"
+    # },
     {
         "name": "Data Analytics",
         "description": "Data Analytics subject"
@@ -59,11 +58,28 @@ SUBJECTS = [
     }
 ]
 
-
 def seed_subjects():
     db: Session = SessionLocal()
 
     try:
+        subject_names = {
+            subject["name"]
+            for subject in SUBJECTS
+        }
+
+        # Delete subjects not present in SUBJECTS
+        deleted_count = (
+            db.query(Subject)
+            .filter(
+                ~Subject.name.in_(subject_names)
+            )
+            .delete(synchronize_session=False)
+        )
+
+        if deleted_count:
+            print(
+                f"Deleted {deleted_count} obsolete subjects"
+            )
 
         for subject_data in SUBJECTS:
 
@@ -76,25 +92,38 @@ def seed_subjects():
             )
 
             if existing_subject:
-                print(
-                    f"Subject already exists: {subject_data['name']}"
+                # Optional: update description if changed
+                existing_subject.description = (
+                    subject_data["description"]
                 )
-                continue
 
-            subject = Subject(
-                name=subject_data["name"],
-                description=subject_data["description"]
-            )
+                print(
+                    f"Updated subject: {subject_data['name']}"
+                )
 
-            db.add(subject)
+            else:
+                subject = Subject(
+                    name=subject_data["name"],
+                    description=subject_data["description"]
+                )
+
+                db.add(subject)
+
+                print(
+                    f"Added subject: {subject_data['name']}"
+                )
 
         db.commit()
 
-        print("Subjects seeded successfully")
+        print(
+            "Subjects synchronized successfully"
+        )
 
     except Exception as e:
         db.rollback()
-        print(f"Subject seeding failed: {e}")
+        print(
+            f"Subject synchronization failed: {e}"
+        )
         raise
 
     finally:
