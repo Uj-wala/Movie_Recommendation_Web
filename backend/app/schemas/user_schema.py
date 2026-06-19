@@ -430,6 +430,7 @@ class ConfirmRoleResponse(BaseModel):
     user_id: str
  
     role_id: str
+    registration_number: str
  
  
 class StudentDetailsRequest(BaseModel):

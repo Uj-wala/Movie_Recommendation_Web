@@ -18,6 +18,9 @@ from app.models.parent_child_model import ParentChild
 from app.models.subject_model import Subject
 from app.models.teacher_subject_model import TeacherSubject
 from app.models.role_model import Role
+from app.utils.registration_number_util import (
+    generate_registration_number,
+)  
  
 def register_by_phone(data: RegisterRequest, db: Session):
  
@@ -41,7 +44,7 @@ def register_by_phone(data: RegisterRequest, db: Session):
             status_code=400,
             detail="This phone number is already registered"
         )
-        
+       
     roles = (
         db.query(Role)
         .filter(Role.name == "student")
@@ -82,15 +85,45 @@ def confirm_role(data: ConfirmRoleRequest, db: Session):
             status_code=404,
             detail="User not found"
         )
+   
+    new_role = db.query(Role).filter(
+        Role.id == data.role_id
+    ).first()
+ 
+    if not new_role:
+        raise HTTPException(
+            status_code=404,
+            detail="Role not found"
+        )
+ 
+    # Allow only one admin
+    if new_role.name.lower() == "admin":
+ 
+        existing_admin = (
+            db.query(User)
+            .join(Role, User.role_id == Role.id)
+            .filter(Role.name == "admin")
+            .first()
+        )
+ 
+        if existing_admin:
+            raise HTTPException(
+                status_code=400,
+                detail="Admin already exists. Only one admin is allowed."
+            )
  
     user.role_id = data.role_id
+    new_role = db.query(Role).filter(Role.id == data.role_id).first()
+    if new_role:
+        user.registration_number = generate_registration_number(db, new_role.name)  
     db.commit()
     db.refresh(user)
  
     return {
         "message": "Role confirmed successfully",
         "user_id": user.id,
-        "role_id": user.role_id
+        "role_id": user.role_id,
+        "registration_number": user.registration_number
     }
  
  
@@ -160,17 +193,17 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     parent_profile = ParentProfile(
     user_id=data.user_id
     )
-
+ 
     db.add(parent_profile)
     db.flush()
-    
+   
     parent_child = ParentChild(
     parent_profile_id=parent_profile.id,
     child_name=data.child_name,
     grade=data.child_grade,
     student_reference_id=data.student_reference_id
     )
-
+ 
     db.add(parent_child)
     user.profile_completed = True
     db.commit()
@@ -187,44 +220,44 @@ def save_teacher_verification(
     data: TeacherProfileCreateRequest,
     db: Session
 ):
-
+ 
     user = db.query(User).filter(
         User.id == data.user_id
     ).first()
-
+ 
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found"
         )
-
+ 
     existing_profile = db.query(
         TeacherProfile
     ).filter(
         TeacherProfile.user_id == data.user_id
     ).first()
-
+ 
     if existing_profile:
         raise HTTPException(
             status_code=400,
             detail="Teacher profile already exists"
         )
-
+ 
     teacher_profile = TeacherProfile(
         user_id=data.user_id,
         school_name=data.school_name
     )
-
+ 
     db.add(teacher_profile)
-
+ 
     db.flush()
-    
+   
     if len(data.subject_ids) != len(set(data.subject_ids)):
         raise HTTPException(
             status_code=400,
             detail="Duplicate subjects are not allowed"
         )
-    
+   
     subjects = (
         db.query(Subject)
         .filter(
@@ -232,7 +265,7 @@ def save_teacher_verification(
         )
         .all()
     )
-
+ 
     if len(subjects) != len(data.subject_ids):
         raise HTTPException(
             status_code=400,
@@ -240,15 +273,15 @@ def save_teacher_verification(
         )
  
     for subject_id in data.subject_ids:
-
+ 
         teacher_subject = TeacherSubject(
             teacher_profile_id=teacher_profile.id,
             subject_id=subject_id
         )
-
+ 
         db.add(teacher_subject)
         user.profile_completed = True
-
+ 
     db.commit()
     db.refresh(teacher_profile)
  
@@ -257,4 +290,3 @@ def save_teacher_verification(
         "user_id": data.user_id,
         "teacher_id": teacher_profile.id
     }
- 

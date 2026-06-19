@@ -77,6 +77,13 @@ class User(Base, BaseModel):
         default=False,
         nullable=False
     )  
+
+    registration_number: Mapped[str | None] = mapped_column(
+        String(30),
+        unique=True,
+        nullable=True,
+        index=True
+    )
     
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
  
