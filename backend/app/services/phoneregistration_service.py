@@ -189,6 +189,67 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
             status_code=400,
             detail="Parent profile already exists"
         )
+        
+    student_user = (
+        db.query(User)
+        .filter(
+            User.id == data.student_reference_id
+        )
+        .first()
+    )
+ 
+    if not student_user:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+ 
+    student_role = (
+        db.query(Role)
+        .filter(
+            Role.id == student_user.role_id
+        )
+        .first()
+    )
+ 
+    if (
+        not student_role
+        or student_role.name.lower() != "student"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="User is not a student"
+        )
+ 
+    student_profile = (
+        db.query(StudentProfile)
+        .filter(
+            StudentProfile.user_id ==
+            student_user.id
+        )
+        .first()
+    )
+ 
+    if not student_profile:
+        raise HTTPException(
+            status_code=400,
+            detail="Student profile not found"
+        )
+    
+    # Check if the student is already linked to another parent
+    already_linked_parent = (
+        db.query(ParentChild)
+        .filter(
+            ParentChild.student_reference_id == student_user.id
+        )
+        .first()
+    )
+
+    if already_linked_parent:
+        raise HTTPException(
+            status_code=400,
+            detail="Student is already linked to another parent"
+        )  
  
     parent_profile = ParentProfile(
     user_id=data.user_id
@@ -199,8 +260,6 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
    
     parent_child = ParentChild(
     parent_profile_id=parent_profile.id,
-    child_name=data.child_name,
-    grade=data.child_grade,
     student_reference_id=data.student_reference_id
     )
  

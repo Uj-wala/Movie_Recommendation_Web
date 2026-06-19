@@ -1,0 +1,105 @@
+.role-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.role-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.role-table th {
+  background: #F8F8F8;
+  padding: 12px 24px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 15px;
+  color: #0F172A;
+}
+
+.role-table th:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.role-table th:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.role-table td {
+  padding: 16px 24px;
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 15px;
+  color: #0F172A;
+  border-bottom: 1px solid #D9D9D9;
+}
+
+.role-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* We reuse these general utility classes from UserTable in our tsx if we want, but copying them here is safe */
+.status-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4.5px 9px;
+  border-radius: 4px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.status-active {
+  background: #238B45;
+  color: #FFFFFF;
+}
+
+.status-blocked {
+  background: #B8B8B8;
+  color: #727272;
+}
+
+.actions-cell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-edit {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 15px;
+  color: #419ED8;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.action-disable {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 15px;
+  color: #F8BB03;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.action-activate {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 15px;
+  color: #238B45;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.action-divider {
+  width: 1px;
+  height: 12px;
+  background: #0F172A;
+}

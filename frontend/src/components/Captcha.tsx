@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { RefreshCw, Volume2, HelpCircle, Check, X } from 'lucide-react';
 
 type CaptchaStatus = 'default' | 'error' | 'success';
+
+export interface CaptchaHandle {
+  validate: () => boolean;
+}
+
+interface CaptchaProps {
+  onPrivacyClick?: () => void;
+  onTermsClick?: () => void;
+}
 
 const generateCaptcha = () => {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -12,10 +21,20 @@ const generateCaptcha = () => {
   return result;
 };
 
-const Captcha = () => {
+const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTermsClick }, ref) => {
   const [value, setValue] = useState('');
   const [status, setStatus] = useState<CaptchaStatus>('default');
-  const [captchaText, setCaptchaText] = useState('oisdykss');
+  const [captchaText, setCaptchaText] = useState(() => generateCaptcha());
+
+  const isCaptchaValid = (input: string) => input === captchaText;
+
+  useImperativeHandle(ref, () => ({
+    validate: () => {
+      const isValid = isCaptchaValid(value);
+      setStatus(isValid ? 'success' : 'error');
+      return isValid;
+    },
+  }), [captchaText, value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -24,7 +43,7 @@ const Captcha = () => {
     if (val.length === 0) {
       setStatus('default');
     } else if (val.length >= captchaText.length) {
-      if (val.toLowerCase() === captchaText.toLowerCase()) {
+      if (isCaptchaValid(val)) {
         setStatus('success');
       } else {
         setStatus('error');
@@ -85,7 +104,7 @@ const Captcha = () => {
             type="text"
             value={value}
             onChange={handleChange}
-            placeholder="oisdykss"
+            placeholder="Enter the Captcha"
             className={`w-full py-2.5 px-4 rounded-md text-[15px] bg-white outline-none transition-colors border ${status === 'default' ? 'border-transparent text-gray-700' :
                 status === 'error' ? 'border-[#ff4d4d] text-[#ff4d4d]' :
                   'border-[#33cc66] text-[#33cc66]'
@@ -113,7 +132,7 @@ const Captcha = () => {
 
       {status === 'error' && (
         <div className="mt-4 text-[13px] text-gray-500 font-bold">
-          Please Enter <span className="text-[#ff4d4d]">CAPTCHA</span> Correctly.
+          <span className="text-[#ff4d4d]">Incorrect CAPTCHA.</span>
         </div>
       )}
 
@@ -124,7 +143,29 @@ const Captcha = () => {
       )}
 
       <div className={`flex justify-between items-center ${status === 'default' ? 'mt-8' : 'mt-4'} text-[11px]`}>
-        <a href="#" className="text-blue-500 hover:underline">Privacy & Terms</a>
+        <span className="text-blue-500">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              onPrivacyClick?.();
+            }}
+            className="hover:underline"
+          >
+            Privacy
+          </a>{" "}
+          &{" "}
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              onTermsClick?.();
+            }}
+            className="hover:underline"
+          >
+            Terms
+          </a>
+        </span>
         <div className={`flex items-center font-bold tracking-wide ${status === 'default' ? 'text-gray-500' :
             status === 'error' ? 'text-[#ff4d4d]' :
               'text-[#33cc66]'
@@ -139,6 +180,8 @@ const Captcha = () => {
       </div>
     </div>
   );
-};
+});
+
+Captcha.displayName = 'Captcha';
 
 export default Captcha;

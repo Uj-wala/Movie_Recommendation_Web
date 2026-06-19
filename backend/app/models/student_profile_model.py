@@ -25,7 +25,6 @@ class StudentProfile(Base, BaseModel):
             ondelete="CASCADE",
         ),
         unique=True,
-        index=True,
         nullable=False,
     )
 

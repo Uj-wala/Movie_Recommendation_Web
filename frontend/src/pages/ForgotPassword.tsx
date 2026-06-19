@@ -7,11 +7,14 @@ import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "../services/authService";
+import { EMAIL_FORMAT_ERROR, isValidEmailFormat } from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
+  const isEmailDisabled = Boolean(mobile.trim());
+  const isMobileDisabled = Boolean(email.trim());
   const navigate = useNavigate();
 
   const [loading, setLoading] =
@@ -32,6 +35,11 @@ const ForgotPassword = () => {
 
       setError("");
       setSuccess("");
+
+      if (email.trim() && !isValidEmailFormat(email)) {
+        setError(EMAIL_FORMAT_ERROR);
+        return;
+      }
 
       try {
 
@@ -105,7 +113,7 @@ const ForgotPassword = () => {
           Enter your registered email id to reset your Password
         </p>
 
-        <form className="w-full" onSubmit={handleForgotPassword}>
+        <form className="w-full" onSubmit={handleForgotPassword} noValidate>
           <div className="mb-6">
             <label className="block text-xs font-bold text-gray-900 mb-2">
               Email Address
@@ -116,10 +124,21 @@ const ForgotPassword = () => {
               </div>
               <input
                 type="email"
-                className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green transition-colors"
-                placeholder="you@institution.edu"
+                className={`block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green transition-colors disabled:cursor-not-allowed ${
+                  isEmailDisabled
+                    ? 'bg-gray-200 text-gray-400 opacity-70'
+                    : 'bg-white'
+                }`}
+                placeholder="Enter Your Email Address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value.replace(/[^a-zA-Z0-9@._-]/g, ''))}
+                disabled={isEmailDisabled}
+                style={{
+                  backgroundColor: isEmailDisabled ? '#e5e7eb' : undefined,
+                  color: isEmailDisabled ? '#9ca3af' : undefined,
+                  opacity: isEmailDisabled ? 0.7 : undefined,
+                  cursor: isEmailDisabled ? 'not-allowed' : undefined,
+                }}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>
@@ -144,9 +163,32 @@ const ForgotPassword = () => {
                 onChange={(phone: string) =>
                   setMobile(`+${phone}`)
                 } enableSearch={true}
+                disabled={isMobileDisabled}
+                inputProps={{
+                  disabled: isMobileDisabled,
+                }}
+                inputStyle={{
+                  backgroundColor: isMobileDisabled ? '#e5e7eb' : undefined,
+                  color: isMobileDisabled ? '#9ca3af' : undefined,
+                  opacity: isMobileDisabled ? 0.7 : undefined,
+                  cursor: isMobileDisabled ? 'not-allowed' : undefined,
+                }}
+                buttonStyle={{
+                  backgroundColor: isMobileDisabled ? '#e5e7eb' : undefined,
+                  opacity: isMobileDisabled ? 0.7 : undefined,
+                  cursor: isMobileDisabled ? 'not-allowed' : undefined,
+                }}
                 containerClass="!w-full !h-full"
-                inputClass="!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
-                buttonClass="!bg-gray-50 !border-gray-200 !rounded-l-md"
+                inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm disabled:!cursor-not-allowed focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${
+                  isMobileDisabled
+                    ? '!bg-gray-200 !text-gray-400 !opacity-70'
+                    : '!bg-white'
+                }`}
+                buttonClass={`!border-gray-200 !rounded-l-md disabled:!cursor-not-allowed ${
+                  isMobileDisabled
+                    ? '!bg-gray-200 !opacity-70'
+                    : '!bg-gray-50'
+                }`}
               />
             </div>
           </div>

@@ -44,6 +44,18 @@ SUBJECTS = [
     {
         "name": "Economics",
         "description": "Economics subject"
+    },
+    {
+        "name": "Data Analytics",
+        "description": "Data Analytics subject"
+    },
+    {
+        "name": "AI Chart Tools",
+        "description": "AI Chart Tools subject"
+    },
+    {
+        "name":"Data Science",
+        "description": "Data Science subject"
     }
 ]
 
