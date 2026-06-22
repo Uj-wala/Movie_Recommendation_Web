@@ -43,14 +43,7 @@ def register_by_phone(data: RegisterRequest, db: Session):
         raise HTTPException(
             status_code=400,
             detail="This phone number is already registered"
-        )
-       
-    roles = (
-        db.query(Role)
-        .filter(Role.name == "student")
-        .order_by(Role.name)
-        .first()
-    )    
+        )   
  
     new_user = User(
         full_name=data.full_name,
@@ -59,7 +52,6 @@ def register_by_phone(data: RegisterRequest, db: Session):
         password_hash=hash_password(data.password),
         security_question=SecurityQuestion(data.security_question),
         security_answer_hash=hash_security_answer(data.security_answer),
-        role_id=roles.id if roles else None,
         failed_login_attempts=0,
         is_active=True,
         is_verified=False,

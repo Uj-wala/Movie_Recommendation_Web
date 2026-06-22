@@ -45,9 +45,7 @@ class RegisterRequest(BaseModel):
     password: str
  
     confirm_password: str
- 
-    role_id: Optional[str] = None
- 
+  
     security_question: SecurityQuestion
  
     security_answer: str
@@ -129,18 +127,6 @@ class RegisterRequest(BaseModel):
             raise ValueError("Security answer is too short")
  
         return value
- 
- 
-    @field_validator("role_id")
-    @classmethod
-    def validate_role_id(cls, value):
-
-      value = value.strip()
-
-      if not UUID_REGEX.match(value.lower()):
-        raise ValueError("Invalid role ID format")
-
-      return value
  
     @model_validator(mode="after")
     def validate_passwords_match(self):
@@ -351,9 +337,7 @@ class UserResponse(BaseModel):
     email: Optional[str]
  
     phone_number: Optional[str]
- 
-    role_id: str
- 
+  
     is_verified: bool
  
     profile_completed: bool
