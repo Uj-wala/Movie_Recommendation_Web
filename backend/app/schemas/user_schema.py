@@ -502,7 +502,7 @@ class StudentDetailsResponse(BaseModel):
  
     user_id: str
 
-    student_id: str
+    student_registration_number: str
     
 REGISTRATION_NUMBER_REGEX = re.compile(
     r"^STU-\d{4}-\d{6}$"

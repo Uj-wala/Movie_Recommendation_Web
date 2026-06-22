@@ -156,7 +156,7 @@ def save_student_details(data: StudentDetailsRequest, db: Session):
     return {
         "message": "Registration successful! You can now access the Dashboard.",
         "user_id": data.user_id,
-        "student_id": student_profile.id
+        "student_registration_number": user.registration_number
     }
  
  
