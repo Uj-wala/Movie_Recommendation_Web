@@ -13,12 +13,14 @@ interface EditStatusModalProps {
 const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSave, user }) => {
   const [status, setStatus] = useState(user?.status === 'Active' ? 'Active' : 'Deactivate');
   const [selectedRole, setSelectedRole] = useState(user?.role?.toLowerCase() || 'student');
+  const [userName, setUserName] = useState(user?.name || "Kumar Gandham");
 
   if (!isOpen) return null;
 
   const handleSave = () => {
     if (onSave) {
       onSave({ 
+        name: userName,
         role: selectedRole, 
         status: status === 'Active' ? 'Active' : 'Blocked' 
       });
@@ -40,9 +42,9 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
           <input 
             type="text" 
             className="status-text-input" 
-            placeholder="Kumar Gandham" 
-            defaultValue={user?.name || "Kumar Gandham"}
-            readOnly
+            placeholder="Enter User Name" 
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
           />
         </div>
 

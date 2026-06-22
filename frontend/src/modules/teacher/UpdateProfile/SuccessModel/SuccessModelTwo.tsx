@@ -12,6 +12,7 @@ interface SuccessModalProps {
 
 const SuccessModalTwo: React.FC<SuccessModalProps> = ({
   isOpen,
+  onClose,
   title = "Congratulations!",
   message = "Your Profile has been Updated successfully.",
   buttonText = "Visit My Profile Screen",
@@ -22,6 +23,14 @@ const SuccessModalTwo: React.FC<SuccessModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-[460px] p-10 relative animate-in fade-in zoom-in duration-200">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close success message"
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-2xl leading-none text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#299555]/40"
+        >
+          &times;
+        </button>
         <div className="flex flex-col items-center text-center">
           <h2 className="text-[34px] font-bold text-[#333333] mb-2 font-sans tracking-tight">{title}</h2>
           <p className="text-[#666666] text-[15px] mb-10">
@@ -38,6 +47,7 @@ const SuccessModalTwo: React.FC<SuccessModalProps> = ({
 
           <Link
             to={redirectUrl}
+            onClick={onClose}
             className="w-full inline-block text-center bg-[#299555] hover:bg-[#238148] text-white font-bold py-4 px-4 rounded-xl text-[16px] transition-colors shadow-sm"
           >
             {buttonText}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import type { ClipboardEvent, KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -13,6 +14,7 @@ import eyehide from "../../../assets/UpdateProfileIcons/eyehide.svg";
 import tick from "../../../assets/UpdateProfileIcons/tick.svg";
 // import SuccessModal from "./SuccessModel/SuccessModal";
 import profilePictureDefault from "../../../assets/UpdateProfileIcons/profilepicturedefault.svg";
+import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import profileData from "../../../data/profile.json";
 import { useNavigate } from "react-router-dom";
 import SuccessModalTwo from "./SuccessModel/SuccessModelTwo";
@@ -36,6 +38,8 @@ interface InitialValues{
 }
 
 const InitialValuesProfile: InitialValues = profileData;
+const TEACHER_DEFAULT_PASSWORD = "Stackly@123";
+const PASSWORD_MAX_LENGTH = 12;
 
 const profiles: Profile[] = [
   {
@@ -65,6 +69,7 @@ const YEARS_OPTIONS = [
 
 const passwordRules = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
+  { label: "No more than 12 characters", test: (v: string) => v.length <= PASSWORD_MAX_LENGTH },
   { label: "At least one uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
   { label: "At least one number", test: (v: string) => /[0-9]/.test(v) },
   { label: "At least one special character (!@#$%^&*)", test: (v: string) => /[!@#$%^&*(),.?":{}|<>]/.test(v) },
@@ -76,16 +81,19 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 const validationSchema = Yup.object({
   username: Yup.string()
     .required("Username is required")
-    .matches(/^\S*$/, "Username cannot contain spaces — use _ instead")
+    .max(24, "User Name cannot exceed 24 characters")
+    .matches(/^[A-Za-z\s'.-]+$/, "User Name can only contain letters, spaces, apostrophe, hyphen, and period")
     .min(3, "Username must be at least 3 characters"),
   password: Yup.string()
     .required("Password is required")
     .min(8, "Password must be at least 8 characters")
+    .max(PASSWORD_MAX_LENGTH, "Password cannot exceed 12 characters")
     .matches(/[A-Z]/, "Must contain at least one uppercase letter")
     .matches(/[0-9]/, "Must contain at least one number")
     .matches(/[!@#$%^&*(),.?":{}|<>]/, "Must contain at least one special character"),
   confirmPassword: Yup.string()
     .required("Please confirm your password")
+    .max(PASSWORD_MAX_LENGTH, "Confirm Password cannot exceed 12 characters")
     .oneOf([Yup.ref("password")], "Passwords do not match"),
   yearsOfExperience: Yup.string().required("Please select years of experience"),
   qualification: Yup.string().required("Qualification is required"),
@@ -96,6 +104,20 @@ const validationSchema = Yup.object({
 
 export default function UpdateProfile() {
   const [activeProfile] = useState<Profile>(profiles[0]);
+  const displayName =
+    localStorage.getItem("userName") ||
+    localStorage.getItem("full_name") ||
+    localStorage.getItem("name") ||
+    activeProfile.name;
+  const displayEmail =
+    localStorage.getItem("userEmail") ||
+    localStorage.getItem("email") ||
+    localStorage.getItem("phone_number") ||
+    activeProfile.email;
+  const displayPassword =
+    localStorage.getItem("userPassword") ||
+    localStorage.getItem("password") ||
+    TEACHER_DEFAULT_PASSWORD;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -111,8 +133,22 @@ export default function UpdateProfile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const blockPasswordClipboardAction = (event: ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault();
+  };
+
+  const blockPasswordContextMenu = (event: ReactMouseEvent<HTMLInputElement>) => {
+    event.preventDefault();
+  };
+
+  const blockPasswordClipboardShortcut = (event: KeyboardEvent<HTMLInputElement>) => {
+    if ((event.ctrlKey || event.metaKey) && ["c", "v", "x"].includes(event.key.toLowerCase())) {
+      event.preventDefault();
+    }
+  };
+
   const [phones, setPhones] = useState(InitialValuesProfile.phone.map((p) => ({ value: p, touched: false, error: "" })));
-  const [emails, setEmails] = useState(InitialValuesProfile.email.map((e) => ({ value: e, touched: false, error: "" })));
+  const [emails, setEmails] = useState([{ value: displayEmail, touched: false, error: "" }]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -126,9 +162,9 @@ export default function UpdateProfile() {
 
   const formik = useFormik({
     initialValues: {
-      username: InitialValuesProfile.username,
-      password: InitialValuesProfile.password,
-      confirmPassword: InitialValuesProfile.confirmPassword,
+      username: displayName,
+      password: displayPassword,
+      confirmPassword: displayPassword,
       yearsOfExperience: InitialValuesProfile.yearsOfExperience,
       qualification: InitialValuesProfile.qualification,
       subjects: InitialValuesProfile.subjects as string[],
@@ -147,15 +183,19 @@ export default function UpdateProfile() {
       setPhones((prev) => prev.map((p, i) => ({ ...p, touched: true, error: phoneErrors[i] })));
       setEmails((prev) => prev.map((em, i) => ({ ...em, touched: true, error: emailErrors[i] })));
       if (hasPhoneError || hasEmailError) return;
+      localStorage.setItem("userPassword", values.password);
       console.log("Submitted:", values);
-      toast.success("Profile saved successfully!",{position:"bottom-right"});
       setIsEditing(false);
+      setShowSuccess(true);
     },
   });
 
  const handlePhotoChange = useCallback((file: File) => {
-  if (!file.type.startsWith("image/")) {
-    toast.error("Please upload a valid image file.", { position: "bottom-right" });
+  const allowedImageTypes = ["image/jpeg", "image/jpg", "image/png"];
+  const allowedExtensions = /\.(jpe?g|png)$/i;
+
+  if (!allowedImageTypes.includes(file.type) || !allowedExtensions.test(file.name)) {
+    toast.error("Please upload only JPG, JPEG, or PNG image files.", { position: "bottom-right" });
     return;
   }
   setIsUploading(true);
@@ -196,16 +236,22 @@ export default function UpdateProfile() {
   // ── Phone helpers ─────────────────────────────────────────────────────────
   const validatePhone = (value: string) => {
     if (!value) return "Phone number is required";
+    const digitsAfterCountryCode = value.startsWith("+91") ? value.slice(3).replace(/\D/g, "") : "";
+    if (digitsAfterCountryCode.length > 10) return "Phone number cannot exceed 10 digits";
     if (!phoneRegex.test(value)) return "Invalid format. Use country code e.g. +911234567890";
     return "";
   };
 
   const handlePhoneChange = (index: number, raw: string) => {
-    let cleaned = raw.replace(/[^\d+]/g, "");
-    if (cleaned.indexOf("+") > 0) cleaned = cleaned.replace(/\+/g, "");
-    if (!cleaned.startsWith("+") && cleaned.length > 0) cleaned = "+" + cleaned.replace(/\+/g, "");
-    const error = phones[index].touched ? validatePhone(cleaned) : "";
-    setPhones((prev) => prev.map((p, i) => i === index ? { ...p, value: cleaned, error } : p));
+    const digits = raw.replace(/\D/g, "");
+    if (!digits) {
+      setPhones((prev) => prev.map((p, i) => i === index ? { ...p, value: "", touched: true, error: "Phone number is required" } : p));
+      return;
+    }
+    const nationalNumber = digits.startsWith("91") ? digits.slice(2) : digits;
+    const cleaned = `+91${nationalNumber.slice(0, 10)}`;
+    const error = validatePhone(cleaned);
+    setPhones((prev) => prev.map((p, i) => i === index ? { ...p, value: cleaned, touched: true, error } : p));
   };
 
   const blurPhone = (index: number) => {
@@ -237,8 +283,8 @@ export default function UpdateProfile() {
   };
 
   const handleEmailChange = (index: number, value: string) => {
-    const error = emails[index].touched ? validateEmail(value) : "";
-    setEmails((prev) => prev.map((e, i) => i === index ? { ...e, value, error } : e));
+    const error = validateEmail(value);
+    setEmails((prev) => prev.map((e, i) => i === index ? { ...e, value, touched: true, error } : e));
   };
 
   const blurEmail = (index: number) => {
@@ -267,12 +313,44 @@ export default function UpdateProfile() {
     setIsEditing(false);
   };
 
+  const handleLogout = () => {
+    setDropdownOpen(false);
+    [
+      "access_token",
+      "refresh_token",
+      "isAuthenticated",
+      "user_role",
+      "userEmail",
+      "userName",
+      "full_name",
+      "name",
+      "userPassword",
+    ].forEach((key) => localStorage.removeItem(key));
+    toast.dismiss();
+    toast.success("Logged out successfully", { duration: 5000 });
+    navigate("/");
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    setIsEditing(false);
+  };
+
   const pwValue = formik.values.password;
   const allRulesPassed = passwordRules.every((r) => r.test(pwValue));
   const showRules = passwordFocused && pwValue.length > 0 && !allRulesPassed;
+  const usernameLimitReached = formik.values.username.length >= 24;
 
-  const inputCls = (disabled: boolean) =>
-    `w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-gray-50 focus:outline-none  ${disabled ? "opacity-60 cursor-not-allowed" : ""}`;
+  const personalLabelCls =
+    "block w-auto min-w-[117px] h-[16px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2 whitespace-nowrap";
+  const personalFieldCls = (disabled: boolean) =>
+    `w-[497px] h-[48px] rounded-[8px] px-4 py-3 font-poppins text-sm text-gray-800 bg-gray-50 focus:outline-none ${disabled ? "opacity-60 cursor-not-allowed" : ""}`;
+  const personalFieldTextCls =
+    "flex-1 font-poppins text-sm text-gray-800 bg-transparent focus:outline-none";
+  const addLinkCls =
+    "w-[147px] h-[16px] font-poppins text-[12px] font-medium leading-[100%] text-[#238B45] underline";
+  const updateLinkCls =
+    "w-[138px] h-[16px] font-poppins text-[12px] font-medium leading-[100%] text-[#238B45] underline";
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#F5F5F5]">
@@ -284,12 +362,12 @@ export default function UpdateProfile() {
             className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
           >
             <img
-              src={formik.values.image || profilePictureDefault}
-              alt={activeProfile.name}
+              src={formik.values.image || teacherProfile || profilePictureDefault}
+              alt={displayName}
               className="w-9 h-9 rounded-full object-cover bg-white border border-gray-200"
             />
             <span className="text-sm font-semibold text-gray-800">
-              {activeProfile.name.toUpperCase()}
+              {displayName}
             </span>
             <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] p-1 rounded-[9px]" />
           </button>
@@ -300,7 +378,7 @@ export default function UpdateProfile() {
               {/* Signed in as */}
               <div className="px-4 py-3 border-b border-gray-100">
                 <p className="text-xs text-gray-400">Signed in as</p>
-                <p className="text-sm font-bold text-gray-800 truncate">{activeProfile.email}</p>
+                <p className="text-sm font-bold text-gray-800 truncate">{displayEmail}</p>
               </div>
 
               {/* Menu items */}
@@ -323,13 +401,8 @@ export default function UpdateProfile() {
               {/* Log Out */}
               <div className="border-t border-gray-100 py-1">
                 <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    
-                    navigate("/");
-                    // handle logout here
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] focus:text-[#B91C1C] focus:outline-none transition-colors"
                 >
                   Log Out
                 </button>
@@ -341,15 +414,15 @@ export default function UpdateProfile() {
       </div>
 
       {/* Page Content */}
-      <div className="flex-1 px-8 py-1 max-w-[100%]">
+      <div className="flex-1 px-8 py-1 max-w-[100%] flex justify-center">
         <form onSubmit={formik.handleSubmit}>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-7">
+          <div className="w-[1090px] bg-white rounded-[16px] border border-gray-100 shadow-sm p-6 space-y-7">
 
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Manage Profile Details</h1>
-                <p className="text-xs text-gray-400 mt-0.5">Manage your Account Details</p>
+                <h1 className="w-[290px] h-[24px] font-poppins text-[26px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Manage Profile Details</h1>
+                <p className="w-[203px] h-[12px] font-poppins text-[14px] font-normal leading-[100%] tracking-[-0.01em] text-[#ACACAC] mt-2">Manage your Account Details</p>
               </div>
               {!isEditing && (
                 <button
@@ -422,52 +495,57 @@ export default function UpdateProfile() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoChange(f); }}
               />
             </div>
 
             {/* Personal Details */}
-            <section>
-              <h2 className="text-sm font-bold text-gray-800 mb-4">Personal Details</h2>
+            <section className="w-[1018px] min-h-[360px] flex flex-col gap-6">
+              <h2 className="w-[1018px] h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Personal Details</h2>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
                 {/* Username */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">User Name</label>
+                  <label className={personalLabelCls}>User Name</label>
                   <input
                     type="text"
                     id="username"
                     name="username"
                     disabled={!isEditing}
+                    maxLength={24}
                     placeholder="Enter your Name"
                     value={formik.values.username}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    className={inputCls(!isEditing)}
+                    className={personalFieldCls(!isEditing)}
                   />
                   {formik.touched.username && formik.errors.username && (
                     <p className="text-[11px] text-red-500 mt-1">{formik.errors.username}</p>
+                  )}
+                  {usernameLimitReached && !formik.errors.username && (
+                    <p className="text-[11px] text-red-500 mt-1">User Name cannot exceed 24 characters</p>
                   )}
                 </div>
 
                 {/* Phone Numbers */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Phone Number</label>
+                  <label className={personalLabelCls}>Phone Number</label>
                   <div className="space-y-2">
                     {phones.map((p, i) => (
                       <div key={i}>
-                        <div className={`flex items-center border rounded-lg px-3 py-2 bg-gray-50 gap-2 ${p.touched && p.error ? "border-red-400" : "border-gray-200"}`}>
+                        <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 gap-2 ${p.touched && p.error ? "border border-red-400" : ""}`}>
                           <img src={phone} alt="phone" className="w-4 h-4 shrink-0" />
                           <input
                             type="text"
                             inputMode="tel"
+                            disabled={!isEditing}
                             value={p.value}
                             onChange={(e) => handlePhoneChange(i, e.target.value)}
                             onBlur={() => blurPhone(i)}
                             placeholder="+91XXXXXXXXXX"
-                            className="flex-1 text-sm text-gray-800 bg-transparent focus:outline-none"
+                            className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                           />
                           {phones.length > 1 && (
                             <button type="button" onClick={() => removePhone(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none font-bold ml-1">×</button>
@@ -478,10 +556,10 @@ export default function UpdateProfile() {
                         )}
                         <div className="flex justify-between mt-1">
                           {i === 0 && phones.length < 2 && (
-                            <button type="button" onClick={addPhone} className="text-[11px] text-[#1a7a4a] hover:underline">Add New Phone Number</button>
+                            <button type="button" onClick={addPhone} className={addLinkCls}>Add New Phone Number</button>
                           )}
                           {i > 0 && <span />}
-                          <button type="button" onClick={() => handleUpdatePhone(i)} className="text-[11px] text-[#1a7a4a] hover:underline ml-auto">Update Phone Number</button>
+                          <button type="button" onClick={() => handleUpdatePhone(i)} className={`${updateLinkCls} ml-auto`}>Update Phone Number</button>
                         </div>
                       </div>
                     ))}
@@ -490,8 +568,8 @@ export default function UpdateProfile() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Password</label>
-                  <div className={`flex items-center border rounded-lg px-3 py-2 bg-gray-50 ${formik.touched.password && formik.errors.password ? "border-red-400" : "border-gray-200"} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
+                  <label className={personalLabelCls}>Password</label>
+                  <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 ${formik.touched.password && formik.errors.password ? "border border-red-400" : ""} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
                     <input
                       type={showPassword ? "text" : "password"}
                       id="password"
@@ -499,12 +577,26 @@ export default function UpdateProfile() {
                       disabled={!isEditing}
                       placeholder="Enter your password"
                       value={formik.values.password}
-                      onChange={formik.handleChange}
+                      maxLength={PASSWORD_MAX_LENGTH}
+                      onCopy={blockPasswordClipboardAction}
+                      onCut={blockPasswordClipboardAction}
+                      onPaste={blockPasswordClipboardAction}
+                      onContextMenu={blockPasswordContextMenu}
+                      onKeyDown={blockPasswordClipboardShortcut}
+                      onChange={(e) => {
+                        formik.setFieldValue("password", e.target.value.slice(0, PASSWORD_MAX_LENGTH));
+                      }}
                       onBlur={(e) => { setPasswordFocused(false); formik.handleBlur(e); }}
                       onFocus={() => setPasswordFocused(true)}
-                      className="flex-1 text-sm text-gray-800 bg-transparent focus:outline-none disabled:cursor-not-allowed"
+                      className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => setShowPassword(!showPassword)} className="text-gray-400 cursor-pointer hover:text-gray-600">
+                    <button type="button" disabled={!isEditing} onClick={() => {
+                      setShowPassword((current) => {
+                        const next = !current;
+                        if (next) setShowConfirm(false);
+                        return next;
+                      });
+                    }} className="text-gray-400 cursor-pointer hover:text-gray-600">
                       <img className="w-5 h-5" src={showPassword ? eyeshow : eyehide} alt="eyeicon" />
                     </button>
                   </div>
@@ -528,8 +620,8 @@ export default function UpdateProfile() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Confirm Password</label>
-                  <div className={`flex items-center border rounded-lg px-3 py-2 bg-gray-50 ${formik.touched.confirmPassword && formik.errors.confirmPassword ? "border-red-400" : "border-gray-200"} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
+                  <label className={personalLabelCls}>Confirm Password</label>
+                  <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 ${formik.touched.confirmPassword && formik.errors.confirmPassword ? "border border-red-400" : ""} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
                     <input
                       type={showConfirm ? "text" : "password"}
                       id="confirmPassword"
@@ -537,11 +629,25 @@ export default function UpdateProfile() {
                       disabled={!isEditing}
                       placeholder="Confirm your password"
                       value={formik.values.confirmPassword}
-                      onChange={formik.handleChange}
+                      maxLength={PASSWORD_MAX_LENGTH}
+                      onCopy={blockPasswordClipboardAction}
+                      onCut={blockPasswordClipboardAction}
+                      onPaste={blockPasswordClipboardAction}
+                      onContextMenu={blockPasswordContextMenu}
+                      onKeyDown={blockPasswordClipboardShortcut}
+                      onChange={(e) => {
+                        formik.setFieldValue("confirmPassword", e.target.value.slice(0, PASSWORD_MAX_LENGTH));
+                      }}
                       onBlur={formik.handleBlur}
-                      className="flex-1 text-sm text-gray-800 bg-transparent focus:outline-none disabled:cursor-not-allowed"
+                      className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => setShowConfirm(!showConfirm)} className="text-gray-400 cursor-pointer hover:text-gray-600">
+                    <button type="button" disabled={!isEditing} onClick={() => {
+                      setShowConfirm((current) => {
+                        const next = !current;
+                        if (next) setShowPassword(false);
+                        return next;
+                      });
+                    }} className="text-gray-400 cursor-pointer hover:text-gray-600">
                       <img className="w-5 h-5" src={showConfirm ? eyeshow : eyehide} alt="eyeicon" />
                     </button>
                   </div>
@@ -552,18 +658,19 @@ export default function UpdateProfile() {
 
                 {/* Email Addresses */}
                 <div className="col-span-1">
-                  <label className="block text-xs text-gray-500 mb-1.5">Email Address</label>
+                  <label className={personalLabelCls}>Email Address</label>
                   <div className="space-y-2">
                     {emails.map((em, i) => (
                       <div key={i}>
-                        <div className={`flex items-center border rounded-lg px-3 py-2 bg-gray-50 gap-2 ${em.touched && em.error ? "border-red-400" : "border-gray-200"}`}>
+                        <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 gap-2 ${em.touched && em.error ? "border border-red-400" : ""}`}>
                           <input
                             type="text"
+                            disabled={!isEditing}
                             value={em.value}
                             onChange={(e) => handleEmailChange(i, e.target.value)}
                             onBlur={() => blurEmail(i)}
                             placeholder="Enter your Email Address"
-                            className="flex-1 text-sm text-gray-800 bg-transparent focus:outline-none"
+                            className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                           />
                           {emails.length > 1 && (
                             <button type="button" onClick={() => removeEmail(i)} className="text-gray-400 hover:text-red-500 text-lg leading-none font-bold ml-1">×</button>
@@ -574,10 +681,10 @@ export default function UpdateProfile() {
                         )}
                         <div className="flex justify-between mt-1">
                           {i === 0 && emails.length < 2 && (
-                            <button type="button" onClick={addEmail} className="text-[11px] text-[#1a7a4a] hover:underline">Add New Email Address</button>
+                            <button type="button" onClick={addEmail} className={addLinkCls}>Add New Email Address</button>
                           )}
                           {i > 0 && <span />}
-                          <button type="button" onClick={() => handleUpdateEmail(i)} className="text-[11px] text-[#1a7a4a] hover:underline ml-auto">Update Email Address</button>
+                          <button type="button" onClick={() => handleUpdateEmail(i)} className={`${updateLinkCls} ml-auto`}>Update Email Address</button>
                         </div>
                       </div>
                     ))}
@@ -588,38 +695,38 @@ export default function UpdateProfile() {
             </section>
 
             {/* Professional Details */}
-            <section>
-              <h2 className="text-sm font-bold text-gray-800 mb-4">Professional Details</h2>
+            <section className="w-[1018px]">
+              <h2 className="w-[1018px] h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000] mb-[42px]">Professional Details</h2>
 
               {/* Subjects */}
-              <div className=" w-[312px] mb-5">
-                <p className="text-xs text-gray-600 mb-2 font-medium">
-                  Subjects: <span className="text-gray-400 font-normal">(minimum 3 required)</span>
+              <div className="w-[312px] min-h-[368px] mb-5 flex flex-col gap-4">
+                <p className="w-[284px] h-[24px] font-poppins text-[18px] font-semibold leading-[100%] text-[#0F172A]">
+                  Subjects:
                 </p>
-                <div className={`border border-gray-200 rounded-xl overflow-hidden bg-white ${!isEditing ? "opacity-60 pointer-events-none" : ""}`}>
-                  <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
+                <div className={`${!isEditing ? "pointer-events-none" : ""}`}>
+                  <div className="w-[312px] h-[42px] flex items-center gap-2 px-3 rounded-[8px] bg-gray-50">
                     <img src={search} alt="search" className="w-4 h-4" />
                     <input
                       type="text"
                       placeholder="Search"
                       value={subjectSearch}
                       onChange={(e) => setSubjectSearch(e.target.value)}
-                      className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+                      className="flex-1 font-poppins text-sm bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
                     />
                   </div>
-                  <div className="divide-y divide-gray-50">
+                  <div className="mt-4 flex flex-col gap-4">
                     {filteredSubjects.map((subject) => {
                       const checked = formik.values.subjects.includes(subject);
                       return (
                         <label
                           key={subject}
                           onClick={() => toggleSubject(subject)}
-                          className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-green-50 transition-colors"
+                          className="w-[348px] h-[20px] flex items-center gap-4 cursor-pointer"
                         >
-                          <div className="w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 bg-white border-[#1a7a4a]">
+                          <div className="w-[16px] h-[16px] rounded border-2 flex items-center justify-center shrink-0 bg-white border-[#1a7a4a]">
                             {checked && <img className="w-2 h-2" src={tick} alt="tick" />}
                           </div>
-                          <span className="text-sm text-gray-700">{subject}</span>
+                          <span className="font-poppins text-[16px] font-semibold text-gray-700">{subject}</span>
                         </label>
                       );
                     })}
@@ -633,10 +740,10 @@ export default function UpdateProfile() {
               </div>
 
               {/* Years + Qualification */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 mt-6">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Years of Experience</label>
-                  <div className={`flex items-center border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
+                  <label className="block w-[240px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Years of Experience</label>
+                  <div className={`w-[315px] h-[42px] flex items-center gap-2 rounded-[8px] px-3 bg-gray-50 ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
                     <select
                       id="yearsOfExperience"
                       name="yearsOfExperience"
@@ -644,11 +751,11 @@ export default function UpdateProfile() {
                       value={formik.values.yearsOfExperience}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
-                      className="flex-1 text-sm text-gray-500 bg-transparent focus:outline-none appearance-none disabled:cursor-not-allowed cursor-pointer"
+                      className="flex-1 pl-3 pr-8 font-poppins text-[16px] font-semibold text-gray-500 bg-transparent focus:outline-none appearance-none disabled:cursor-not-allowed cursor-pointer"
                     >
-                      <option value="">Choose Years of Experience</option>
+                      <option value="" className="px-4 py-2">Choose Years of Experience</option>
                       {YEARS_OPTIONS.map((y) => (
-                        <option key={y} value={y}>{y}</option>
+                        <option key={y} value={y} className="px-4 py-2">{y}</option>
                       ))}
                     </select>
                     <img src={downarrow} alt="downarrow" className="w-4 h-4 shrink-0 pointer-events-none" />
@@ -659,7 +766,7 @@ export default function UpdateProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Qualification</label>
+                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Qualification</label>
                   <input
                     type="text"
                     id="qualification"
@@ -669,14 +776,14 @@ export default function UpdateProfile() {
                     value={formik.values.qualification}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    className={inputCls(!isEditing)}
+                    className="w-[315px] h-[42px] rounded-[8px] px-3 bg-gray-50 font-poppins text-sm text-gray-800 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {formik.touched.qualification && formik.errors.qualification && (
                     <p className="text-[11px] text-red-500 mt-1">{formik.errors.qualification}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1.5">Qualification</label>
+                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Qualification</label>
                   <input
                     type="text"
                     id="qualification"
@@ -686,7 +793,7 @@ export default function UpdateProfile() {
                     value={formik.values.qualification}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    className={inputCls(!isEditing)}
+                    className="w-[315px] h-[42px] rounded-[8px] px-3 bg-gray-50 font-poppins text-sm text-gray-800 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   {formik.touched.qualification && formik.errors.qualification && (
                     <p className="text-[11px] text-red-500 mt-1">{formik.errors.qualification}</p>
@@ -701,14 +808,13 @@ export default function UpdateProfile() {
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="w-[216px] px-6 py-2.5 rounded-lg border cursor-pointer border-[#238B45] text-sm font-medium text-[#238B45] hover:bg-[#036724] active:bg-[#42CE70] active:text-white hover:text-amber-50 transition-colors"
+                  className="w-[216px] h-[48px] rounded-[8px] border border-[#238B45] p-3 flex items-center justify-center gap-3 cursor-pointer font-poppins text-[20px] font-semibold leading-[100%] capitalize text-[#238B45] hover:bg-[#F1FFF6] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="w-[216px] px-6 py-2.5 rounded-lg bg-[#238B45] cursor-pointer text-white text-sm font-medium hover:bg-[#036724] active:bg-[#42CE70] transition-colors"
-                  onClick={()=>setShowSuccess(true)}
+                  className="w-[215px] h-[48px] rounded-[8px] bg-[#238B45] p-3 flex items-center justify-center gap-3 cursor-pointer font-poppins text-[20px] font-semibold leading-[100%] capitalize text-[#FFFFFF] hover:bg-[#036724] active:bg-[#42CE70] transition-colors"
                 >
                   Save Permissions
                 </button>
@@ -720,7 +826,7 @@ export default function UpdateProfile() {
       </div>
       <SuccessModalTwo
         isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
+        onClose={handleSuccessClose}
       //   onVisitProfile={() => {
       //     setShowSuccess(false);
       //     // navigate("/profile") if you want to route somewhere

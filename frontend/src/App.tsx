@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 // ── Auth / Landing pages (User Module) ──────────────────────────────────────
 import Login             from "./pages/Login";
@@ -12,7 +13,7 @@ import ConfirmRole       from "./pages/ConfirmRole";
 import StudentDetails    from "./pages/StudentDetails";
 import TeacherVerification from "./pages/TeacherVerification";
 import ParentVerification  from "./pages/ParentVerification";
-import Home              from "./pages/Home";
+import Home              from "./modules/landing/Home";
 import SocialAuthCallback from "./pages/SocialAuthCallback";
 
 // ── Landing section pages ───────────────────────────────────────────────────
@@ -46,6 +47,7 @@ import ProtectedRoute     from "./routes/ProtectedRoute";
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       <Routes>
 
         {/* ── Home / Landing ────────────────────────────────────────────── */}
@@ -99,6 +101,7 @@ function App() {
           <Route path="assignments"  element={<Assignments />} />
           <Route path="settings"     element={<TeacherSettings />} />
           <Route path="profile"      element={<UpdateProfile />} />
+          <Route path="profile-update" element={<UpdateProfile />} />
         </Route>
 
         {/* ── Parent module (/parent/*) ─────────────────────────────────── */}

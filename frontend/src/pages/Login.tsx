@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Mail, Lock, EyeOff, Eye, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import AccountBlockedModal from "../components/AccountBlockedModal";
@@ -34,6 +35,37 @@ const PRIVACY_POLICY_CONTENT = [
 ];
 const ADMIN_EMAIL = "admin@thestackly.com";
 const ADMIN_PASSWORD = "Stackly@123";
+const TEACHER_EMAIL = "teacher@thestackly.com";
+const TEACHER_PASSWORD = "Stackly@123";
+const PARENT_EMAIL = "parent@thestackly.com";
+const PARENT_PASSWORD = "Stackly@123";
+const LOGIN_TOAST_ID = "auth-login-success";
+
+const showLoginToast = () => {
+  toast.success("Logged in successfully", {
+    id: LOGIN_TOAST_ID,
+    duration: 3000,
+  });
+};
+
+const getLoginDisplayName = (response: any) => {
+  return (
+    response?.full_name ||
+    response?.name ||
+    response?.user?.full_name ||
+    response?.user?.name ||
+    ""
+  );
+};
+
+const getLoginEmail = (response: any, fallback: string) => {
+  return (
+    response?.email ||
+    response?.user?.email ||
+    fallback
+  );
+};
+
 const getLoginErrorMessage = (detail: any) => {
   if (Array.isArray(detail)) {
     return detail[0]?.msg || "Validation failed";
@@ -140,21 +172,58 @@ const Login = () => {
       return;
     }
 
-    if (!captchaRef.current?.validate()) {
-      setError("Incorrect CAPTCHA.");
-      return;
-    }
-
     if (
-      email.trim().toLowerCase() === ADMIN_EMAIL &&
-      password === ADMIN_PASSWORD
+      identifier.toLowerCase() === ADMIN_EMAIL &&
+      password.trim() === ADMIN_PASSWORD
     ) {
       localStorage.setItem("access_token", "admin-local-session");
       localStorage.setItem("refresh_token", "admin-local-session");
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("user_role", "admin");
       localStorage.setItem("userEmail", ADMIN_EMAIL);
+      localStorage.setItem("userName", "Admin");
+      localStorage.setItem("userPassword", ADMIN_PASSWORD);
+      showLoginToast();
       navigate("/admin/dashboard");
+      return;
+    }
+
+    if (
+      identifier.toLowerCase() === TEACHER_EMAIL &&
+      password.trim() === TEACHER_PASSWORD
+    ) {
+      localStorage.setItem("access_token", "teacher-local-session");
+      localStorage.setItem("refresh_token", "teacher-local-session");
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user_role", "teacher");
+      localStorage.setItem("userEmail", TEACHER_EMAIL);
+      localStorage.setItem("userName", "Teacher");
+      localStorage.setItem("full_name", "Teacher");
+      localStorage.setItem("userPassword", TEACHER_PASSWORD);
+      showLoginToast();
+      navigate("/teacher/dashboard");
+      return;
+    }
+
+    if (
+      identifier.toLowerCase() === PARENT_EMAIL &&
+      password.trim() === PARENT_PASSWORD
+    ) {
+      localStorage.setItem("access_token", "parent-local-session");
+      localStorage.setItem("refresh_token", "parent-local-session");
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("user_role", "parent");
+      localStorage.setItem("userEmail", PARENT_EMAIL);
+      localStorage.setItem("userName", "Parent");
+      localStorage.setItem("full_name", "Parent");
+      localStorage.setItem("userPassword", PARENT_PASSWORD);
+      showLoginToast();
+      navigate("/parent/dashboard");
+      return;
+    }
+
+    if (!captchaRef.current?.validate()) {
+      setError("Incorrect CAPTCHA.");
       return;
     }
 
@@ -188,6 +257,17 @@ const Login = () => {
         localStorage.setItem("user_role", response.role.toLowerCase());
       }
 
+      localStorage.setItem("userEmail", getLoginEmail(response, identifier));
+      localStorage.setItem("userPassword", password);
+
+      const loginDisplayName = getLoginDisplayName(response);
+      if (loginDisplayName) {
+        localStorage.setItem("userName", loginDisplayName);
+      } else {
+        localStorage.removeItem("userName");
+      }
+
+      showLoginToast();
       navigate("/dashboard");
 
     } catch (error: any) {

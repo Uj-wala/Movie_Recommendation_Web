@@ -1,35 +1,23 @@
-import React, { useRef, useState } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
- 
+import React, { useEffect, useRef, useState } from "react";
 import {
   Star,
   ChevronDown,
 } from "lucide-react";
-import icon322 from "../../../assets/icons/Frame 322.png";
-import icon323 from "../../../assets/icons/Frame 323.png";
-import icon324 from "../../../assets/icons/Frame 324.png";
-import icon325 from "../../../assets/icons/Frame 325.png";
-import icon322_1 from "../../../assets/icons/Frame 322 (1).png";
-import icon322_2 from "../../../assets/icons/Frame 322 (2).png";
-import icon322_3 from "../../../assets/icons/Frame 322 (3).png";
-import icon322_4 from "../../../assets/icons/Frame 322 (4).png";
-import activityIcon1 from "../../../assets/icons/Icons.png";
-import activityIcon2 from "../../../assets/icons/Icons (1).png";
-import activityIcon3 from "../../../assets/icons/Icons (2).png";
-import avatarImage from "../../../assets/icons/Avatar.png";
+import teacherIcon1 from "../../../assets/Teacher_icon_1.jpeg";
+import teacherIcon2 from "../../../assets/Teacher_icon_2.jpeg";
+import teacherIcon3 from "../../../assets/Teacher_icon_3.jpeg";
+import teacherIcon4 from "../../../assets/Teacher_icon_4.jpeg";
+import teacherIcon5 from "../../../assets/Teacher_icon_5.jpeg";
+import teacherIcon6 from "../../../assets/Teacher_icon_6.jpeg";
+import teacherIcon7 from "../../../assets/Teacher_icon_7.jpeg";
+import teacherIcon8 from "../../../assets/Teacher_icon_8.jpeg";
+import activityIcon1 from "../../../assets/teacher_module_recent_activity_1.jpeg";
+import activityIcon2 from "../../../assets/teacher_module_recent_activity_2.jpeg";
+import activityIcon3 from "../../../assets/teacher_module_recent_activity_3.jpeg";
+import activityIcon4 from "../../../assets/teacher_module_recent_activity_4.jpeg";
 import { useNavigate } from "react-router-dom";
-import profilePictureDefault from "../../../assets/UpdateProfileIcons/profilepicturedefault.svg";
+import toast from "react-hot-toast";
+import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import downarrow from "../../../assets/UpdateProfileIcons/DownArrow.svg";
  
 interface StatCard {
@@ -37,61 +25,17 @@ interface StatCard {
   title: string;
   value: string;
   icon: string;
-  bgColor: string;
 }
  
 const statsData: StatCard[] = [
-  { id: 1, title: "Enrolled Courses", value: "957", icon: icon322, bgColor: "bg-[#F1FFF6]" },
-  { id: 2, title: "Active Courses", value: "19", icon: icon323, bgColor: "bg-[#F4F1FF]" },
-  { id: 3, title: "Course Instructors", value: "241", icon: icon325, bgColor: "bg-[#F1FFF6]" },
-  { id: 4, title: "Completed Courses", value: "951", icon: icon324, bgColor: "bg-[#F1FFF6]" },
-  { id: 5, title: "Students", value: "1,674,767", icon: icon322_1, bgColor: "bg-[#FFF3F3]" },
-  { id: 6, title: "Online Courses", value: "3", icon: icon322_2, bgColor: "bg-[#F1FFF6]" },
-  { id: 7, title: "USD Total Earning", value: "$7,461,767", icon: icon322_3, bgColor: "bg-[#F8F8F8]" },
-  { id: 8, title: "Course Sold", value: "56,489", icon: icon322_4, bgColor: "bg-[#F4F1FF]" },
-];
- 
-const revenueData = [
-  { day: "Aug 01", revenue: 110000 },
-  { day: "Aug 05", revenue: 95000 },
-  { day: "Aug 07", revenue: 51749 },
-  { day: "Aug 10", revenue: 85000 },
-  { day: "Aug 15", revenue: 65000 },
-  { day: "Aug 20", revenue: 76000 },
-  { day: "Aug 25", revenue: 43000 },
-  { day: "Aug 31", revenue: 98000 },
-];
- 
-const profileData = [
-  { value: 60 },
-  { value: 82 },
-  { value: 35 },
-  { value: 85 },
-  { value: 42 },
-  { value: 60 },
-  { value: 28 },
-  { value: 50 },
-  { value: 42 },
-];
- 
-const overviewData = [
-  { day: "Sun", blue: 140, green: 60 },
-  { day: "Mon", blue: 170, green: 80 },
-  { day: "Tue", blue: 55, green: 180 },
-  { day: "Wed", blue: 90, green: 20 },
-  { day: "Thu", blue: 70, green: 10 },
-  { day: "Fri", blue: 85, green: 170 },
-  { day: "Sat", blue: 130, green: 5 },
-];
- 
-const miniChart = [
-  { value: 30 },
-  { value: 80 },
-  { value: 40 },
-  { value: 60 },
-  { value: 70 },
-  { value: 50 },
-  { value: 90 },
+  { id: 1, title: "Enrolled Courses", value: "957", icon: teacherIcon1 },
+  { id: 2, title: "Active Courses", value: "19", icon: teacherIcon2 },
+  { id: 3, title: "Course Instructors", value: "241", icon: teacherIcon3 },
+  { id: 4, title: "Completed Courses", value: "951", icon: teacherIcon4 },
+  { id: 5, title: "Students", value: "1,674,767", icon: teacherIcon5 },
+  { id: 6, title: "Online Courses", value: "3", icon: teacherIcon6 },
+  { id: 7, title: "USD Total Earning", value: "$7,461,767", icon: teacherIcon7 },
+  { id: 8, title: "Course Sold", value: "56,489", icon: teacherIcon8 },
 ];
  
 interface ActivityItem {
@@ -124,36 +68,497 @@ const activities: ActivityItem[] = [
     title: "Arif purchased your course",
     subtitle: "2021 ui/ux design with figma",
     time: "7 mins ago",
-    icon: activityIcon3,
+    icon: activityIcon4,
   },
 ];
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload?.length) {
-    return (
-      <div className="bg-black text-white px-4 py-2 rounded-lg shadow-lg">
-        <p className="font-semibold">
-          {payload[0].value.toLocaleString()}
-        </p>
-      </div>
+const revenueSvgPoints = [
+  { x: 68, y: 82, value: 104000, day: "Aug 01" },
+  { x: 94, y: 74, value: 111000, day: "Aug 03" },
+  { x: 125, y: 96, value: 95000, day: "Aug 05" },
+  { x: 146, y: 92, value: 101000, day: "Aug 06" },
+  { x: 170, y: 128, value: 51749, day: "7th Aug" },
+  { x: 199, y: 110, value: 89000, day: "Aug 09" },
+  { x: 231, y: 136, value: 63000, day: "Aug 11" },
+  { x: 260, y: 122, value: 73000, day: "Aug 13" },
+  { x: 291, y: 142, value: 61000, day: "Aug 15" },
+  { x: 321, y: 126, value: 78000, day: "Aug 17" },
+  { x: 352, y: 154, value: 50000, day: "Aug 19" },
+  { x: 382, y: 133, value: 69000, day: "Aug 20" },
+  { x: 411, y: 107, value: 86000, day: "Aug 22" },
+  { x: 444, y: 173, value: 40000, day: "Aug 24" },
+  { x: 474, y: 135, value: 68000, day: "Aug 26" },
+  { x: 504, y: 153, value: 52000, day: "Aug 28" },
+  { x: 536, y: 96, value: 98000, day: "Aug 30" },
+  { x: 562, y: 119, value: 82000, day: "Aug 31" },
+];
+
+const revenueLinePath =
+  "M68 82 C83 74 94 72 108 80 C121 89 130 102 146 92 C158 84 160 106 170 128 C181 155 191 120 199 110 C211 94 219 118 231 136 C242 154 251 120 260 122 C274 125 279 147 291 142 C305 136 309 112 321 126 C334 142 342 166 352 154 C362 142 366 133 382 133 C396 132 398 112 411 107 C426 102 430 163 444 173 C459 184 462 151 474 135 C489 116 493 155 504 153 C518 151 524 100 536 96 C548 92 552 104 562 119";
+
+const revenueFillPath = `${revenueLinePath} L562 252 L68 252 Z`;
+
+const RevenueChart = () => {
+  const [hoverPoint, setHoverPoint] = useState<(typeof revenueSvgPoints)[number] | null>(null);
+
+  const handleMouseMove = (event: React.MouseEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const scaleX = 590 / rect.width;
+    const mouseX = (event.clientX - rect.left) * scaleX;
+    const closest = revenueSvgPoints.reduce((best, point) =>
+      Math.abs(point.x - mouseX) < Math.abs(best.x - mouseX) ? point : best
     );
-  }
- 
-  return null;
+    setHoverPoint(closest);
+  };
+
+  return (
+    <svg
+      viewBox="0 0 590 290"
+      className="h-[290px] w-full"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoverPoint(null)}
+    >
+      {[
+        ["1m", 26],
+        ["500k", 67],
+        ["100k", 108],
+        ["50k", 148],
+        ["10k", 190],
+        ["1k", 230],
+        ["0", 270],
+      ].map(([label, y]) => (
+        <text
+          key={label}
+          x="8"
+          y={Number(y)}
+          fill="#A3ACBD"
+          fontFamily="Inter"
+          fontSize="15"
+          dominantBaseline="middle"
+        >
+          {label}
+        </text>
+      ))}
+
+      {[
+        ["Aug 01", 68],
+        ["Aug 10", 212],
+        ["Aug 20", 382],
+        ["Aug 31", 536],
+      ].map(([label, x]) => (
+        <text
+          key={label}
+          x={Number(x)}
+          y="278"
+          fill="#A3ACBD"
+          fontFamily="Inter"
+          fontSize="15"
+          textAnchor="middle"
+        >
+          {label}
+        </text>
+      ))}
+
+      <path d={revenueFillPath} fill="#EEF0FF" opacity="0.72" />
+      <path
+        d={revenueLinePath}
+        fill="none"
+        stroke="#4F46E5"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {hoverPoint && (
+        <>
+          <line
+            x1={hoverPoint.x}
+            y1="0"
+            x2={hoverPoint.x}
+            y2="252"
+            stroke="#4F46E5"
+            strokeWidth="1.5"
+            strokeDasharray="9 8"
+          />
+          <circle cx={hoverPoint.x} cy={hoverPoint.y} r="7" fill="#4F46E5" stroke="#FFFFFF" strokeWidth="4" />
+          <g transform={`translate(${Math.max(78, Math.min(hoverPoint.x - 54, 452))} ${Math.max(16, hoverPoint.y - 92)})`}>
+            <rect width="108" height="66" fill="#1D2026" />
+            <text x="54" y="27" fill="#FFFFFF" fontFamily="Inter" fontSize="17" fontWeight="600" textAnchor="middle">
+              {hoverPoint.value.toLocaleString()}
+            </text>
+            <text x="54" y="49" fill="#B8C0CC" fontFamily="Inter" fontSize="13" textAnchor="middle">
+              {hoverPoint.day}
+            </text>
+            <path d="M47 66 L61 66 L54 74 Z" fill="#1D2026" />
+          </g>
+        </>
+      )}
+    </svg>
+  );
+};
+
+const profileViewBars = [
+  63, 84, 37, 89, 42, 63, 29, 51, 43,
+];
+
+const ProfileViewChart = () => {
+  const chartHeight = 222;
+  const baseline = 230;
+  const barWidth = 15;
+  const gap = 10;
+
+  return (
+    <svg viewBox="0 0 225 240" className="h-[240px] w-full">
+      {profileViewBars.map((value, index) => {
+        const x = index * (barWidth + gap) + 3;
+        const greenHeight = (value / 100) * chartHeight;
+
+        return (
+          <g key={index}>
+            <rect
+              x={x}
+              y={8}
+              width={barWidth}
+              height={chartHeight}
+              fill="#EAF4EF"
+            />
+            <rect
+              x={x}
+              y={baseline - greenHeight}
+              width={barWidth}
+              height={greenHeight}
+              fill="#238B45"
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const CourseOverviewChart = () => (
+  <svg viewBox="0 0 596 330" className="h-[335px] w-full">
+    <defs>
+      <filter id="courseGreenLineShadow" x="-10%" y="-10%" width="125%" height="125%">
+        <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#238B45" floodOpacity="0.18" />
+      </filter>
+    </defs>
+    {[
+      ["1m", 28],
+      ["500k", 72],
+      ["100k", 114],
+      ["50k", 156],
+      ["10k", 200],
+      ["1k", 244],
+      ["0", 287],
+    ].map(([label, y]) => (
+      <text
+        key={label}
+        x="4"
+        y={Number(y)}
+        fill="#A3ACBD"
+        fontFamily="Inter"
+        fontSize="13"
+        dominantBaseline="middle"
+      >
+        {label}
+      </text>
+    ))}
+
+    {[
+      ["Sun", 74],
+      ["Mon", 168],
+      ["Tue", 262],
+      ["Wed", 356],
+      ["Thi", 450],
+      ["Fri", 544],
+      ["Sat", 586],
+    ].map(([label, x]) => (
+      <text
+        key={label}
+        x={Number(x)}
+        y="320"
+        fill="#A3ACBD"
+        fontFamily="Inter"
+        fontSize="14"
+        textAnchor="middle"
+      >
+        {label}
+      </text>
+    ))}
+
+    <path d="M64 86 C95 164 122 127 145 92 C175 43 196 173 236 148 C270 126 285 220 319 168 C347 126 359 184 389 177 C419 170 430 184 457 170 C493 151 514 174 548 194 C569 207 584 166 590 142 L606 142 L606 286 L64 286 Z" fill="#F0F1FF" opacity="0.75" />
+
+    <path
+      d="M64 86 C95 164 122 127 145 92 C175 43 196 173 236 148 C270 126 285 220 319 168 C347 126 359 184 389 177 C419 170 430 184 457 170 C493 151 514 174 548 194 C569 207 584 166 590 142"
+      fill="none"
+      stroke="#4F46E5"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+
+    <path
+      d="M64 139 C100 169 123 156 150 138 C177 119 188 144 216 88 C244 32 278 123 296 150 C324 190 319 260 350 212 C371 179 386 293 431 244 C465 206 474 61 517 97 C548 124 553 133 578 170 C593 194 604 236 606 256"
+      fill="none"
+      stroke="#238B45"
+      strokeWidth="7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      opacity="0.12"
+      filter="url(#courseGreenLineShadow)"
+    />
+
+    <path
+      d="M64 139 C100 169 123 156 150 138 C177 119 188 144 216 88 C244 32 278 123 296 150 C324 190 319 260 350 212 C371 179 386 293 431 244 C465 206 474 61 517 97 C548 124 553 133 578 170 C593 194 604 236 606 256"
+      fill="none"
+      stroke="#238B45"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const RatingSparkline = () => (
+  <svg viewBox="0 0 241 100" className="h-full w-full">
+    <rect width="241" height="100" fill="#F1FFF6" />
+    <path
+      d="M8 55 C22 80 30 13 49 17 C66 20 63 78 82 64 C101 49 121 52 132 71 C145 93 155 44 178 38 C197 33 196 78 211 71 C226 64 220 29 239 45"
+      fill="none"
+      stroke="#238B45"
+      strokeWidth="3.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const RatingStars = ({ filled, half = false, size = 16 }: { filled: number; half?: boolean; size?: number }) => (
+  <div className="flex gap-[4px]">
+    {[0, 1, 2, 3, 4].map((starIndex) => {
+      const isFilled = starIndex < filled;
+      const isHalf = half && starIndex === filled;
+
+      return (
+        <span key={starIndex} className="relative inline-flex" style={{ width: size, height: size }}>
+          <Star size={size} fill="none" color="#238B45" strokeWidth={2.2} />
+          {(isFilled || isHalf) && (
+            <span
+              className="absolute left-0 top-0 overflow-hidden"
+              style={{ width: isHalf ? size / 2 : size, height: size }}
+            >
+              <Star size={size} fill="#238B45" color="#238B45" strokeWidth={2.2} />
+            </span>
+          )}
+        </span>
+      );
+    })}
+  </div>
+);
+
+const ratingRows = [
+  { label: "5 Star", percent: "56%", width: 56, filled: 5 },
+  { label: "4 Star", percent: "37%", width: 37, filled: 4 },
+  { label: "3 Star", percent: "8%", width: 8, filled: 3 },
+  { label: "2 Star", percent: "1%", width: 1, filled: 2 },
+  { label: "1 Star", percent: "<1%", width: 2, filled: 1 },
+];
+
+type PeriodDropdownProps = {
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+};
+
+const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, options, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setOpen(false);
+      buttonRef.current?.focus();
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && document.activeElement === buttonRef.current) {
+      event.preventDefault();
+      setOpen((current) => {
+        const nextOpen = !current;
+        if (!current) {
+          window.setTimeout(() => optionRefs.current[0]?.focus(), 0);
+        }
+        return nextOpen;
+      });
+      return;
+    }
+
+    if (!open) return;
+
+    const currentIndex = optionRefs.current.findIndex((item) => item === document.activeElement);
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+      optionRefs.current[nextIndex]?.focus();
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const previousIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+      optionRefs.current[previousIndex]?.focus();
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef} onKeyDown={handleKeyDown}>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-1 h-[19px] font-['Inter'] text-[11.56px] font-normal leading-[18.17px] tracking-[-0.01em] text-right text-[#6E7485]"
+      >
+        {value}
+        <ChevronDown size={16} />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-[24px] z-30 w-[110px] rounded-md border border-[#E5E7EB] bg-white py-1 shadow-md" role="menu">
+          {options.map((option, index) => (
+            <button
+              key={option}
+              ref={(element) => {
+                optionRefs.current[index] = element;
+              }}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+              }}
+              className={`block w-full px-3 py-2 text-center font-['Inter'] text-[11.56px] leading-[18.17px] hover:bg-[#F1FFF6] focus:bg-[#F1FFF6] focus:outline-none ${
+                option === value ? "text-[#238B45] font-medium" : "text-[#6E7485] font-normal"
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
  
 const TeacherDashboard: React.FC = () => {
   const userName =
+    localStorage.getItem("userName") ||
     localStorage.getItem("full_name") ||
     localStorage.getItem("name") ||
-    "John_doe";
+    "Teacher";
  const navigate = useNavigate();
   const userEmail =
+    localStorage.getItem("userEmail") ||
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
-    "john.doe@gmail.com";
+    "teacher@thestackly.com";
  const [dropdownOpen, setDropdownOpen] = useState(false);
+ const [activityPeriod, setActivityPeriod] = useState("Today");
+ const [revenuePeriod, setRevenuePeriod] = useState("This Month");
+ const [profilePeriod, setProfilePeriod] = useState("Today");
+ const [ratingPeriod, setRatingPeriod] = useState("This Week");
+ const [overviewPeriod, setOverviewPeriod] = useState("This Week");
  const dropdownRef = useRef<HTMLDivElement>(null);
+ const dropdownButtonRef = useRef<HTMLButtonElement>(null);
+ const dropdownItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+ const handleLogout = () => {
+  setDropdownOpen(false);
+  [
+    "access_token",
+    "refresh_token",
+    "isAuthenticated",
+    "user_role",
+    "userEmail",
+    "userName",
+    "full_name",
+    "name",
+    "userPassword",
+  ].forEach((key) => localStorage.removeItem(key));
+  toast.dismiss();
+  toast.success("Logged out successfully", { duration: 5000 });
+  navigate("/");
+ };
+ const dropdownActions = [
+  {
+    label: "My Profile",
+    onSelect: () => navigate("/teacher/profile"),
+  },
+  {
+    label: "Settings",
+    onSelect: () => navigate("/teacher/settings"),
+  },
+  {
+    label: "Log Out",
+    onSelect: handleLogout,
+  },
+ ];
+
+ useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setDropdownOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+ }, []);
+
+ const handleProfileDropdownKeyDown = (event: React.KeyboardEvent) => {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    setDropdownOpen(false);
+    dropdownButtonRef.current?.focus();
+    return;
+  }
+
+  if ((event.key === "Enter" || event.key === " ") && !dropdownOpen) {
+    event.preventDefault();
+    setDropdownOpen(true);
+    window.setTimeout(() => dropdownItemRefs.current[0]?.focus(), 0);
+    return;
+  }
+
+  if (!dropdownOpen) return;
+
+  const currentIndex = dropdownItemRefs.current.findIndex((item) => item === document.activeElement);
+
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    const nextIndex = currentIndex < dropdownActions.length - 1 ? currentIndex + 1 : 0;
+    dropdownItemRefs.current[nextIndex]?.focus();
+  }
+
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    const previousIndex = currentIndex > 0 ? currentIndex - 1 : dropdownActions.length - 1;
+    dropdownItemRefs.current[previousIndex]?.focus();
+  }
+ };
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] p-8">
  
@@ -161,35 +566,43 @@ const TeacherDashboard: React.FC = () => {
  
       <div className="flex justify-between items-start mb-8">
  
-        <div>
-          <h1 className="text-[30px] font-semibold">
+        <div className="w-[384px] h-[64px] flex flex-col gap-1">
+          <h1 className="w-[384px] h-[36px] text-[28px] font-semibold leading-[100%] text-black">
             Welcome back, Larah! 👋
           </h1>
  
-          <p className="text-[#8B8B8B] mt-2">
+          <p className="w-[384px] h-[24px] text-[#8B8B8B] text-[16px] font-normal leading-[100%] flex items-center">
             Here's what's happening in your profile today.
           </p>
         </div>
         {/* Top Bar */}
       <div className="flex mt-[-32px] mr-[-32px] justify-end items-center px-8 py-3">
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef} onKeyDown={handleProfileDropdownKeyDown}>
           <button
+            ref={dropdownButtonRef}
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+            aria-haspopup="menu"
+            aria-expanded={dropdownOpen}
+            className="w-[167px] h-[42px] flex items-center gap-2 rounded-xl opacity-80 hover:bg-gray-100 transition-colors"
           >
             <img
-              src={ profilePictureDefault}
+              src={teacherProfile}
               alt={userName}
-              className="w-9 h-9 rounded-full object-cover bg-white border border-gray-200"
+              className="w-[42px] h-[42px] rounded-[12px] object-cover"
             />
-            <span className="text-sm font-semibold text-gray-800">
-              {userName.toUpperCase()}
+            <span className="flex w-[87px] h-[28px] flex-col gap-[1px] text-left text-[#000000]">
+              <span className="w-[74px] h-[14px] text-[12px] font-semibold leading-[100%] text-[#000000] whitespace-nowrap overflow-hidden text-ellipsis">
+                {userName}
+              </span>
+              <span className="w-[87px] h-[10px] font-['Nunito'] text-[10px] font-normal leading-[100%] text-[#000000] opacity-50 whitespace-nowrap overflow-hidden text-ellipsis">
+                {userEmail}
+              </span>
             </span>
-            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] p-1 rounded-[9px]" />
+            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] rounded-[9px] py-[7px] px-[4px]" />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden" role="menu">
               
               {/* Signed in as */}
               <div className="px-4 py-3 border-b border-gray-100">
@@ -199,31 +612,36 @@ const TeacherDashboard: React.FC = () => {
 
               {/* Menu items */}
               <div className="py-1">
-                <button
-                  onClick={() => {setDropdownOpen(false) ;navigate("/teacher/dashboard");}}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-
-                >
-                  My Profile
-                </button>
-                <button
-                  onClick={() => {setDropdownOpen(false);navigate("/teacher/settings");}}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Settings
-                </button>
+                {dropdownActions.slice(0, 2).map((item, index) => (
+                  <button
+                    key={item.label}
+                    ref={(element) => {
+                      dropdownItemRefs.current[index] = element;
+                    }}
+                    role="menuitem"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      item.onSelect();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#F1FFF6] focus:bg-[#F1FFF6] focus:text-[#238B45] focus:outline-none transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
 
               {/* Log Out */}
               <div className="border-t border-gray-100 py-1">
                 <button
+                  ref={(element) => {
+                    dropdownItemRefs.current[2] = element;
+                  }}
+                  role="menuitem"
                   onClick={() => {
                     setDropdownOpen(false);
-                    
-                    navigate("/");
-                    // handle logout here
+                    dropdownActions[2].onSelect();
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="w-full text-left px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] focus:text-[#B91C1C] focus:outline-none transition-colors"
                 >
                   Log Out
                 </button>
@@ -237,29 +655,27 @@ const TeacherDashboard: React.FC = () => {
  
       {/* Stats */}
  
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-4 gap-6">
  
         {statsData.map((card) => (
           <div
             key={card.id}
-            className="bg-white border border-[#EFEFEF] rounded-xl p-5 flex items-center gap-4"
+            className="w-[278px] h-[104px] bg-white border border-[#EFEFEF] rounded-xl p-[22px] flex items-center gap-[22px]"
           >
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center ${card.bgColor}`}
-            >
+            <div className="w-16 h-16 flex items-center justify-center">
               <img
                 src={card.icon}
                 alt=""
-                className="w-8 h-8 object-contain"
+                className="w-14 h-14 object-contain"
               />
             </div>
  
-            <div>
-              <h3 className="text-lg font-semibold">
+            <div className="w-[165px] h-[56px] flex flex-col gap-[6px]">
+              <h3 className={`w-[165px] h-[30px] font-['Inter'] text-[22px] ${card.value === "3" || card.value === "$7,461,767" ? "font-semibold" : "font-normal"} leading-[30px] text-[#1D2026]`}>
                 {card.value}
               </h3>
  
-              <p className="text-xs text-gray-500">
+              <p className="w-[165px] h-[20px] font-['Inter'] text-[12.5px] font-normal leading-[20px] tracking-[-0.01em] text-[#4E5566]">
                 {card.title}
               </p>
             </div>
@@ -269,70 +685,73 @@ const TeacherDashboard: React.FC = () => {
  
       {/* Progress Banner */}
  
-      <div className="bg-[#EDF8F0] rounded-2xl p-6 mt-8 flex items-center justify-between">
+      <div className="w-[1184px] h-[132px] bg-[#F1FFF6] mt-8 flex items-center gap-12 px-[30px] py-[26px]">
  
+        <div className="w-full h-[80px] flex items-center justify-between">
         <div className="flex items-center gap-4">
  
           <img
-            src={avatarImage}
+            src={teacherProfile}
             alt=""
-            className="w-16 h-16 rounded-full"
+            className="w-[80px] h-[80px] rounded-[40px] object-cover"
           />
  
-          <div>
-            <h3 className="font-semibold">
-              Vako Shivili
+          <div className="w-[180px] h-[47px] flex flex-col gap-1">
+            <h3 className="w-[180px] h-[24px] font-poppins text-[18px] font-semibold leading-[21.47px] text-[#141414]">
+              Vako Shvili
             </h3>
  
-            <p className="text-sm text-gray-500">
+            <p className="w-[180px] h-[19px] font-poppins text-[14px] font-normal leading-[18.17px] tracking-[-0.01em] text-[#141414] opacity-50">
               vako.shivili@gmail.com
             </p>
           </div>
         </div>
  
-        <div className="flex items-center gap-5">
+        <div className="w-[517.73px] h-[19px] flex items-center gap-[19.82px]">
  
-          <span className="text-xs text-gray-500">
+          <span className="w-[52px] h-[17px] font-['Inter'] text-[13px] font-medium leading-[16.52px] tracking-[-0.01em] text-right text-[#141414] opacity-60">
             1/4 Steps
           </span>
  
-          <div className="w-[260px] h-[12px] bg-[#DDEEDD] rounded-full">
+          <div className="w-[257.64px] h-[13.21px] bg-[#DDEEDD] rounded-full">
             <div className="w-[25%] h-full bg-[#238B45] rounded-full" />
           </div>
  
-          <span className="font-semibold">
+          <span className="w-[168.45px] h-[19px] font-poppins text-[16px] font-semibold leading-[18.17px] text-[#141414]">
             25% Completed
           </span>
         </div>
  
-        <button onClick={()=>navigate("/teacher/profile-update")} className=" text-white px-6 py-3 rounded-lg font-medium transition bg-[#238B45] cursor-pointer text-white text-sm font-medium hover:bg-[#036724] active:bg-[#42CE70] transition-colorshover:shadow-lg">
+        <button onClick={()=>navigate("/teacher/profile-update")} className="w-[170px] h-[54px] rounded-[8px] flex items-center justify-center gap-2 bg-[#238B45] text-white text-sm font-medium hover:bg-[#036724] active:bg-[#42CE70] transition-colors">
           Edit Biography
         </button>
+        </div>
       </div>
  
       {/* Row 1 */}
  
-      <div className="grid grid-cols-[350px_442px_258px] gap-5 mt-5">
+      <div className="grid grid-cols-[395px_500px_249px] gap-5 mt-5">
  
         {/* Recent Activity */}
  
-        <div className="bg-white rounded-xl p-5 h-[350px] overflow-hidden">
+        <div className="w-[395px] h-[350.12px] bg-white rounded-xl overflow-hidden">
  
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="font-semibold">Recent Activity</h3>
-            <button className="flex items-center gap-1 text-sm font-medium text-gray-500">
-              Today
-              <ChevronDown size={16} />
-            </button>
+          <div className="h-[45.42px] flex justify-between items-center px-[16.52px] py-[13.21px]">
+            <h3 className="w-[96px] h-[19px] font-['Inter'] text-[13.21px] font-bold leading-[18.17px] text-[#1D2026]">Recent Activity</h3>
+            <PeriodDropdown
+              value={activityPeriod}
+              options={["Today", "This Week", "This Month"]}
+              onChange={setActivityPeriod}
+            />
           </div>
  
-          <div className="max-h-[260px] overflow-y-auto pr-2 scrollbar-none">
+          <div className="max-h-[304px] overflow-y-auto scrollbar-none">
             {activities.map((item, index) => (
               <div
                 key={index}
-                className="flex min-h-[56px] gap-[8px] py-3"
+                className="w-[395px] h-[75.77px] flex gap-[9.91px] px-[16.52px] py-[9.91px]"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#238B45] flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center flex-shrink-0">
                   <img
                     src={item.icon}
                     alt="activity icon"
@@ -340,10 +759,25 @@ const TeacherDashboard: React.FC = () => {
                   />
                 </div>
  
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                  <p className="text-xs text-slate-500">{item.subtitle}</p>
-                  <span className="text-xs text-gray-400">{item.time}</span>
+                <div className="w-[315px] pt-[1px]">
+                  {index === 0 ? (
+                    <p className="w-[280.76px] h-[37px] font-['Inter'] text-[14px] tracking-[-0.01em] text-[#4E5566]">
+                      <span className="font-semibold leading-[16.52px] text-[#1D2026]">Kevin</span>{" "}
+                      <span className="font-normal leading-[18.17px]">comments on your lecture “What is ux” in</span>
+                      <br />
+                      <span className="font-semibold leading-[16.52px] text-[#1D2026]">“2021 ui/ux design with figma”</span>
+                    </p>
+                  ) : (
+                    <p className="w-[280.76px] h-[37px] font-['Inter'] text-[14px] font-normal leading-[18.17px] tracking-[-0.01em] text-[#4E5566]">
+                      <span className="font-semibold leading-[16.52px] text-[#1D2026]">
+                        {item.title.split(" ")[0]}
+                      </span>{" "}
+                      {item.title.split(" ").slice(1).join(" ")} “{item.subtitle}”
+                    </p>
+                  )}
+                  <span className="mt-[8px] block w-[280.76px] h-[14px] font-['Inter'] text-[12px] font-normal leading-[13.21px] tracking-normal text-[#8C94A3]">
+                    {item.time}
+                  </span>
                 </div>
               </div>
             ))}
@@ -352,163 +786,127 @@ const TeacherDashboard: React.FC = () => {
  
         {/* Revenue */}
  
-        <div className="bg-white rounded-xl p-5 h-[350px]">
+        <div className="w-[500px] h-[350.12px] bg-white rounded-xl overflow-hidden">
  
-          <div className="flex justify-between mb-4">
-            <h3 className="font-semibold text-lg">
+          <div className="w-[500px] h-[45.42px] flex justify-between items-center px-[16.52px] py-[13.21px] bg-white">
+            <h3 className="w-[55px] h-[19px] font-['Inter'] text-[13.21px] font-bold leading-[18.17px] text-[#1D2026]">
               Revenue
             </h3>
  
-            <button className="flex items-center gap-1 text-sm">
-              This Month
-              <ChevronDown size={16} />
-            </button>
+            <PeriodDropdown
+              value={revenuePeriod}
+              options={["Today", "This Week", "This Month", "This Year"]}
+              onChange={setRevenuePeriod}
+            />
           </div>
  
-          <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={revenueData}>
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip content={<CustomTooltip />} />
- 
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="#4F46E5"
-                strokeWidth={3}
-                fill="#EEF2FF"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="px-4">
+            <RevenueChart />
+          </div>
         </div>
  
         {/* Profile View */}
  
-        <div className="bg-white rounded-xl p-5 h-[350px]">
+        <div className="w-[249px] h-[350.12px] bg-white rounded-xl overflow-hidden">
  
-          <div className="flex justify-between mb-4">
-            <h3 className="font-semibold">
+          <div className="w-[249px] h-[45.42px] flex justify-between items-center px-[16.52px] py-[13.21px]">
+            <h3 className="w-[76px] h-[19px] font-['Inter'] text-[13.21px] font-bold leading-[18.17px] text-[#1D2026]">
               Profile View
             </h3>
  
-            <ChevronDown size={16} />
+            <PeriodDropdown
+              value={profilePeriod}
+              options={["Today", "This Week", "This Month"]}
+              onChange={setProfilePeriod}
+            />
           </div>
  
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={profileData}>
-              <Tooltip content={<CustomTooltip />} />
+          <div className="px-[16.52px] pt-[8px]">
+            <ProfileViewChart />
+          </div>
  
-              <Bar
-                dataKey="value"
-                fill="#238B45"
-                radius={[5, 5, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-[224.61px] h-[52px] mx-auto mt-[-6px] flex flex-col gap-[6px]">
+            <h2 className="w-[224.61px] h-[26px] font-['Inter'] text-[22px] font-medium leading-[26px] text-[#1D2026]">
+              $7,443
+            </h2>
  
-          <h2 className="text-3xl font-bold">
-            $7,443
-          </h2>
- 
-          <p className="text-gray-500 text-sm">
-            USD Dollar you earned.
-          </p>
+            <p className="w-[224.61px] h-[20px] font-['Inter'] text-[14px] font-normal leading-[20px] tracking-[-0.01em] text-[#6E7485]">
+              USD Dollar you earned.
+            </p>
+          </div>
         </div>
       </div>
  
       {/* Row 2 */}
  
-      <div className="grid grid-cols-[442px_628px] gap-5 mt-5">
+      <div className="w-[1184px] h-[396px] grid grid-cols-[462.61px_701.57px] gap-[19.82px] mt-5">
  
         {/* Rating */}
  
-        <div className="bg-white rounded-xl p-5 h-[400px]">
+        <div className="w-[462.61px] h-[400.56px] bg-white rounded-xl flex flex-col gap-[18.17px] pb-[16.52px] overflow-hidden">
  
-          <div className="flex justify-between mb-5">
+          <div className="w-[462.61px] h-[45.42px] flex justify-between items-center px-[16.52px] py-[13.21px]">
  
-            <h3 className="font-semibold">
+            <h3 className="w-[160px] h-[19px] font-['Inter'] text-[13.21px] font-bold leading-[18.17px] text-[#1D2026]">
               Overall Course Rating
             </h3>
  
-            <span className="text-sm">
-              This Week
-            </span>
+            <PeriodDropdown
+              value={ratingPeriod}
+              options={["Today", "This Week", "This Month"]}
+              onChange={setRatingPeriod}
+            />
           </div>
  
-          <div className="flex gap-4">
+          <div className="w-[429.58px] h-[149.48px] mx-auto flex items-center gap-[19.82px]">
  
-            <div className="w-[170px] h-[170px] bg-[#F1FFF6] rounded-xl flex flex-col items-center justify-center">
+            <div className="w-[148.64px] h-[149.48px] bg-[#F1FFF6] flex flex-col items-center gap-[13.21px] py-[28.08px]">
  
-              <h1 className="text-6xl font-bold">
+              <h1 className="w-[148.64px] h-[40px] font-['Inter'] text-[33.03px] font-semibold leading-[39.64px] tracking-[-0.01em] text-center text-[#1D2026]">
                 4.6
               </h1>
  
-              <div className="flex mt-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={18}
-                    fill="#22C55E"
-                    color="#22C55E"
-                  />
-                ))}
+              <div className="w-[89.18px] h-[16.52px] flex items-center justify-center">
+                <RatingStars filled={4} half size={16.5} />
               </div>
  
-              <p className="text-sm mt-2">
+              <p className="w-[148.64px] h-[17px] font-['Inter'] text-[11.56px] font-medium leading-[16.52px] tracking-[-0.01em] text-center text-[#1D2026]">
                 Overall Rating
               </p>
             </div>
  
-            <div className="flex-1 bg-[#F1FFF6] rounded-xl">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={miniChart}>
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#238B45"
-                    strokeWidth={3}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="w-[261.12px] h-[149.48px] bg-[#F1FFF6] flex items-center">
+              <div className="w-[261.12px] h-[100.33px]">
+                <RatingSparkline />
+              </div>
             </div>
           </div>
  
-          <div className="mt-6 space-y-3">
+          <div className="w-[429.58px] h-[134.64px] mx-auto flex flex-col gap-[9.91px] border-t border-[#E9EAF0] pt-[11px]">
  
-            {[
-              ["5 Star", 56, 5],
-              ["4 Star", 37, 4],
-              ["3 Star", 8, 3],
-              ["2 Star", 1, 2],
-              ["1 Star", 0.5, 1],
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ].map(([label, value, starCount]: any) => (
+            {ratingRows.map((row) => (
               <div
-                key={label}
-                className="flex items-center gap-3"
+                key={row.label}
+                className="w-[429.58px] h-[19px] flex items-center justify-between"
               >
-                <div className="flex gap-1 w-20">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      fill={i < starCount ? "#238B45" : "#D1D5DB"}
-                      color={i < starCount ? "#238B45" : "#D1D5DB"}
-                    />
-                  ))}
+                <div className="flex w-[120px] items-center gap-[8px]">
+                  <RatingStars filled={row.filled} size={14.5} />
+                  <span className="font-['Inter'] text-[13px] font-normal leading-[18px] text-[#6E7485] whitespace-nowrap">
+                    {row.label}
+                  </span>
                 </div>
  
-                <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                <div className="w-[252px] h-[7px] bg-[#E8EAF0]">
                   <div
-                    className="h-full bg-[#238B45] rounded-full"
+                    className="h-full bg-[#238B45]"
                     style={{
-                      width: `${value}%`,
+                      width: `${row.width}%`,
                     }}
                   />
                 </div>
  
-                <span className="text-sm font-medium w-12 text-right">
-                  {value}%
+                <span className="font-['Inter'] text-[13px] font-medium leading-[18px] w-[34px] text-right text-[#1D2026]">
+                  {row.percent}
                 </span>
               </div>
             ))}
@@ -517,39 +915,23 @@ const TeacherDashboard: React.FC = () => {
  
         {/* Course Overview */}
  
-        <div className="bg-white rounded-xl p-5 h-[400px]">
+        <div className="w-[701.57px] h-[396.36px] bg-white rounded-xl overflow-hidden">
  
-          <div className="flex justify-between mb-5">
-            <h3 className="font-semibold text-lg">
+          <div className="w-[701.57px] h-[45.42px] flex justify-between items-center px-[16.52px] py-[13.21px]">
+            <h3 className="font-['Inter'] text-[13.21px] font-bold leading-[18.17px] text-[#1D2026]">
               Course Overview
             </h3>
  
-            <span className="text-sm">This Week</span>
+            <PeriodDropdown
+              value={overviewPeriod}
+              options={["Today", "This Week", "This Month"]}
+              onChange={setOverviewPeriod}
+            />
           </div>
  
-          <ResponsiveContainer width="100%" height={330}>
-            <LineChart data={overviewData}>
-              <XAxis dataKey="day" stroke="#D1D5DB" />
-              <YAxis stroke="#D1D5DB" />
-              <Tooltip content={<CustomTooltip />} />
- 
-              <Line
-                type="monotone"
-                dataKey="blue"
-                stroke="#4F46E5"
-                strokeWidth={3}
-                dot={false}
-              />
- 
-              <Line
-                type="monotone"
-                dataKey="green"
-                stroke="#238B45"
-                strokeWidth={3}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="px-4">
+            <CourseOverviewChart />
+          </div>
         </div>
       </div>
  

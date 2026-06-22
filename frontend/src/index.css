@@ -1,9 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600&family=Outfit:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400&family=Roboto+Flex:wght@125;200;400;600;700&display=swap');
+
 @import "tailwindcss";
  
 @theme {
+  --font-sans: "Outfit", "Poppins", sans-serif;
+  --font-outfit: "Outfit", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+  --font-instrument-sans: "Instrument Sans", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-roboto-flex: "Roboto Flex", sans-serif;
   --color-brand-green: #248943;
   --color-brand-green-hover: #1d6e35;
   --color-brand-blue: #4c6ef5;
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 }
  
 

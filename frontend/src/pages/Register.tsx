@@ -309,6 +309,7 @@ const Register = () => {
         localStorage.setItem("email", registeredEmail);
       }
  
+      localStorage.setItem("userPassword", password);
       localStorage.setItem("registration_type", registrationType);
       clearRegistrationDraft();
  
@@ -328,6 +329,8 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  const inlineErrorClass = "mt-1 text-[11px] text-red-500";
  
   return (
     <>
@@ -378,7 +381,7 @@ const Register = () => {
         <form className="w-full" onSubmit={handleSubmit} noValidate>
           {formError && (
             <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm font-medium text-red-600">{formError}</p>
+              <p className="text-[11px] text-red-500">{formError}</p>
             </div>
           )}
 
@@ -417,7 +420,7 @@ const Register = () => {
               />
             </div>
             {fullNameError && (
-              <p className="mt-1 text-xs font-medium text-red-600">
+              <p className={inlineErrorClass}>
                 {fullNameError}
               </p>
             )}
@@ -449,7 +452,7 @@ const Register = () => {
                     placeholder="Enter Your Email Address"
                   />
                   {emailError && (
-                    <p className="mt-1 text-xs font-medium text-red-600">
+                    <p className={inlineErrorClass}>
                       {emailError}
                     </p>
                   )}
@@ -536,7 +539,7 @@ const Register = () => {
                 </button>
               </div>
               {passwordError && (
-                <p className="mt-1 text-xs font-medium text-red-600">
+                <p className={inlineErrorClass}>
                   {passwordError}
                 </p>
               )}
@@ -601,7 +604,7 @@ const Register = () => {
                 </button>
               </div>
               {confirmPasswordError && (
-                <p className="mt-1 text-xs font-medium text-red-600">
+                <p className={inlineErrorClass}>
                   {confirmPasswordError}
                 </p>
               )}
@@ -655,7 +658,7 @@ const Register = () => {
               placeholder="Enter your answer"
             />
             {securityAnswerError && (
-              <p className="mt-1 text-xs font-medium text-red-600">
+              <p className={inlineErrorClass}>
                 {securityAnswerError}
               </p>
             )}

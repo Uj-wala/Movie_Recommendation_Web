@@ -1,4 +1,5 @@
 import Logo from "../../components/Logo";
+import { Link } from "react-router-dom";
 
 const categoryLinks: string[] = [
   "Creative Writing",
@@ -19,30 +20,57 @@ const quickLinks: string[] = [
 
 const footerStyles = `
 .landing-footer {
-  background: #e1f6e9;
-  color: #424242;
-  font-family: Arial, Helvetica, sans-serif;
-  padding: clamp(64px, 7vw, 109px) clamp(24px, 4.15vw, 64px) clamp(34px, 3vw, 43px);
-}
-
-.landing-footer-container {
-  display: grid;
-  column-gap: clamp(38px, 4.5vw, 70px);
-  grid-template-columns:
-    minmax(210px, 266px)
-    minmax(190px, 313px)
-    minmax(190px, 281px)
-    minmax(280px, 335px);
-  margin: 0 auto;
-  max-width: min(1416px, 100%);
+  background: #e1f3e7;
+  color: #212832;
+  font-family: Roboto, Arial, Helvetica, sans-serif;
+  height: 512px;
+  overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
+.landing-footer-container {
+  height: 100%;
+  margin: 0 auto;
+  max-width: 1308px;
+  position: relative;
+  width: 100%;
+}
+
+.footer-brand-column {
+  left: 0;
+  position: absolute;
+  top: 102px;
+  width: 238px;
+}
+
+.landing-footer-container > .footer-column:nth-child(2) {
+  left: 311px;
+  position: absolute;
+  top: 114px;
+  width: 168px;
+}
+
+.landing-footer-container > .footer-column:nth-child(3) {
+  left: 665px;
+  position: absolute;
+  top: 114px;
+  width: 175px;
+}
+
+.footer-subscribe {
+  left: 990px;
+  position: absolute;
+  top: 114px;
+  width: 310px;
+}
+
 .footer-logo-row {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
-  gap: 18px;
-  width: fit-content;
+  gap: 16px;
+  height: 54px;
+  width: 204px;
   transition: transform 220ms ease;
 }
 
@@ -57,10 +85,10 @@ const footerStyles = `
 
 .footer-logo-image {
   display: block;
-  height: 58px;
+  height: 54px;
   object-fit: contain;
   transition: box-shadow 220ms ease, transform 220ms ease;
-  width: 58px;
+  width: 54px;
 }
 
 .footer-logo-row:hover .footer-logo-image {
@@ -68,12 +96,19 @@ const footerStyles = `
   transform: scale(1.03);
 }
 
+.footer-brand-link {
+  display: block;
+  text-decoration: none;
+}
+
 .footer-brand-name {
-  color: #17873b;
-  font-size: clamp(24px, 1.75vw, 27px);
-  font-weight: 800;
+  color: #238b45;
+  font-family: Poppins, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  height: 24px;
   line-height: 1;
-  margin: 1px 0 10px;
+  margin: 0 0 8px;
   transition: color 220ms ease;
 }
 
@@ -91,59 +126,68 @@ const footerStyles = `
 
 .footer-address {
   font-style: normal;
-  margin-top: clamp(42px, 4.25vw, 65px);
+  margin-top: 57px;
 }
 
 .footer-address strong {
-  color: #3f3f3f;
+  color: #212832;
   display: block;
-  font-size: clamp(28px, 2.2vw, 34px);
+  font-family: Roboto, sans-serif;
+  font-size: 32px;
   font-weight: 400;
-  line-height: 1;
-  margin-bottom: 8px;
+  height: 35px;
+  line-height: 1.11;
+  margin: 0 0 6px;
 }
 
 .footer-address span {
-  color: #62c786;
+  color: #51a06f;
   display: block;
-  font-size: clamp(18px, 1.45vw, 22px);
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 400;
-  line-height: 1.1;
+  height: 22px;
+  line-height: 1.11;
 }
 
 .footer-contact {
-  color: #3f3f3f;
-  font-size: clamp(18px, 1.5vw, 23px);
+  color: #212832;
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 400;
-  line-height: 1;
-  margin: clamp(34px, 3.3vw, 50px) 0 0 19px;
+  line-height: 2.5;
+  margin: 30px 0 0 23px;
 }
 
 .footer-contact p {
-  margin: 0 0 clamp(22px, 2.1vw, 32px);
+  height: 50px;
+  margin: 0;
 }
 
 .footer-column,
 .footer-subscribe {
-  padding-top: 13px;
+  padding-top: 0;
 }
 
 .footer-column h2,
 .footer-subscribe h2 {
-  color: #424242;
-  font-size: clamp(29px, 2.3vw, 35px);
+  color: #212832;
+  font-family: Roboto, sans-serif;
+  font-size: 32px;
   font-weight: 400;
-  line-height: 1;
-  margin: 0 0 clamp(34px, 3.25vw, 50px);
+  height: 35px;
+  line-height: 1.11;
+  margin: 0 0 33px;
 }
 
 .footer-column a {
-  color: #424242;
+  color: #212832;
   display: block;
-  font-size: clamp(18px, 1.5vw, 23px);
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 400;
-  line-height: 1;
-  margin-bottom: clamp(22px, 2vw, 31px);
+  line-height: 2.5;
+  margin: 0;
   position: relative;
   text-decoration: none;
   transition: color 180ms ease, transform 180ms ease;
@@ -174,30 +218,32 @@ const footerStyles = `
 }
 
 .footer-subscribe p {
-  color: #424242;
-  font-size: clamp(18px, 1.5vw, 23px);
+  color: #212832;
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 400;
-  line-height: 1.04;
-  margin: 0 0 clamp(32px, 3.1vw, 48px);
-  max-width: 335px;
+  height: 66px;
+  line-height: 1.11;
+  margin: 48px 0 44px;
+  width: 306px;
 }
 
 .footer-subscribe input {
   background: #ffffff;
   border: 0;
-  border-radius: 13px;
-  box-shadow: 0 5px 7px rgba(0, 0, 0, 0.22);
+  border-radius: 15px;
+  box-shadow: 0 4px 7px rgba(0, 0, 0, 0.24);
   color: #424242;
   display: block;
-  font-family: inherit;
-  font-size: clamp(18px, 1.5vw, 23px);
+  font-family: Roboto, sans-serif;
+  font-size: 20px;
   font-weight: 400;
-  height: clamp(58px, 4.5vw, 69px);
-  margin-bottom: clamp(32px, 3.05vw, 47px);
+  height: 59px;
+  margin-bottom: 40px;
   outline: 0;
-  padding: 0 31px;
+  padding: 0 28px;
   transition: box-shadow 180ms ease, transform 180ms ease;
-  width: min(335px, 100%);
+  width: 289px;
 }
 
 .footer-subscribe input::placeholder {
@@ -214,19 +260,19 @@ const footerStyles = `
 .footer-subscribe button {
   background: #62c786;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   box-shadow: 0 0 0 rgba(23, 135, 59, 0);
   color: #ffffff;
   cursor: pointer;
-  font-family: inherit;
-  font-size: clamp(21px, 1.62vw, 25px);
-  font-weight: 700;
-  height: clamp(52px, 3.75vw, 58px);
+  font-family: "Instrument Sans", sans-serif;
+  font-size: 23px;
+  font-weight: 600;
+  height: 51px;
   line-height: 1;
   padding: 0 27px;
   position: relative;
   transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-  width: min(255px, 100%);
+  width: 220px;
 }
 
 .footer-subscribe button:hover {
@@ -269,12 +315,27 @@ const footerStyles = `
 }
 
 @media (max-width: 1240px) {
+  .landing-footer {
+    height: auto;
+    min-height: 512px;
+    overflow: visible;
+  }
+
   .landing-footer-container {
-    grid-template-columns:
-      minmax(200px, 1fr)
-      minmax(170px, 0.85fr)
-      minmax(170px, 0.85fr)
-      minmax(260px, 1fr);
+    display: grid;
+    gap: 56px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: auto;
+    max-width: calc(100% - 48px);
+    padding-bottom: 64px;
+    padding-top: 72px;
+  }
+
+  .footer-brand-column,
+  .landing-footer-container > .footer-column:nth-child(2),
+  .landing-footer-container > .footer-column:nth-child(3),
+  .footer-subscribe {
+    position: static;
   }
 }
 
@@ -286,13 +347,10 @@ const footerStyles = `
 }
 
 @media (max-width: 760px) {
-  .landing-footer {
-    padding: 64px 28px 36px;
-  }
-
   .landing-footer-container {
     gap: 40px;
     grid-template-columns: 1fr;
+    max-width: calc(100% - 56px);
   }
 
   .footer-column,
@@ -321,15 +379,15 @@ const Footer = () => {
   return (
     <>
       <style>{footerStyles}</style>
-      <footer className="landing-footer">
+      <footer id="footer" className="landing-footer">
         <div className="landing-footer-container">
           <div className="footer-brand-column">
             <div className="footer-logo-row">
               <Logo className="footer-logo" imgClassName="footer-logo-image" />
-              <div>
+              <Link to="/" className="footer-brand-link" aria-label="Go to Home Page">
                 <p className="footer-brand-name">E-Learning</p>
                 <p className="footer-brand-subtitle">AI-Powered</p>
-              </div>
+              </Link>
             </div>
 
             <address className="footer-address">

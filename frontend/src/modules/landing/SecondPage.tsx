@@ -1,7 +1,7 @@
 import React from "react";
 import { Clock3 } from "lucide-react";
 
-import profile from "../../assets/profile-1.png";
+import profile from "../../assets/profile-1.jpeg";
 
 import uiUx1 from "../../assets/ui-ux-1.png";
 import uiUx2 from "../../assets/ui-ux-2.png";
@@ -10,8 +10,6 @@ import uiUx4 from "../../assets/ui-ux-4.png";
 import uiUx5 from "../../assets/ui-ux-5.png";
 import uiUx6 from "../../assets/ui-ux-6.png";
 import lectureLogo from "../../assets/video-logo.png";
-
-import BecomeInstructor from "./BecomeInstructor";
 
 const SecondPage: React.FC = () => {
   const courses = [
@@ -139,8 +137,6 @@ const SecondPage: React.FC = () => {
         </div>  
       </section>
 
-      {/* Become Instructor Section */}
-      <BecomeInstructor />
     </div>
   );
 };

@@ -60,6 +60,14 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
     setIsSuccessModalOpen(true);
   };
 
+  const handleToggleStatus = (user: User) => {
+    setUsers(users.map((item) => (
+      item.id === user.id
+        ? { ...item, status: user.status === 'Active' ? 'Blocked' : 'Active' }
+        : item
+    )));
+  };
+
   return (
     <div className="user-table-wrapper">
       <table className="user-table">
@@ -72,6 +80,10 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
             <th>Actions</th>
           </tr>
         </thead>
+      </table>
+
+      <div className="user-table-scroll">
+        <table className="user-table user-table-body">
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
@@ -95,13 +107,13 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
                       )}
                       <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
                       <div className="action-divider"></div>
-                      <span className="action-disable">Disable</span>
+                      <span className="action-disable" onClick={() => handleToggleStatus(user)}>Disable</span>
                     </>
                   ) : (
                     <>
                       <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
                       <div className="action-divider"></div>
-                      <span className="action-activate">Activate</span>
+                      <span className="action-activate" onClick={() => handleToggleStatus(user)}>Activate</span>
                     </>
                   )}
                 </div>
@@ -110,6 +122,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
           ))}
         </tbody>
       </table>
+      </div>
 
       {isModalOpen && (
         <EditRoleModal 

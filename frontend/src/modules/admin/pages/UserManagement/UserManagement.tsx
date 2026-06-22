@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './UserManagement.css';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import UserTable from '../../components/UserTable/UserTable';
 import EditRoleModal from '../../components/EditRoleModal/EditRoleModal';
 import SuccessModal from '../../components/SuccessModal/SuccessModal';
@@ -126,7 +126,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
         </div>
         <div className="filter-wrapper">
           <button className="filter-button" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-            <Filter className="filter-icon" size={20} />
+            <svg
+              className="filter-icon"
+              width="34"
+              height="34"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path
+                d="M4.25 5.61C6.27 8.2 10 13 10 13V19C10 19.55 10.45 20 11 20H13C13.55 20 14 19.55 14 19V13C14 13 17.72 8.2 19.74 5.61C20.25 4.95 19.78 4 18.95 4H5.04C4.21 4 3.74 4.95 4.25 5.61Z"
+                fill="#238B45"
+              />
+            </svg>
             <span className="filter-text">Filters</span>
           </button>
 

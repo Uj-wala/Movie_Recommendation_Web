@@ -3,7 +3,7 @@ import './UserManagement/UserManagement.css';
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="user-management-page" style={{ height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column' }}>
+    <div className="user-management-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
         <p className="page-subtitle">your dashboard message</p>

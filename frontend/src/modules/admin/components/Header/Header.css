@@ -27,23 +27,30 @@
 .profile-text {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .profile-name {
   font-family: 'Nunito';
   font-weight: 600;
-  font-size: 14px;
-  line-height: 16px;
+  font-size: 12px;
+  line-height: 100%;
+  width: 67px;
+  height: 16px;
   color: #000000;
 }
 
 .profile-email {
   font-family: 'Nunito';
   font-weight: 400;
-  font-size: 10px;
-  line-height: 14px;
+  font-size: 14px;
+  line-height: 100%;
   color: #000000;
   opacity: 0.5;
+  width: 130px;
+  height: 16px;
+  display: block;
+  white-space: nowrap;
 }
 
 .dropdown-icon {
@@ -83,7 +90,7 @@
 .dropdown-header {
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 12px;
+  padding: 16px 20px 4px;
   gap: 4px;
 }
 
@@ -102,7 +109,7 @@
 .dropdown-links {
   display: flex;
   flex-direction: column;
-  padding: 8px 0;
+  padding: 0 0 8px;
 }
 
 .dropdown-item {
@@ -126,6 +133,13 @@
 
 .dropdown-logout {
   padding: 12px 20px 16px;
+  color: #DC2626;
+  font-weight: 600;
+}
+
+.dropdown-logout:hover {
+  background: #FEF2F2;
+  color: #B91C1C;
 }
 
 .hamburger-btn {

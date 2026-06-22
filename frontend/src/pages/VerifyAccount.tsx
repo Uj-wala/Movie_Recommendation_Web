@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 
@@ -191,18 +190,6 @@ const VerifyAccount = () => {
 
   return (
     <SplitScreenLayout fitViewport>
-      <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-        <Link
-          to="/select-role"
-          className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
-        >
-          <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-            <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-          </div>
-          Back
-        </Link>
-      </div>
-
       <div className="w-full max-w-md flex flex-col items-center">
         <Logo />
 
