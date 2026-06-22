@@ -130,6 +130,23 @@ def save_student_details(data: StudentDetailsRequest, db: Session):
             status_code=404,
             detail="User not found"
         )
+        
+    student_role = (
+        db.query(Role)
+        .filter(
+            Role.id == user.role_id
+        )
+        .first()
+    )
+ 
+    if (
+        not student_role
+        or student_role.name.lower() != "student"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="User is not a student"
+        )    
  
     existing_profile = db.query(StudentProfile).filter(
         StudentProfile.user_id == data.user_id
@@ -171,6 +188,23 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
             status_code=404,
             detail="User not found"
         )
+        
+    parent_role = (
+        db.query(Role)
+        .filter(
+            Role.id == user.role_id
+        )
+        .first()
+    )
+ 
+    if (
+        not parent_role
+        or parent_role.name.lower() != "parent"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="User is not a parent"
+        )    
  
     existing_profile = db.query(ParentProfile).filter(
         ParentProfile.user_id == data.user_id
@@ -210,7 +244,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     ):
         raise HTTPException(
             status_code=400,
-            detail="User is not a student"
+            detail="Given Registration_Number does not belong to a student"
         )
  
     student_profile = (
@@ -263,7 +297,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     return {
         "message": "Registration successful! You can now access the Dashboard.",
         "user_id": data.user_id,
-        "parent_id": parent_profile.id
+        "parent_registration_number": user.registration_number
     }
  
  
@@ -281,6 +315,23 @@ def save_teacher_verification(
             status_code=404,
             detail="User not found"
         )
+        
+    teacher_role = (
+        db.query(Role)
+        .filter(
+            Role.id == user.role_id
+        )
+        .first()
+    )
+ 
+    if (
+        not teacher_role
+        or teacher_role.name.lower() != "teacher"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="User is not a teacher"
+        )    
  
     existing_profile = db.query(
         TeacherProfile
@@ -339,5 +390,5 @@ def save_teacher_verification(
     return {
         "message": "Registration successful! You can now access the Dashboard.",
         "user_id": data.user_id,
-        "teacher_id": teacher_profile.id
+        "teacher_registration_number": user.registration_number
     }

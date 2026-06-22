@@ -49,7 +49,7 @@ class TeacherProfileCreateRequest(BaseModel):
 class TeacherVerificationResponse(BaseModel):
     message: str
     user_id: str
-    teacher_id: str
+    teacher_registration_number: str
 
 
 class TeacherProfileUpdate(BaseModel):

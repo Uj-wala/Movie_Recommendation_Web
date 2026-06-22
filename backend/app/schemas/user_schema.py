@@ -542,6 +542,6 @@ class ParentVerificationResponse(BaseModel):
  
     user_id: str
 
-    parent_id: str
+    parent_registration_number: str
 
  
