@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -13,12 +13,16 @@ class ParentChild(Base, BaseModel):
         nullable=False
     )
 
-    student_reference_id: Mapped[str | None] = mapped_column(
-        String(100),
-        nullable=True
+    student_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False
     )
 
     parent_profile = relationship(
         "ParentProfile",
         back_populates="children"
+    )
+
+    student = relationship(
+        "User"
     )

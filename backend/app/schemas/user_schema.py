@@ -1,3 +1,4 @@
+from datetime import datetime
 import re
 from typing import Optional
  
@@ -44,9 +45,7 @@ class RegisterRequest(BaseModel):
     password: str
  
     confirm_password: str
- 
-    role_id: Optional[str] = None
- 
+  
     security_question: SecurityQuestion
  
     security_answer: str
@@ -128,18 +127,6 @@ class RegisterRequest(BaseModel):
             raise ValueError("Security answer is too short")
  
         return value
- 
- 
-    @field_validator("role_id")
-    @classmethod
-    def validate_role_id(cls, value):
-
-      value = value.strip()
-
-      if not UUID_REGEX.match(value.lower()):
-        raise ValueError("Invalid role ID format")
-
-      return value
  
     @model_validator(mode="after")
     def validate_passwords_match(self):
@@ -350,9 +337,7 @@ class UserResponse(BaseModel):
     email: Optional[str]
  
     phone_number: Optional[str]
- 
-    role_id: str
- 
+  
     is_verified: bool
  
     profile_completed: bool
@@ -433,6 +418,7 @@ class ConfirmRoleResponse(BaseModel):
     user_id: str
  
     role_id: str
+    registration_number: str
  
  
 class StudentDetailsRequest(BaseModel):
@@ -516,14 +502,30 @@ class StudentDetailsResponse(BaseModel):
  
     user_id: str
 
-    student_id: str
- 
+    student_registration_number: str
+    
+REGISTRATION_NUMBER_REGEX = re.compile(
+    r"^STU-\d{4}-\d{6}$"
+)     
  
 class ParentVerificationRequest(BaseModel):
  
     user_id: str
  
-    student_reference_id: Optional[str] = None
+    student_registration_number: str
+
+    @field_validator("student_registration_number")
+    @classmethod
+    def validate_student_registration_number(cls, value):
+        value = value.strip().upper()
+
+        if not REGISTRATION_NUMBER_REGEX.match(value):
+            current_year = datetime.now().year
+            raise ValueError(
+                f"Invalid student registration number format. Expected: STU-{current_year}-000001"
+            )
+
+        return value
  
     @field_validator("user_id")
     @classmethod
@@ -533,16 +535,6 @@ class ParentVerificationRequest(BaseModel):
             raise ValueError("Invalid user ID format")
         return value
  
-    @field_validator("student_reference_id")
-    @classmethod
-    def validate_student_reference_id(cls, value):
-        if value is None:
-            return value
-        value = value.strip()
-        if not UUID_REGEX.match(value.lower()):
-            raise ValueError("Invalid student reference ID format")
-        return value
- 
  
 class ParentVerificationResponse(BaseModel):
  
@@ -550,55 +542,6 @@ class ParentVerificationResponse(BaseModel):
  
     user_id: str
 
-    parent_id: str
+    parent_registration_number: str
 
- 
- 
-# class TeacherVerificationRequest(BaseModel):
- 
-#     user_id: str
- 
-#     school_name: str
- 
-#     subject: str
- 
-#     @field_validator("user_id")
-#     @classmethod
-#     def validate_user_id(cls, value):
-#         value = value.strip()
-#         if not UUID_REGEX.match(value.lower()):
-#             raise ValueError("Invalid user ID format")
-#         return value
- 
-#     @field_validator("school_name")
-#     @classmethod
-#     def validate_school_name(cls, value):
-#         value = value.strip()
-#         if len(value) < 3:
-#             raise ValueError("School name must be at least 3 characters")
-#         if len(value) > 255:
-#             raise ValueError("School name must not exceed 255 characters")
-#         return value
- 
-#     @field_validator("subject")
-#     @classmethod
-#     def validate_subject(cls, value):
-#         value = value.strip()
-#         if len(value) < 2:
-#             raise ValueError("Subject must be at least 2 characters")
-#         if len(value) > 100:
-#             raise ValueError("Subject must not exceed 100 characters")
-#         pattern = re.compile(r"^[a-zA-Z\s]+$")
-#         if not pattern.match(value):
-#             raise ValueError("Subject can only contain letters and spaces")
-#         return value
- 
- 
-# class TeacherVerificationResponse(BaseModel):
- 
-#     message: str
- 
-    # user_id: str
-
-    # teacher_id: str
  

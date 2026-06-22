@@ -50,7 +50,7 @@ def get_profile(
  
 
 
-@router.put(
+@router.patch(
     "",
     response_model=MessageResponse
 )

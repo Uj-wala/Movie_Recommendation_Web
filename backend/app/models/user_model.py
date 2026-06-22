@@ -38,10 +38,11 @@ class User(Base, BaseModel):
  
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
  
-    role_id: Mapped[str] = mapped_column(
+    role_id: Mapped[str | None] = mapped_column(
         ForeignKey("roles.id"),
-        nullable=False
-    ) 
+        nullable=True
+    )
+     
     security_question: Mapped[SecurityQuestion] = mapped_column(
         Enum(SecurityQuestion), nullable=False
     )
@@ -77,6 +78,13 @@ class User(Base, BaseModel):
         default=False,
         nullable=False
     )  
+
+    registration_number: Mapped[str | None] = mapped_column(
+        String(30),
+        unique=True,
+        nullable=True,
+        index=True
+    )
     
     profile_completed: Mapped[bool] = mapped_column(Boolean, default=False)
  

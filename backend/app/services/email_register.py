@@ -13,19 +13,12 @@ class EmailRegister:
             if existing_user:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="you already registered with this email")
             
-            roles = (
-                db.query(Role)
-                .filter(Role.name == "student")
-                .order_by(Role.name)
-                .first()
-           )
             user = User(
                 full_name=data.full_name,
                 email=data.email,
                 phone_number=data.phone_number,
                 country_id=data.country_id,
                 password_hash=hash_password(data.password),
-                role_id=roles.id if roles else None,
                 security_question=data.security_question,
                 security_answer_hash=hash_security_answer(data.security_answer),
                 agree_to_terms=data.agree_to_terms
