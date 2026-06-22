@@ -16,8 +16,9 @@ import tick from "../../../assets/UpdateProfileIcons/tick.svg";
 import profilePictureDefault from "../../../assets/UpdateProfileIcons/profilepicturedefault.svg";
 import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import profileData from "../../../data/profile.json";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import SuccessModalTwo from "./SuccessModel/SuccessModelTwo";
+import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 
 interface Profile {
   id: number;
@@ -103,6 +104,7 @@ const validationSchema = Yup.object({
 });
 
 export default function UpdateProfile() {
+  const { setActiveTab } = useOutletContext<TeacherLayoutContext>();
   const [activeProfile] = useState<Profile>(profiles[0]);
   const displayName =
     localStorage.getItem("userName") ||
@@ -120,6 +122,8 @@ export default function UpdateProfile() {
     TEACHER_DEFAULT_PASSWORD;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownButtonRef = useRef<HTMLButtonElement>(null);
+  const dropdownItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [photoSrc, setPhotoSrc] = useState<string>(InitialValuesProfile.image);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -331,6 +335,59 @@ export default function UpdateProfile() {
     navigate("/");
   };
 
+  const dropdownActions = [
+    {
+      label: "My Profile",
+      onSelect: () => {
+        setDropdownOpen(false);
+        navigate("/teacher/dashboard");
+      },
+    },
+    {
+      label: "Settings",
+      onSelect: () => {
+        setDropdownOpen(false);
+        setActiveTab("settings");
+      },
+    },
+    {
+      label: "Log Out",
+      onSelect: handleLogout,
+    },
+  ];
+
+  const handleProfileDropdownKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setDropdownOpen(false);
+      dropdownButtonRef.current?.focus();
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && !dropdownOpen) {
+      event.preventDefault();
+      setDropdownOpen(true);
+      window.setTimeout(() => dropdownItemRefs.current[0]?.focus(), 0);
+      return;
+    }
+
+    if (!dropdownOpen) return;
+
+    const currentIndex = dropdownItemRefs.current.findIndex((item) => item === document.activeElement);
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = currentIndex < dropdownActions.length - 1 ? currentIndex + 1 : 0;
+      dropdownItemRefs.current[nextIndex]?.focus();
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const previousIndex = currentIndex > 0 ? currentIndex - 1 : dropdownActions.length - 1;
+      dropdownItemRefs.current[previousIndex]?.focus();
+    }
+  };
+
   const handleSuccessClose = () => {
     setShowSuccess(false);
     setIsEditing(false);
@@ -356,24 +413,37 @@ export default function UpdateProfile() {
     <div className="flex-1 flex flex-col min-h-screen bg-[#F5F5F5]">
       {/* Top Bar */}
       <div className="flex justify-end items-center px-8 py-3">
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef} onKeyDown={handleProfileDropdownKeyDown}>
           <button
+            ref={dropdownButtonRef}
+            type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="h-[43px] flex items-center gap-3 rounded-xl transition-colors"
+            aria-haspopup="menu"
+            aria-expanded={dropdownOpen}
           >
             <img
               src={formik.values.image || teacherProfile || profilePictureDefault}
               alt={displayName}
-              className="w-9 h-9 rounded-full object-cover bg-white border border-gray-200"
+              className="w-[45px] h-[43px] rounded-[12px] object-cover"
             />
-            <span className="text-sm font-semibold text-gray-800">
-              {displayName}
+            <span className="flex w-[130px] flex-col gap-1 text-left text-[#000000]">
+              <span className="w-[67px] h-4 font-['Nunito'] text-[12px] font-semibold leading-[100%] whitespace-nowrap overflow-hidden text-ellipsis">
+                {displayName}
+              </span>
+              <span className="w-auto h-4 font-['Nunito'] text-[14px] font-normal leading-[100%] opacity-50 whitespace-nowrap">
+                {displayEmail}
+              </span>
             </span>
-            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] p-1 rounded-[9px]" />
+            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] rounded-[9px] py-[7px] px-[4px] ml-2" />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+            <div
+              className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden"
+              role="menu"
+              onMouseLeave={() => setDropdownOpen(false)}
+            >
               
               {/* Signed in as */}
               <div className="px-4 py-3 border-b border-gray-100">
@@ -383,25 +453,31 @@ export default function UpdateProfile() {
 
               {/* Menu items */}
               <div className="py-1">
-                <button
-                  onClick={() => {setDropdownOpen(false) ;navigate("/teacher/dashboard");}}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-
-                >
-                  My Profile
-                </button>
-                <button
-                  onClick={() => {setDropdownOpen(false);navigate("/teacher/settings");}}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Settings
-                </button>
+                {dropdownActions.slice(0, 2).map((item, index) => (
+                  <button
+                    key={item.label}
+                    ref={(element) => {
+                      dropdownItemRefs.current[index] = element;
+                    }}
+                    type="button"
+                    role="menuitem"
+                    onClick={item.onSelect}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
 
               {/* Log Out */}
               <div className="border-t border-gray-100 py-1">
                 <button
-                  onClick={handleLogout}
+                  ref={(element) => {
+                    dropdownItemRefs.current[2] = element;
+                  }}
+                  type="button"
+                  role="menuitem"
+                  onClick={dropdownActions[2].onSelect}
                   className="w-full text-left px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] focus:text-[#B91C1C] focus:outline-none transition-colors"
                 >
                   Log Out
@@ -590,13 +666,7 @@ export default function UpdateProfile() {
                       onFocus={() => setPasswordFocused(true)}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => {
-                      setShowPassword((current) => {
-                        const next = !current;
-                        if (next) setShowConfirm(false);
-                        return next;
-                      });
-                    }} className="text-gray-400 cursor-pointer hover:text-gray-600">
+                    <button type="button" disabled={!isEditing} onClick={() => setShowPassword((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600">
                       <img className="w-5 h-5" src={showPassword ? eyeshow : eyehide} alt="eyeicon" />
                     </button>
                   </div>
@@ -641,13 +711,7 @@ export default function UpdateProfile() {
                       onBlur={formik.handleBlur}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => {
-                      setShowConfirm((current) => {
-                        const next = !current;
-                        if (next) setShowPassword(false);
-                        return next;
-                      });
-                    }} className="text-gray-400 cursor-pointer hover:text-gray-600">
+                    <button type="button" disabled={!isEditing} onClick={() => setShowConfirm((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600">
                       <img className="w-5 h-5" src={showConfirm ? eyeshow : eyehide} alt="eyeicon" />
                     </button>
                   </div>

@@ -3,6 +3,8 @@ import './EditStatusModal.css';
 import { X } from 'lucide-react';
 import type { UserOrRole } from '../../types';
 
+const USER_NAME_MAX_LENGTH = 24;
+
 interface EditStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,10 +16,16 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
   const [status, setStatus] = useState(user?.status === 'Active' ? 'Active' : 'Deactivate');
   const [selectedRole, setSelectedRole] = useState(user?.role?.toLowerCase() || 'student');
   const [userName, setUserName] = useState(user?.name || "Kumar Gandham");
+  const [userNameError, setUserNameError] = useState("");
 
   if (!isOpen) return null;
 
   const handleSave = () => {
+    if (!userName.trim()) {
+      setUserNameError("Please enter a user name");
+      return;
+    }
+
     if (onSave) {
       onSave({ 
         name: userName,
@@ -44,8 +52,22 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
             className="status-text-input" 
             placeholder="Enter User Name" 
             value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            onChange={(e) => {
+              const nextUserName = e.target.value;
+
+              if (nextUserName.length > USER_NAME_MAX_LENGTH) {
+                setUserNameError(`User Name cannot exceed ${USER_NAME_MAX_LENGTH} characters`);
+                setUserName(nextUserName.slice(0, USER_NAME_MAX_LENGTH));
+                return;
+              }
+
+              setUserName(nextUserName);
+              if (userNameError) setUserNameError("");
+            }}
           />
+          {userNameError && (
+            <span className="status-error-text">{userNameError}</span>
+          )}
         </div>
 
         <div className="status-input-group">

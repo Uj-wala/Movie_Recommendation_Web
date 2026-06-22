@@ -9,11 +9,9 @@ interface LayoutProps {
   setActiveTab?: (tab: string) => void;
   handleLogout?: () => void;
   userEmail?: string;
-  profileImage?: string | null;
-  setProfileImage?: (image: string | null) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, handleLogout, userEmail, profileImage }) => {
+const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, handleLogout, userEmail }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -23,7 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, hand
       )}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="main-content">
-        <Header setActiveTab={setActiveTab} handleLogout={handleLogout} userEmail={userEmail} profileImage={profileImage} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <Header setActiveTab={setActiveTab} handleLogout={handleLogout} userEmail={userEmail} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="page-content">
           {children}
         </div>

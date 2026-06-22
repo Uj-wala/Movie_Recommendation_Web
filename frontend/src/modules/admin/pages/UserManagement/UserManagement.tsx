@@ -25,7 +25,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const isFilterOpen = false;
   const [filters, setFilters] = useState({
     student: false,
     teacher: false,
@@ -48,7 +48,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
         id: Date.now(), 
         name: userData.name, 
         email: userData.email || '', 
-        role: (userData.role && userData.role !== 'Choose Role Type') ? (userData.role.charAt(0).toUpperCase() + userData.role.slice(1)) : 'Teacher', 
+        role: userData.role ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1) : '', 
         status: 'Active' 
       }]);
     }
@@ -125,11 +125,15 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
           />
         </div>
         <div className="filter-wrapper">
-          <button className="filter-button" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+          <button
+            className="filter-button disabled"
+            disabled
+            aria-disabled="true"
+          >
             <svg
               className="filter-icon"
-              width="34"
-              height="34"
+              width="24"
+              height="24"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -137,7 +141,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
             >
               <path
                 d="M4.25 5.61C6.27 8.2 10 13 10 13V19C10 19.55 10.45 20 11 20H13C13.55 20 14 19.55 14 19V13C14 13 17.72 8.2 19.74 5.61C20.25 4.95 19.78 4 18.95 4H5.04C4.21 4 3.74 4.95 4.25 5.61Z"
-                fill="#238B45"
+                fill="currentColor"
               />
             </svg>
             <span className="filter-text">Filters</span>
@@ -194,6 +198,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
         }} 
         onSave={handleSaveRole}
         user={null}
+        existingEmails={users.map((user) => user.email)}
       />
       <SuccessModal 
         isOpen={isSuccessModalOpen} 

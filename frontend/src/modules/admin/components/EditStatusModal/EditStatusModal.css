@@ -61,9 +61,20 @@
   padding: 16px 16px;
   font-family: 'Poppins';
   font-size: 14px;
-  color: #8C94A3;
+  color: #0F172A;
   outline: none;
   width: 50%;
+}
+
+.status-text-input::placeholder {
+  color: #8C94A3;
+}
+
+.status-error-text {
+  color: #ef4444;
+  font-family: 'Poppins';
+  font-size: 12px;
+  margin-top: -4px;
 }
 
 .status-dropdown {

@@ -53,7 +53,7 @@
               E-Learning
             </span>
           </Link>
-          <p className="w-[108px] h-[24px] ml-[47px] text-[#292D32] font-semibold text-[9px] leading-[100%] px-3 bg-[#F5F5F5] rounded-[4px] whitespace-nowrap flex items-center justify-center">
+          <p className="w-[134px] h-[30px] ml-[47px] text-[#292D32] font-semibold text-[11px] leading-[100%] px-4 bg-[#F5F5F5] rounded-[5px] whitespace-nowrap flex items-center justify-center">
             Teacher Dashboard
           </p>
         </div>

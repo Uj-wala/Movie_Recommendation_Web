@@ -78,15 +78,30 @@
   gap: 12px;
   height: 48px;
   background: #F8F8F8;
+  border: 1px solid transparent;
   border-radius: 8px;
+  color: #8C94A3;
   cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.filter-button.active {
+  background: #F1FFF6;
+  border-color: #238B45;
+  color: #238B45;
+}
+
+.filter-button.disabled {
+  background: #F1FFF6;
+  border-color: #238B45;
+  color: #238B45;
+  cursor: not-allowed;
 }
 
 .filter-icon {
-  color: #238B45;
   display: block;
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
@@ -94,7 +109,7 @@
   font-family: 'Poppins';
   font-weight: 600;
   font-size: 18px;
-  color: #4B4B4B;
+  color: currentColor;
 }
 
 .filter-wrapper {

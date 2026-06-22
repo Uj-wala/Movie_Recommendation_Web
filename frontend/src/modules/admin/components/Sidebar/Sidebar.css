@@ -75,13 +75,13 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 4px 0;
-  width: 94px;
+  padding: 5px 8px;
+  width: 118px;
   background: #F5F5F5;
   border-radius: 4px;
   font-family: 'Poppins';
   font-weight: 600;
-  font-size: 8px;
+  font-size: 10px;
   color: #292D32;
 }
 

@@ -155,7 +155,7 @@ function RoleDashboardRedirect() {
   if (!token) return <Navigate to="/login" replace />;
 
   switch (role) {
-    case "admin":   return <Navigate to="/admin/dashboard"  replace />;
+    case "admin":   return <Navigate to="/admin/users"      replace />;
     case "teacher": return <Navigate to="/teacher/dashboard" replace />;
     case "parent":  return <Navigate to="/parent/dashboard"  replace />;
     default:        return <Navigate to="/"                  replace />;

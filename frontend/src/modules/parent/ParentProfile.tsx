@@ -369,7 +369,7 @@ export default function ParentProfile() {
   };
 
   const handleDropdownKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!showDropdown && (event.key === "ArrowDown" || event.key === "Enter")) {
+    if (!showDropdown && (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ")) {
       event.preventDefault();
       setDropdownActiveIndex(0);
       setShowDropdown(true);
@@ -396,7 +396,7 @@ export default function ParentProfile() {
       return;
     }
 
-    if (event.key === "Enter") {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       handleDropdownSelect(dropdownActiveIndex);
     }
@@ -488,27 +488,27 @@ export default function ParentProfile() {
                 setShowDropdown(!showDropdown);
               }}
               onKeyDown={handleDropdownKeyDown}
-              className="flex items-center gap-3 bg-white p-1.5 rounded-xl cursor-pointer transition-all select-none text-left"
+              className="flex h-[40px] items-center gap-[10px] rounded-xl border-none bg-transparent p-0 cursor-pointer transition-all select-none text-left"
               aria-haspopup="menu"
               aria-expanded={showDropdown}
             >
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-transparent">
+              <div className="flex h-[40px] w-[42px] items-center justify-center overflow-hidden rounded-[11px] bg-transparent">
                 <img
                   src={profileImage || parentProfileImage}
                   alt="Profile"
-                  className="h-full w-full rounded-full object-cover"
+                  className="h-full w-full rounded-[11px] object-cover"
                 />
               </div>
-              <div className="text-left hidden sm:block">
-                <p className="text-sm font-bold text-[#475569] leading-tight">{displayName}</p>
-                <p className="text-[11px] text-gray-400 font-medium mt-0.5">{displayEmail}</p>
+              <div className="hidden w-[120px] flex-col gap-[3px] text-left text-[#000000] sm:flex">
+                <p className="m-0 h-[15px] w-[62px] overflow-hidden text-ellipsis whitespace-nowrap font-['Nunito',sans-serif] text-[11px] font-semibold leading-[100%] text-[#000000]">{displayName}</p>
+                <p className="m-0 h-[15px] w-[120px] whitespace-nowrap font-['Nunito',sans-serif] text-[13px] font-normal leading-[100%] text-[#000000] opacity-50">{displayEmail}</p>
               </div>
-              <div className="text-[10px] text-gray-400 ml-1 pr-1 flex items-center justify-center">
+              <div className="ml-1 flex h-[17px] w-[17px] items-center justify-center rounded-[9px] bg-[#D9D9D9]">
                 <svg
-                  width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className={`transform transition-transform duration-200 ${showDropdown ? "rotate-180" : "rotate-0"}`}
+                  width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                  className={`text-[#4B4B4B] transform transition-transform duration-200 ${showDropdown ? "rotate-180" : "rotate-0"}`}
                 >
-                  <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
             </button>
@@ -519,6 +519,7 @@ export default function ParentProfile() {
                 role="menu"
                 tabIndex={-1}
                 onKeyDown={handleDropdownKeyDown}
+                onMouseLeave={() => setShowDropdown(false)}
               >
                 <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
                   <p className="text-[11px] text-gray-400 font-medium">Signed in as</p>
@@ -704,13 +705,7 @@ export default function ParentProfile() {
                         <button
                           type="button"
                           disabled={!isEditing}
-                          onClick={() => {
-                            setShowPassword((current) => {
-                              const next = !current;
-                              if (next) setShowConfirmPassword(false);
-                              return next;
-                            });
-                          }}
+                          onClick={() => setShowPassword((current) => !current)}
                           className="cursor-pointer text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
                         >
                           <img className="h-5 w-5" src={showPassword ? eyeShowIcon : eyeHideIcon} alt="eyeicon" />
@@ -745,13 +740,7 @@ export default function ParentProfile() {
                         <button
                           type="button"
                           disabled={!isEditing}
-                          onClick={() => {
-                            setShowConfirmPassword((current) => {
-                              const next = !current;
-                              if (next) setShowPassword(false);
-                              return next;
-                            });
-                          }}
+                          onClick={() => setShowConfirmPassword((current) => !current)}
                           className="cursor-pointer text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
                         >
                           <img className="h-5 w-5" src={showConfirmPassword ? eyeShowIcon : eyeHideIcon} alt="eyeicon" />

@@ -519,17 +519,7 @@ const Register = () => {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => {
-                    setShowPassword((current) => {
-                      const next = !current;
- 
-                      if (next) {
-                        setShowConfirmPassword(false);
-                      }
- 
-                      return next;
-                    });
-                  }}
+                  onClick={() => setShowPassword((current) => !current)}
                 >
                   {showPassword ? (
                     <Eye className="w-4 h-4" />
@@ -584,17 +574,7 @@ const Register = () => {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => {
-                    setShowConfirmPassword((current) => {
-                      const next = !current;
- 
-                      if (next) {
-                        setShowPassword(false);
-                      }
- 
-                      return next;
-                    });
-                  }}
+                  onClick={() => setShowConfirmPassword((current) => !current)}
                 >
                   {showConfirmPassword ? (
                     <Eye className="w-4 h-4" />

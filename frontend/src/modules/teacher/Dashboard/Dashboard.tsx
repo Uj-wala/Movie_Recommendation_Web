@@ -15,10 +15,11 @@ import activityIcon1 from "../../../assets/teacher_module_recent_activity_1.jpeg
 import activityIcon2 from "../../../assets/teacher_module_recent_activity_2.jpeg";
 import activityIcon3 from "../../../assets/teacher_module_recent_activity_3.jpeg";
 import activityIcon4 from "../../../assets/teacher_module_recent_activity_4.jpeg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import toast from "react-hot-toast";
 import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import downarrow from "../../../assets/UpdateProfileIcons/DownArrow.svg";
+import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
  
 interface StatCard {
   id: number;
@@ -438,7 +439,11 @@ const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, options, onChang
         <ChevronDown size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 top-[24px] z-30 w-[110px] rounded-md border border-[#E5E7EB] bg-white py-1 shadow-md" role="menu">
+        <div
+          className="absolute right-0 top-[24px] z-30 w-[110px] rounded-md border border-[#E5E7EB] bg-white py-1 shadow-md"
+          role="menu"
+          onMouseLeave={() => setOpen(false)}
+        >
           {options.map((option, index) => (
             <button
               key={option}
@@ -465,6 +470,7 @@ const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, options, onChang
 };
  
 const TeacherDashboard: React.FC = () => {
+  const { setActiveTab } = useOutletContext<TeacherLayoutContext>();
   const userName =
     localStorage.getItem("userName") ||
     localStorage.getItem("full_name") ||
@@ -509,7 +515,7 @@ const TeacherDashboard: React.FC = () => {
   },
   {
     label: "Settings",
-    onSelect: () => navigate("/teacher/settings"),
+    onSelect: () => setActiveTab("settings"),
   },
   {
     label: "Log Out",
@@ -583,26 +589,30 @@ const TeacherDashboard: React.FC = () => {
             onClick={() => setDropdownOpen(!dropdownOpen)}
             aria-haspopup="menu"
             aria-expanded={dropdownOpen}
-            className="w-[167px] h-[42px] flex items-center gap-2 rounded-xl opacity-80 hover:bg-gray-100 transition-colors"
+            className="h-[43px] flex items-center gap-3 rounded-xl transition-colors"
           >
             <img
               src={teacherProfile}
               alt={userName}
-              className="w-[42px] h-[42px] rounded-[12px] object-cover"
+              className="w-[45px] h-[43px] rounded-[12px] object-cover"
             />
-            <span className="flex w-[87px] h-[28px] flex-col gap-[1px] text-left text-[#000000]">
-              <span className="w-[74px] h-[14px] text-[12px] font-semibold leading-[100%] text-[#000000] whitespace-nowrap overflow-hidden text-ellipsis">
+            <span className="flex w-[130px] flex-col gap-1 text-left text-[#000000]">
+              <span className="w-[67px] h-4 font-['Nunito'] text-[12px] font-semibold leading-[100%] text-[#000000] whitespace-nowrap overflow-hidden text-ellipsis">
                 {userName}
               </span>
-              <span className="w-[87px] h-[10px] font-['Nunito'] text-[10px] font-normal leading-[100%] text-[#000000] opacity-50 whitespace-nowrap overflow-hidden text-ellipsis">
+              <span className="w-auto h-4 font-['Nunito'] text-[14px] font-normal leading-[100%] text-[#000000] opacity-50 whitespace-nowrap">
                 {userEmail}
               </span>
             </span>
-            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] rounded-[9px] py-[7px] px-[4px]" />
+            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] rounded-[9px] py-[7px] px-[4px] ml-2" />
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden" role="menu">
+            <div
+              className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden"
+              role="menu"
+              onMouseLeave={() => setDropdownOpen(false)}
+            >
               
               {/* Signed in as */}
               <div className="px-4 py-3 border-b border-gray-100">

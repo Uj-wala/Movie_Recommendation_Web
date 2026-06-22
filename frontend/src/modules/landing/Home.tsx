@@ -770,6 +770,9 @@ const Home = () => {
   const coursesDropdownRef = useRef<HTMLDivElement>(null);
   const coursesButtonRef = useRef<HTMLButtonElement>(null);
   const courseItemRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const languageDropdownRef = useRef<HTMLDivElement>(null);
+  const languageButtonRef = useRef<HTMLButtonElement>(null);
+  const languageItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const courseMenuItems = [
     "React.js",
@@ -827,6 +830,12 @@ const Home = () => {
       ) {
         setIsCoursesOpen(false);
       }
+      if (
+        languageDropdownRef.current &&
+        !languageDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsLangOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -864,6 +873,41 @@ const Home = () => {
       event.preventDefault();
       const previousIndex = currentIndex > 0 ? currentIndex - 1 : courseMenuItems.length - 1;
       courseItemRefs.current[previousIndex]?.focus();
+    }
+  };
+
+  const handleLanguageKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setIsLangOpen(false);
+      languageButtonRef.current?.focus();
+      return;
+    }
+
+    if ((event.key === "Enter" || event.key === " ") && document.activeElement === languageButtonRef.current) {
+      event.preventDefault();
+      setIsLangOpen(true);
+      setIsCoursesOpen(false);
+      window.setTimeout(() => languageItemRefs.current[0]?.focus(), 0);
+      return;
+    }
+
+    if (!isLangOpen) return;
+
+    const currentIndex = languageItemRefs.current.findIndex(
+      (item) => item === document.activeElement
+    );
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = currentIndex < languages.length - 1 ? currentIndex + 1 : 0;
+      languageItemRefs.current[nextIndex]?.focus();
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const previousIndex = currentIndex > 0 ? currentIndex - 1 : languages.length - 1;
+      languageItemRefs.current[previousIndex]?.focus();
     }
   };
 
@@ -914,6 +958,7 @@ const Home = () => {
               <div
                 className="absolute left-0 top-full z-[9999] mt-2 w-[180px] rounded-[7px] border border-[#b6edc7] bg-[#E1F3E7] py-1.5 shadow-[0_14px_32px_rgba(3,27,18,0.14)]"
                 role="menu"
+                onMouseLeave={() => setIsCoursesOpen(false)}
               >
                 {courseMenuItems.map((course, index) => (
                   <Link
@@ -962,13 +1007,17 @@ const Home = () => {
             Sign Up
           </Link>
 
-          <div className="relative">
+          <div className="relative" ref={languageDropdownRef} onKeyDown={handleLanguageKeyDown}>
             <button
+              ref={languageButtonRef}
+              type="button"
               onClick={() => {
                 setIsLangOpen(!isLangOpen);
                 setIsCoursesOpen(false);
               }}
               className="flex h-[45px] items-center gap-[5px] text-[16px] font-medium text-[#031b12] hover:text-[#238b45]"
+              aria-expanded={isLangOpen}
+              aria-haspopup="menu"
             >
               <Globe className="h-[16px] w-[16px] stroke-[2.5]" />
               {getLanguageCode(selectedLanguage)}
@@ -976,15 +1025,24 @@ const Home = () => {
             </button>
 
             {isLangOpen && (
-              <div className="absolute right-0 z-[9999] mt-2 max-h-[300px] w-48 overflow-y-auto rounded-md bg-[#defaeb] py-2 shadow-lg">
-                {languages.map((lang) => (
+              <div
+                className="absolute right-0 z-[9999] mt-2 max-h-[300px] w-48 overflow-y-auto rounded-md bg-[#defaeb] py-2 shadow-lg"
+                role="menu"
+                onMouseLeave={() => setIsLangOpen(false)}
+              >
+                {languages.map((lang, index) => (
                   <button
                     key={lang}
+                    ref={(element) => {
+                      languageItemRefs.current[index] = element;
+                    }}
+                    type="button"
+                    role="menuitem"
                     onClick={() => {
                       setSelectedLanguage(lang);
                       setIsLangOpen(false);
                     }}
-                    className="flex w-full items-center justify-between px-4 py-3 text-left text-base text-gray-700 hover:bg-green-100"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left text-base text-gray-700 hover:bg-green-100 focus:bg-green-100 focus:outline-none"
                   >
                     {lang}
                     {lang === selectedLanguage && (

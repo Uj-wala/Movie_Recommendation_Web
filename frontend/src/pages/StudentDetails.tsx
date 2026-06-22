@@ -217,7 +217,12 @@ const StudentDetails = () => {
                   </div>
 
                   {isGradeOpen && (
-                    <div id="grade-options" role="listbox" className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+                    <div
+                      id="grade-options"
+                      role="listbox"
+                      className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar"
+                      onMouseLeave={() => setIsGradeOpen(false)}
+                    >
                       {grades.map((g, index) => (
                         <div
                           key={g.value}

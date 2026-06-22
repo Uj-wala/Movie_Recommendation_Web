@@ -184,7 +184,7 @@ const Login = () => {
       localStorage.setItem("userName", "Admin");
       localStorage.setItem("userPassword", ADMIN_PASSWORD);
       showLoginToast();
-      navigate("/admin/dashboard");
+      navigate("/admin/users");
       return;
     }
 
