@@ -1,15 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import { fetchDropdownData } from '../services/ListApiService';
 
 type RoleOption = { id: string; name: string };
-
-const enumRoles: RoleOption[] = [
-  { id: 'student', name: 'student' },
-  { id: 'parent', name: 'parent' },
-  { id: 'teacher', name: 'teacher' },
-];
 
 const roleDisplayOrder: Record<string, number> = {
   student: 0,
@@ -39,7 +34,8 @@ const sortRolesByDisplayOrder = (roles: RoleOption[]) =>
 
 const SelectRole = () => {
   const location = useLocation();
-  const roles = sortRolesByDisplayOrder(enumRoles);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  
   const successMessage =
     typeof location.state?.successMessage === 'string'
       ? location.state.successMessage
@@ -48,6 +44,20 @@ const SelectRole = () => {
     id: string;
     name: string;
   } | null>(null);
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetchDropdownData('/dropdowns/roles');
+      // console.log("data",response)
+      setRoles(sortRolesByDisplayOrder(response));
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   return (
     <SplitScreenLayout fitViewport>
