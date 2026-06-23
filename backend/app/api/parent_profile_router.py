@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 
 from fastapi import Depends
 
@@ -117,3 +117,37 @@ def remove_child_route(
         current_user,
         db
     )
+    
+
+@router.patch(
+    "/password",
+    response_model=MessageResponse,
+)
+def update_parent_password(
+    password_update: ParentPasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(
+        required_role(["parent"])
+    ),
+):
+    return update_parent_password_service(
+        db=db,
+        current_user=current_user,
+        password_update=password_update,
+    )   
+    
+
+@router.get(
+    "/dashboard",
+    response_model=ParentDashboardResponse
+)
+def get_parent_dashboard(
+    db: Session = Depends(get_db),
+    current_user=Depends(
+        required_role(["parent"])
+    )
+):
+    return get_parent_dashboard_service(
+        db,
+        current_user
+    )    
