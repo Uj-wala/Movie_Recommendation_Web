@@ -14,7 +14,7 @@ export interface PhoneRegistrationData {
  
 export interface ConfirmRoleData {
   user_id: string;
-  role: string;
+  role_id: string;
 }
  
 export interface EmailOtpData {

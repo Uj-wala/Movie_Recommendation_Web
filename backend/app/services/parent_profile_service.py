@@ -11,6 +11,8 @@ from app.models.user_model import User
 from app.models.student_profile_model import StudentProfile
 
 from app.models.role_model import Role
+from app.schemas.parent_profile_schema import ParentPasswordUpdate
+from app.core.security import verify_password, hash_password
  
 def get_parent_profile(
 
@@ -47,7 +49,9 @@ def get_parent_profile(
     return {
 
         "parent_profile_id": parent_profile.id,
-
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "phone_number": current_user.phone_number,
         "relationship_type": parent_profile.relationship_type,
         "profile_image_url": current_user.profile_image_url,
 
@@ -80,45 +84,59 @@ def update_parent_profile(
     current_user,
     db: Session
 ):
- 
+
     parent_profile = (
-
         db.query(ParentProfile)
-
         .filter(
-
             ParentProfile.user_id == current_user.id
-
         )
-
         .first()
-
     )
- 
+
     if not parent_profile:
-
         raise HTTPException(
-
             status_code=404,
-
             detail="Parent profile not found"
-
         )
- 
-    parent_profile.relationship_type = (
 
-        data.relationship_type
-
+    existing_user = (
+        db.query(User)
+        .filter(
+            User.email == data.email,
+            User.id != current_user.id
+        )
+        .first()
     )
- 
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Email already exists"
+        )
+
+    parent_profile.relationship_type = (
+        data.relationship_type
+    )
+
+    current_user.full_name = (
+        data.full_name
+    )
+
+    current_user.phone_number = (
+        data.phone_number
+    )
+
+    current_user.email = (
+        data.email
+    )
+
     db.commit()
- 
+
+    db.refresh(parent_profile)
+
     return {
-
         "message":
-
         "Parent profile updated successfully"
-
     }
  
 
@@ -281,3 +299,139 @@ def remove_child(
         "message":
         "Child removed successfully"
     }
+    
+    
+def update_parent_password_service(
+    db: Session,
+    current_user: User,
+    password_update: ParentPasswordUpdate,
+) -> dict:
+
+    user = (
+        db.query(User)
+        .filter(
+            User.id == current_user.id
+        )
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if not verify_password(
+        password_update.current_password,
+        user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
+
+    if (
+        password_update.new_password
+        != password_update.confirm_password
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="New password and confirm password do not match"
+        )
+
+    if (
+        password_update.current_password
+        == password_update.new_password
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be different from current password"
+        )
+
+    user.password_hash = hash_password(
+        password_update.new_password
+    )
+
+    db.commit()
+
+    return {
+        "message": "Password updated successfully"
+    }
+    
+    
+def get_parent_dashboard_service(
+    db: Session,
+    current_user
+):
+
+    parent_profile = (
+        db.query(ParentProfile)
+        .filter(
+            ParentProfile.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not parent_profile:
+        raise HTTPException(
+            status_code=404,
+            detail="Parent profile not found"
+        )
+
+    parent_child = (
+        db.query(ParentChild)
+        .filter(
+            ParentChild.parent_profile_id
+            == parent_profile.id
+        )
+        .first()
+    )
+
+    if not parent_child:
+        raise HTTPException(
+            status_code=404,
+            detail="Child not found"
+        )
+
+    student = (
+        db.query(User)
+        .filter(
+            User.id == parent_child.student_id
+        )
+        .first()
+    )
+
+    student_profile = (
+        db.query(StudentProfile)
+        .filter(
+            StudentProfile.user_id
+            == student.id
+        )
+        .first()
+    )
+
+    return {
+        "parent_id": parent_profile.id,
+        "parent_name": current_user.full_name,
+        "parent_email": current_user.email,
+        "parent_phone_number": current_user.phone_number,
+        "profile_image_url": current_user.profile_image_url,
+        "child": {
+            "id": student.id,
+            "name": student.full_name,
+            "registration_number":
+                student.registration_number,
+            "grade":
+                student_profile.grade,
+            "school_name":
+                student_profile.school_name
+        },
+        "progress": {
+            "course_completion_percentage": 0
+        },
+        "tests": {
+            "pending": 0,
+            "ongoing": 0,
+            "completed": 0
+        }
+    }    
