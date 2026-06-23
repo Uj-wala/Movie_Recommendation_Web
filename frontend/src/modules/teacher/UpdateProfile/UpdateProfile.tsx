@@ -28,10 +28,9 @@ interface Profile {
 }
 interface InitialValues{
   username: string,
-  password: string,
-  confirmPassword: string,
   yearsOfExperience: string,
   qualification: string,
+  expertises?: string,
   subjects: string[],
   phone:string[],
   email:string[],
@@ -39,7 +38,6 @@ interface InitialValues{
 }
 
 const InitialValuesProfile: InitialValues = profileData;
-const TEACHER_DEFAULT_PASSWORD = "Stackly@123";
 const PASSWORD_MAX_LENGTH = 12;
 
 const profiles: Profile[] = [
@@ -81,19 +79,21 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 const validationSchema = Yup.object({
   username: Yup.string()
-    .required("Username is required")
-    .max(24, "User Name cannot exceed 24 characters")
-    .matches(/^[A-Za-z\s'.-]+$/, "User Name can only contain letters, spaces, apostrophe, hyphen, and period")
-    .min(3, "Username must be at least 3 characters"),
+    .required("Full Name is required")
+    .max(24, "Full Name cannot exceed 24 characters")
+    .matches(/^[A-Za-z\s'.-]+$/, "Full Name can only contain letters, spaces, apostrophe, hyphen, and period")
+    .min(3, "Full Name must be at least 3 characters"),
+  currentPassword: Yup.string()
+    .required("Current Password is required"),
   password: Yup.string()
-    .required("Password is required")
-    .min(8, "Password must be at least 8 characters")
-    .max(PASSWORD_MAX_LENGTH, "Password cannot exceed 12 characters")
+    .required("New Password is required")
+    .min(8, "New Password must be at least 8 characters")
+    .max(PASSWORD_MAX_LENGTH, "New Password cannot exceed 12 characters")
     .matches(/[A-Z]/, "Must contain at least one uppercase letter")
     .matches(/[0-9]/, "Must contain at least one number")
     .matches(/[!@#$%^&*(),.?":{}|<>]/, "Must contain at least one special character"),
   confirmPassword: Yup.string()
-    .required("Please confirm your password")
+    .required("Confirm Password is required")
     .max(PASSWORD_MAX_LENGTH, "Confirm Password cannot exceed 12 characters")
     .oneOf([Yup.ref("password")], "Passwords do not match"),
   yearsOfExperience: Yup.string().required("Please select years of experience"),
@@ -116,10 +116,6 @@ export default function UpdateProfile() {
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
     activeProfile.email;
-  const displayPassword =
-    localStorage.getItem("userPassword") ||
-    localStorage.getItem("password") ||
-    TEACHER_DEFAULT_PASSWORD;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownButtonRef = useRef<HTMLButtonElement>(null);
@@ -131,6 +127,7 @@ export default function UpdateProfile() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState("");
@@ -167,15 +164,17 @@ export default function UpdateProfile() {
   const formik = useFormik({
     initialValues: {
       username: displayName,
-      password: displayPassword,
-      confirmPassword: displayPassword,
+      currentPassword: "",
+      password: "",
+      confirmPassword: "",
       yearsOfExperience: InitialValuesProfile.yearsOfExperience,
       qualification: InitialValuesProfile.qualification,
+      expertises: InitialValuesProfile.expertises || "",
       subjects: InitialValuesProfile.subjects as string[],
       image: InitialValuesProfile.image,
     },
     validationSchema,
-    onSubmit: (values) => {
+    onSubmit: (values, actions) => {
       const phoneErrors = phones.map((p) =>
         !p.value ? "Phone number is required" : !phoneRegex.test(p.value) ? "Invalid format. Use country code e.g. +911234567890" : ""
       );
@@ -187,8 +186,33 @@ export default function UpdateProfile() {
       setPhones((prev) => prev.map((p, i) => ({ ...p, touched: true, error: phoneErrors[i] })));
       setEmails((prev) => prev.map((em, i) => ({ ...em, touched: true, error: emailErrors[i] })));
       if (hasPhoneError || hasEmailError) return;
+      const previousPassword =
+        localStorage.getItem("userPassword") ||
+        localStorage.getItem("password") ||
+        "";
+      if (values.currentPassword !== previousPassword) {
+        actions.setFieldTouched("currentPassword", true, false);
+        actions.setFieldError("currentPassword", "Current password is not matched with previous password");
+        return;
+      }
       localStorage.setItem("userPassword", values.password);
-      console.log("Submitted:", values);
+      toast.success("Password updated successfully.", { position: "bottom-right" });
+      console.log("Submitted:", {
+        username: values.username,
+        yearsOfExperience: values.yearsOfExperience,
+        qualification: values.qualification,
+        expertises: values.expertises,
+        subjects: values.subjects,
+        image: values.image,
+      });
+      actions.resetForm({
+        values: {
+          ...values,
+          currentPassword: "",
+          password: "",
+          confirmPassword: "",
+        },
+      });
       setIsEditing(false);
       setShowSuccess(true);
     },
@@ -582,16 +606,16 @@ export default function UpdateProfile() {
               <h2 className="w-[1018px] h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Personal Details</h2>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
-                {/* Username */}
-                <div>
-                  <label className={personalLabelCls}>User Name</label>
+                {/* Full Name */}
+                <div className="order-1">
+                  <label className={personalLabelCls}>Full Name</label>
                   <input
                     type="text"
                     id="username"
                     name="username"
                     disabled={!isEditing}
                     maxLength={24}
-                    placeholder="Enter your Name"
+                    placeholder="Enter your Full Name"
                     value={formik.values.username}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -601,12 +625,41 @@ export default function UpdateProfile() {
                     <p className="text-[11px] text-red-500 mt-1">{formik.errors.username}</p>
                   )}
                   {usernameLimitReached && !formik.errors.username && (
-                    <p className="text-[11px] text-red-500 mt-1">User Name cannot exceed 24 characters</p>
+                    <p className="text-[11px] text-red-500 mt-1">Full Name cannot exceed 24 characters</p>
+                  )}
+                </div>
+
+                {/* Current Password */}
+                <div className="order-2">
+                  <label className={personalLabelCls}>Current Password</label>
+                  <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 ${formik.touched.currentPassword && formik.errors.currentPassword ? "border border-red-400" : ""} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      id="currentPassword"
+                      name="currentPassword"
+                      disabled={!isEditing}
+                      placeholder="Enter your current password"
+                      value={formik.values.currentPassword}
+                      onCopy={blockPasswordClipboardAction}
+                      onCut={blockPasswordClipboardAction}
+                      onPaste={blockPasswordClipboardAction}
+                      onContextMenu={blockPasswordContextMenu}
+                      onKeyDown={blockPasswordClipboardShortcut}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
+                    />
+                    <button type="button" disabled={!isEditing} onClick={() => setShowCurrentPassword((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600 disabled:cursor-not-allowed">
+                      <img className="w-5 h-5" src={showCurrentPassword ? eyeshow : eyehide} alt="eyeicon" />
+                    </button>
+                  </div>
+                  {formik.touched.currentPassword && formik.errors.currentPassword && (
+                    <p className="text-[11px] text-red-500 mt-1">{formik.errors.currentPassword}</p>
                   )}
                 </div>
 
                 {/* Phone Numbers */}
-                <div>
+                <div className="order-3">
                   <label className={personalLabelCls}>Phone Number</label>
                   <div className="space-y-2">
                     {phones.map((p, i) => (
@@ -642,16 +695,16 @@ export default function UpdateProfile() {
                   </div>
                 </div>
 
-                {/* Password */}
-                <div>
-                  <label className={personalLabelCls}>Password</label>
+                {/* New Password */}
+                <div className="order-4">
+                  <label className={personalLabelCls}>New Password</label>
                   <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 ${formik.touched.password && formik.errors.password ? "border border-red-400" : ""} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
                     <input
                       type={showPassword ? "text" : "password"}
                       id="password"
                       name="password"
                       disabled={!isEditing}
-                      placeholder="Enter your password"
+                      placeholder="Enter your new password"
                       value={formik.values.password}
                       maxLength={PASSWORD_MAX_LENGTH}
                       onCopy={blockPasswordClipboardAction}
@@ -689,7 +742,7 @@ export default function UpdateProfile() {
                 </div>
 
                 {/* Confirm Password */}
-                <div>
+                <div className="order-6">
                   <label className={personalLabelCls}>Confirm Password</label>
                   <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 ${formik.touched.confirmPassword && formik.errors.confirmPassword ? "border border-red-400" : ""} ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
                     <input
@@ -721,7 +774,7 @@ export default function UpdateProfile() {
                 </div>
 
                 {/* Email Addresses */}
-                <div className="col-span-1">
+                <div className="order-5 col-span-1">
                   <label className={personalLabelCls}>Email Address</label>
                   <div className="space-y-2">
                     {emails.map((em, i) => (
@@ -804,7 +857,7 @@ export default function UpdateProfile() {
               </div>
 
               {/* Years + Qualification */}
-              <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="grid grid-cols-3 gap-4 mt-[-21px]">
                 <div>
                   <label className="block w-[240px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Years of Experience</label>
                   <div className={`w-[315px] h-[42px] flex items-center gap-2 rounded-[8px] px-3 bg-gray-50 ${!isEditing ? "opacity-60 cursor-not-allowed" : ""}`}>
@@ -836,7 +889,7 @@ export default function UpdateProfile() {
                     id="qualification"
                     name="qualification"
                     disabled={!isEditing}
-                    placeholder="Enter your Qualification Details"
+                    placeholder="Enter your qualification"
                     value={formik.values.qualification}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -847,21 +900,18 @@ export default function UpdateProfile() {
                   )}
                 </div>
                 <div>
-                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Qualification</label>
+                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Expertises</label>
                   <input
                     type="text"
-                    id="qualification"
-                    name="qualification"
+                    id="expertises"
+                    name="expertises"
                     disabled={!isEditing}
-                    placeholder="Enter your Qualification Details"
-                    value={formik.values.qualification}
+                    placeholder="Enter your expertises"
+                    value={formik.values.expertises ?? ""}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     className="w-[315px] h-[42px] rounded-[8px] px-3 bg-gray-50 font-poppins text-sm text-gray-800 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
                   />
-                  {formik.touched.qualification && formik.errors.qualification && (
-                    <p className="text-[11px] text-red-500 mt-1">{formik.errors.qualification}</p>
-                  )}
                 </div>
               </div>
             </section>

@@ -9,6 +9,7 @@ import phoneIcon from "../../assets/UpdateProfileIcons/phone.svg";
 import eyeShowIcon from "../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
 import SuccessModal from "./SuccessModal";
+import { fetchStudentDetailsByStudentId } from "../../services/parentProfileService";
  
 type NavItem = {
   label: string;
@@ -27,6 +28,7 @@ type ChildDetail = {
 type FieldErrors = {
   fullName?: string;
   phoneNumber?: string;
+  currentPassword?: string;
   password?: string;
   confirmPassword?: string;
   emailAddress?: string;
@@ -38,8 +40,7 @@ type ChildFieldErrors = Record<string, Partial<Record<keyof ChildDetail, string>
 const PASSWORD_MAX_LENGTH = 12;
 const PHONE_MAX_LENGTH = 10;
 const NAME_MAX_LENGTH = 24;
-const SCHOOL_MAX_LENGTH = 16;
-const STUDENT_ID_MAX_LENGTH = 12;
+const STUDENT_ID_MAX_LENGTH = 20;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$/;
 const studentIdRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]*$/;
@@ -70,6 +71,7 @@ export default function ParentProfile() {
     () => localStorage.getItem("profileImage") || parentProfileImage
   );
   const [relationship, setRelationship] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -88,14 +90,12 @@ export default function ParentProfile() {
   const [emailAddress, setEmailAddress] = useState(
     () => localStorage.getItem("userEmail") || "parent@thestackly.com"
   );
-  const [password, setPassword] = useState(
-    () => localStorage.getItem("userPassword") || localStorage.getItem("password") || ""
-  );
-  const [confirmPassword, setConfirmPassword] = useState(
-    () => localStorage.getItem("userPassword") || localStorage.getItem("password") || ""
-  );
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [childErrors, setChildErrors] = useState<ChildFieldErrors>({});
+  const [studentLookupLoading, setStudentLookupLoading] = useState<Record<string, boolean>>({});
  
   const [children, setChildren] = useState<ChildDetail[]>([
     { id: crypto.randomUUID(), childName: "", studentId: "", schoolName: "", grade: "" }
@@ -162,13 +162,18 @@ export default function ParentProfile() {
   };
 
   const validatePassword = (value: string) => {
-    if (!value) return "Password is required";
-    if (value.length < 8) return "Password must be at least 8 characters";
-    if (value.length > PASSWORD_MAX_LENGTH) return "Password cannot exceed 12 characters";
+    if (!value) return "New Password is required";
+    if (value.length < 8) return "New Password must be at least 8 characters";
+    if (value.length > PASSWORD_MAX_LENGTH) return "New Password cannot exceed 12 characters";
     if (!passwordRegex.test(value)) {
       return "Use uppercase, lowercase, number, and special character";
     }
     return "";
+  };
+
+  const handleCurrentPasswordChange = (value: string) => {
+    setCurrentPassword(value);
+    updateFieldError("currentPassword", value ? "" : "Current Password is required");
   };
 
   const handleFullNameChange = (value: string) => {
@@ -236,36 +241,79 @@ export default function ParentProfile() {
     const child = children[index];
     if (!child) return;
 
-    if (field === "childName" && value.length > NAME_MAX_LENGTH) {
-      updateChildError(child.id, field, "Child Name cannot exceed 24 characters");
+    if (field !== "studentId") return;
+
+    if (value.length > STUDENT_ID_MAX_LENGTH) {
+      updateChildError(child.id, field, "Student ID cannot exceed 12 characters");
       return;
     }
 
-    if (field === "schoolName" && value.length > SCHOOL_MAX_LENGTH) {
-      updateChildError(child.id, field, "School Name cannot exceed 16 characters");
+    if (!studentIdRegex.test(value)) {
+      updateChildError(
+        child.id,
+        field,
+        "Student ID can contain alphabets, numbers, and special characters only"
+      );
       return;
-    }
-
-    if (field === "studentId") {
-      if (value.length > STUDENT_ID_MAX_LENGTH) {
-        updateChildError(child.id, field, "Student ID cannot exceed 12 characters");
-        return;
-      }
-
-      if (!studentIdRegex.test(value)) {
-        updateChildError(
-          child.id,
-          field,
-          "Student ID can contain alphabets, numbers, and special characters only"
-        );
-        return;
-      }
     }
 
     const updatedChildren = [...children];
-    updatedChildren[index] = { ...updatedChildren[index], [field]: value };
+    updatedChildren[index] = {
+      ...updatedChildren[index],
+      studentId: value,
+      childName: "",
+      schoolName: "",
+      grade: "",
+    };
     setChildren(updatedChildren);
-    updateChildError(child.id, field);
+    updateChildError(child.id, "studentId");
+    updateChildError(child.id, "childName");
+    updateChildError(child.id, "schoolName");
+    updateChildError(child.id, "grade");
+  };
+
+  const lookupStudentDetails = async (index: number) => {
+    const child = children[index];
+    if (!child) return;
+
+    const studentId = child.studentId.trim();
+    if (!studentId) {
+      updateChildError(child.id, "studentId", "Student ID is required");
+      return;
+    }
+
+    setStudentLookupLoading((current) => ({ ...current, [child.id]: true }));
+    updateChildError(child.id, "studentId");
+
+    try {
+      const student = await fetchStudentDetailsByStudentId(studentId);
+
+      if (!student) {
+        updateChildError(child.id, "studentId", "Student not found");
+        return;
+      }
+
+      const updatedChildren = [...children];
+      updatedChildren[index] = {
+        ...updatedChildren[index],
+        childName: student.child_name || "",
+        schoolName: student.school_name || "",
+        grade: student.grade || "",
+      };
+
+      setChildren(updatedChildren);
+      updateChildError(child.id, "childName");
+      updateChildError(child.id, "schoolName");
+      updateChildError(child.id, "grade");
+    } catch {
+      updateChildError(
+        child.id,
+        "studentId",
+        "Unable to fetch student details. Please try again."
+      );
+    } finally {
+      setStudentLookupLoading((current) => ({ ...current, [child.id]: false }));
+    }
   };
  
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -292,15 +340,24 @@ export default function ParentProfile() {
           ? ""
           : "Phone number must be 10 digits"
         : "Phone number is required",
+      currentPassword: currentPassword ? "" : "Current Password is required",
       password: validatePassword(password),
       confirmPassword: confirmPassword
         ? confirmPassword === password
           ? ""
-          : "Passwords do not match"
-        : "Please confirm your password",
+          : "New Password and Confirm Password do not match."
+        : "Confirm Password is required",
       emailAddress: emailRegex.test(emailAddress) ? "" : "Enter a valid email address",
       relationship: relationship ? "" : "Please select relationship type",
     };
+
+    const previousPassword =
+      localStorage.getItem("userPassword") ||
+      localStorage.getItem("password") ||
+      "";
+    if (currentPassword && currentPassword !== previousPassword) {
+      nextErrors.currentPassword = "Current password is incorrect. Please enter your existing password.";
+    }
 
     const nextChildErrors: ChildFieldErrors = {};
     children.forEach((child) => {
@@ -326,11 +383,28 @@ export default function ParentProfile() {
     localStorage.setItem("full_name", fullName);
     localStorage.setItem("userEmail", emailAddress);
     localStorage.setItem("userPassword", password);
+    toast.success("Password updated successfully.");
     if (profileImage) {
       localStorage.setItem("profileImage", profileImage);
     }
+    setCurrentPassword("");
+    setPassword("");
+    setConfirmPassword("");
     setIsEditing(false);
     setShowSuccessModal(true);
+  };
+
+  const handleCancelEdit = () => {
+    setCurrentPassword("");
+    setPassword("");
+    setConfirmPassword("");
+    setFieldErrors((current) => ({
+      ...current,
+      currentPassword: undefined,
+      password: undefined,
+      confirmPassword: undefined,
+    }));
+    setIsEditing(false);
   };
 
   const handleLogout = () => {
@@ -623,10 +697,10 @@ export default function ParentProfile() {
                 </div>
  
                 {/* PARENT INFORMATION BLOCK */}
-                <section className="mb-12 flex h-[360px] w-[1018px] flex-col gap-[24px]">
-                  <h2 className="m-0 h-[24px] w-[1018px] font-['Poppins',sans-serif] text-[22px] font-semibold leading-none tracking-[-0.01em] text-black">Parent Information</h2>
+                <section className="mb-12 flex min-h-[440px] w-[1018px] flex-col gap-[24px]">
+                  <h2 className="m-0 h-[24px] w-[1018px] font-['Poppins',sans-serif] text-[22px] font-semibold leading-none tracking-[-0.01em] text-black">Manage Profile Details</h2>
                   <div className="grid grid-cols-1 gap-x-[24px] gap-y-[24px] md:grid-cols-2">
-                    <div>
+                    <div className="order-1">
                       <label className={personalLabelCls}>Full Name</label>
                       <input
                         type="text"
@@ -635,14 +709,49 @@ export default function ParentProfile() {
                         value={fullName}
                         disabled={!isEditing}
                         onChange={(e) => handleFullNameChange(e.target.value)}
-                        placeholder="Enter your Name"
+                        placeholder="Enter your Full Name"
                         className={personalFieldCls(!isEditing)}
                       />
                       {fieldErrors.fullName && (
                         <p className={errorTextCls}>{fieldErrors.fullName}</p>
                       )}
                     </div>
-                    <div>
+                    <div className="order-2">
+                      <label className={personalLabelCls}>Current Password</label>
+                      <div className={`flex h-[48px] w-[497px] items-center rounded-[8px] bg-gray-50 px-4 py-3 ${fieldErrors.currentPassword ? "border border-red-400" : ""} ${!isEditing ? "cursor-not-allowed opacity-60" : ""}`}>
+                        <input
+                          type={showCurrentPassword ? "text" : "password"}
+                          id="currentPassword"
+                          name="currentPassword"
+                          value={currentPassword}
+                          disabled={!isEditing}
+                          onChange={(e) => handleCurrentPasswordChange(e.target.value)}
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
+                          onPaste={(e) => e.preventDefault()}
+                          onContextMenu={(e) => e.preventDefault()}
+                          onKeyDown={(e) => {
+                            if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
+                              e.preventDefault();
+                            }
+                          }}
+                          placeholder="Enter your current password"
+                          className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
+                        />
+                        <button
+                          type="button"
+                          disabled={!isEditing}
+                          onClick={() => setShowCurrentPassword((current) => !current)}
+                          className="cursor-pointer text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                        >
+                          <img className="h-5 w-5" src={showCurrentPassword ? eyeShowIcon : eyeHideIcon} alt="eyeicon" />
+                        </button>
+                      </div>
+                      {fieldErrors.currentPassword && (
+                        <p className={errorTextCls}>{fieldErrors.currentPassword}</p>
+                      )}
+                    </div>
+                    <div className="order-3">
                       <label className={personalLabelCls}>Phone Number</label>
                       <div className="space-y-2">
                         <div>
@@ -680,8 +789,8 @@ export default function ParentProfile() {
                         </div>
                       </div>
                     </div>
-                    <div>
-                      <label className={personalLabelCls}>Password</label>
+                    <div className="order-4">
+                      <label className={personalLabelCls}>New Password</label>
                       <div className={`flex h-[48px] w-[497px] items-center rounded-[8px] bg-gray-50 px-4 py-3 ${!isEditing ? "cursor-not-allowed opacity-60" : ""}`}>
                         <input
                           type={showPassword ? "text" : "password"}
@@ -699,7 +808,7 @@ export default function ParentProfile() {
                               e.preventDefault();
                             }
                           }}
-                          placeholder="Enter your password"
+                          placeholder="Enter your new password"
                           className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                         />
                         <button
@@ -715,7 +824,7 @@ export default function ParentProfile() {
                         <p className={errorTextCls}>{fieldErrors.password}</p>
                       )}
                     </div>
-                    <div>
+                    <div className="order-6">
                       <label className={personalLabelCls}>Confirm Password</label>
                       <div className={`flex h-[48px] w-[497px] items-center rounded-[8px] bg-gray-50 px-4 py-3 ${!isEditing ? "cursor-not-allowed opacity-60" : ""}`}>
                         <input
@@ -750,7 +859,7 @@ export default function ParentProfile() {
                         <p className={errorTextCls}>{fieldErrors.confirmPassword}</p>
                       )}
                     </div>
-                    <div className="col-span-1">
+                    <div className="order-5 col-span-1">
                       <label className={personalLabelCls}>Email Address</label>
                       <div className="space-y-2">
                         <div>
@@ -786,7 +895,7 @@ export default function ParentProfile() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex h-[72px] w-[238px] flex-col gap-[8px] opacity-100">
+                    <div className="order-7 flex h-[72px] w-[238px] flex-col gap-[8px] opacity-100">
                       <label className="block h-[16px] font-['Poppins',sans-serif] text-[16px] font-medium leading-none text-[#030229]">Relationship</label>
                       <div className="relative">
                         <select
@@ -827,10 +936,9 @@ export default function ParentProfile() {
                           <input
                             type="text"
                             value={child.childName}
-                            disabled={!isEditing}
-                            onChange={(e) => handleChildInputChange(index, "childName", e.target.value)}
+                            disabled
                             placeholder="Enter Child Name"
-                            className={personalFieldCls(!isEditing)}
+                            className={personalFieldCls(true)}
                           />
                           {childErrors[child.id]?.childName && (
                             <p className={errorTextCls}>{childErrors[child.id]?.childName}</p>
@@ -838,14 +946,26 @@ export default function ParentProfile() {
                         </div>
                         <div>
                           <label className={personalLabelCls}>Student ID</label>
-                          <input
-                            type="text"
-                            value={child.studentId}
-                            disabled={!isEditing}
-                            onChange={(e) => handleChildInputChange(index, "studentId", e.target.value)}
-                            placeholder="Enter Student ID"
-                            className={personalFieldCls(!isEditing)}
-                          />
+                          <div className="flex h-[48px] w-[497px] items-center gap-2">
+                            <input
+                              type="text"
+                              value={child.studentId}
+                              disabled={!isEditing || studentLookupLoading[child.id]}
+                              onChange={(e) => handleChildInputChange(index, "studentId", e.target.value)}
+                              onBlur={() => lookupStudentDetails(index)}
+                              placeholder="Enter Student ID"
+                              className={`h-[48px] flex-1 rounded-[8px] bg-gray-50 px-4 py-3 font-poppins text-sm text-gray-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60`}
+                            />
+                            <button
+                              type="button"
+                              disabled={!isEditing || studentLookupLoading[child.id]}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => lookupStudentDetails(index)}
+                              className="h-[48px] w-[104px] rounded-[8px] bg-[#238B45] px-4 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {studentLookupLoading[child.id] ? "Loading" : "Search"}
+                            </button>
+                          </div>
                           {childErrors[child.id]?.studentId && (
                             <p className={errorTextCls}>{childErrors[child.id]?.studentId}</p>
                           )}
@@ -855,10 +975,9 @@ export default function ParentProfile() {
                           <input
                             type="text"
                             value={child.schoolName}
-                            disabled={!isEditing}
-                            onChange={(e) => handleChildInputChange(index, "schoolName", e.target.value)}
+                            disabled
                             placeholder="Enter School Name"
-                            className={personalFieldCls(!isEditing)}
+                            className={personalFieldCls(true)}
                           />
                           {childErrors[child.id]?.schoolName && (
                             <p className={errorTextCls}>{childErrors[child.id]?.schoolName}</p>
@@ -869,9 +988,8 @@ export default function ParentProfile() {
                           <div className="relative">
                             <select
                               value={child.grade}
-                              disabled={!isEditing}
-                              onChange={(e) => handleChildInputChange(index, "grade", e.target.value)}
-                              className={`h-[48px] w-[497px] appearance-none rounded-[8px] bg-gray-50 px-4 py-3 pr-10 font-poppins text-sm font-bold text-gray-800 outline-none ${!isEditing ? "cursor-not-allowed opacity-60" : ""}`}
+                              disabled
+                              className="h-[48px] w-[497px] appearance-none rounded-[8px] bg-gray-50 px-4 py-3 pr-10 font-poppins text-sm font-bold text-gray-800 outline-none cursor-not-allowed opacity-60"
                             >
                               <option value="">Choose Child Grade</option>
                               <option>Grade 1</option>
@@ -933,7 +1051,7 @@ export default function ParentProfile() {
                   <div className="mt-12 flex justify-end gap-3 border-t border-gray-100 pt-6">
                     <button
                       type="button"
-                      onClick={() => setIsEditing(false)}
+                      onClick={handleCancelEdit}
                       className="flex h-[48px] w-[216px] items-center justify-center gap-[12px] rounded-[8px] border border-[#238B45] bg-white p-[12px] font-poppins text-[20px] font-semibold capitalize leading-[100%] text-[#238B45] opacity-100 transition-colors hover:bg-[#EEF8F1]"
                     >
                       <span className="h-[18px] w-[73px] leading-[18px]">Cancel</span>
