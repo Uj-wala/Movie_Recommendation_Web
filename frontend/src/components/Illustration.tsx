@@ -1,12 +1,13 @@
 import React from 'react';
+import sidebarImage from '../assets/sidebar_image.jpeg';
 
 const Illustration: React.FC = () => {
   return (
-    <div className="w-full h-full min-w-0 overflow-hidden flex items-center justify-center bg-[#dbfce8]">
+    <div className="w-full h-full min-w-0 overflow-hidden flex items-center justify-center bg-[#d3fbe1]">
       <img 
-        src="/Illustration.png" 
+        src={sidebarImage} 
         alt="Learning Illustration" 
-        className="w-full h-full max-w-full max-h-full object-contain p-8 lg:p-12 xl:p-16"
+        className="w-full h-auto max-h-screen object-contain"
       />
     </div>
   );

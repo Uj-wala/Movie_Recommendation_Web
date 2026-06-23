@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-import SuccessModal from '../components/SuccessModal';
 import { saveStudentDetails } from "../services/PhoneRegistrationService";
 
 const sanitizeInstitutionName = (value: string) =>
   value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
 
 const StudentDetails = () => {
+  const navigate = useNavigate();
   const [isGradeOpen, setIsGradeOpen] = useState(false);
   const [focusedGradeIndex, setFocusedGradeIndex] = useState(0);
   const gradeDropdownRef = useRef<HTMLDivElement>(null);
@@ -22,8 +21,6 @@ const StudentDetails = () => {
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [studentId, setStudentId] = useState('');
   const isSchoolNameDisabled = Boolean(workPlace.trim());
   const isWorkPlaceDisabled = Boolean(schoolName.trim());
 
@@ -138,8 +135,16 @@ const StudentDetails = () => {
         school_name: schoolName.trim() || null,
       });
 
-      setStudentId(response.student_id);
-      setIsModalOpen(true);
+      navigate('/registration-success', {
+        state: {
+          title: 'Registration Successful!!!',
+          message: `Your student profile has been submitted successfully.${
+            response.student_id ? `\nStudent ID: ${response.student_id}` : ''
+          }`,
+          buttonText: 'Go to Login',
+          redirectUrl: '/login',
+        },
+      });
 
     } catch (err: any) {
       console.error(err);
@@ -149,7 +154,14 @@ const StudentDetails = () => {
         typeof detail === 'string' &&
         detail.toLowerCase().includes('already exists')
       ) {
-        setIsModalOpen(true);
+        navigate('/registration-success', {
+          state: {
+            title: 'Registration Successful!!!',
+            message: 'Your student profile has already been submitted successfully.',
+            buttonText: 'Go to Login',
+            redirectUrl: '/login',
+          },
+        });
         return;
       }
 
@@ -168,16 +180,6 @@ const StudentDetails = () => {
   return (
     <>
       <SplitScreenLayout fitViewport>
-        {/* Back Button */}
-        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/verify-account?role=student" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-            <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-              <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-            </div>
-            Back
-          </Link>
-        </div>
-
         <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
           <div className="flex justify-center w-full mb-8">
             <Logo />
@@ -199,7 +201,11 @@ const StudentDetails = () => {
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Select Grade of Student
                 </label>
-                <div className="relative" ref={gradeDropdownRef}>
+                <div
+                  className="relative"
+                  ref={gradeDropdownRef}
+                  onMouseLeave={() => setIsGradeOpen(false)}
+                >
                   <div
                     ref={gradeTriggerRef}
                     className="block w-full pl-4 pr-10 py-3.5 border border-gray-200 rounded-lg text-[14px] text-center text-gray-700 bg-white shadow-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943]"
@@ -239,9 +245,11 @@ const StudentDetails = () => {
                           id={`grade-option-${index}`}
                           role="option"
                           aria-selected={grade === g.value}
-                          className={`px-4 py-3 text-[14px] text-center cursor-pointer transition-colors ${grade === g.value || focusedGradeIndex === index
+                          className={`px-4 py-3 text-[14px] text-center cursor-pointer transition-colors ${grade === g.value
                               ? 'bg-[#248943] text-white'
-                              : 'text-gray-700 hover:bg-green-50'
+                              : focusedGradeIndex === index
+                                ? 'bg-green-50 text-gray-700'
+                                : 'text-gray-700 hover:bg-green-50'
                             }`}
                           onMouseEnter={() => setFocusedGradeIndex(index)}
                           onClick={() => {
@@ -313,15 +321,6 @@ const StudentDetails = () => {
           </div>
         </div>
       </SplitScreenLayout>
-
-      <SuccessModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Registration Successful!!!"
-        message={`Your student profile has been submitted successfully.${studentId ? `\nStudent ID: ${studentId}` : ''}`}
-        buttonText="Go to Login"
-        redirectUrl="/login"
-      />
     </>
   );
 };

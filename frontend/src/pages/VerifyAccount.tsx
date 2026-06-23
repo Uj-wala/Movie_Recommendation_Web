@@ -29,6 +29,8 @@ const VerifyAccount = () => {
   const email = localStorage.getItem("email");
   const registrationType = localStorage.getItem("registration_type") || "phone";
   const role = localStorage.getItem("selected_role") || "student";
+  const roleId = localStorage.getItem("selected_role_id") || role;
+  const confirmRoleRoute = `/confirm-role?role=${role.toLowerCase()}&role_id=${roleId}`;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(OTP_TIMER_SECONDS);
@@ -193,7 +195,7 @@ const VerifyAccount = () => {
     <SplitScreenLayout fitViewport>
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
         <Link
-          to="/select-role"
+          to={confirmRoleRoute}
           className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
         >
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">

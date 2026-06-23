@@ -49,6 +49,7 @@ const INITIAL_REGISTRATION_FORM_DRAFT: RegistrationFormDraft = {
   agreeToTerms: false,
 };
 const REGISTRATION_FORM_DRAFT_KEY = "registration_form_draft";
+const ROLE_SELECTION_STORAGE_KEYS = ["selected_role", "selected_role_id"];
 const isRegistrationType = (value: string | null): value is "email" | "phone" =>
   value === "email" || value === "phone";
 const getSavedRegistrationDraft = (): RegistrationFormDraft => {
@@ -83,6 +84,12 @@ const saveRegistrationDraft = (draft: RegistrationFormDraft) => {
 const clearRegistrationDraft = () => {
   registrationFormDraft = { ...INITIAL_REGISTRATION_FORM_DRAFT };
   sessionStorage.removeItem(REGISTRATION_FORM_DRAFT_KEY);
+};
+const clearRoleSelection = () => {
+  ROLE_SELECTION_STORAGE_KEYS.forEach((key) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
 };
 let registrationFormDraft: RegistrationFormDraft = getSavedRegistrationDraft();
 const hasRegistrationDraftValues = () =>
@@ -171,6 +178,7 @@ const Register = () => {
   useEffect(() => {
     if (!shouldRestoreRegistrationDraft) {
       clearRegistrationDraft();
+      clearRoleSelection();
     }
   }, [shouldRestoreRegistrationDraft]);
  
@@ -311,6 +319,7 @@ const Register = () => {
  
       localStorage.setItem("registration_type", registrationType);
       clearRegistrationDraft();
+      clearRoleSelection();
  
       navigate("/select-role", {
         state: {
@@ -413,7 +422,7 @@ const Register = () => {
                   setFullName(sanitizedName.slice(0, FULL_NAME_MAX_LENGTH));
                 }}
                 className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="Enter the full name "
+                placeholder="Enter your Full Name as per Certificate"
               />
             </div>
             {fullNameError && (
@@ -516,17 +525,7 @@ const Register = () => {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => {
-                    setShowPassword((current) => {
-                      const next = !current;
- 
-                      if (next) {
-                        setShowConfirmPassword(false);
-                      }
- 
-                      return next;
-                    });
-                  }}
+                  onClick={() => setShowPassword((current) => !current)}
                 >
                   {showPassword ? (
                     <Eye className="w-4 h-4" />
@@ -581,17 +580,7 @@ const Register = () => {
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => {
-                    setShowConfirmPassword((current) => {
-                      const next = !current;
- 
-                      if (next) {
-                        setShowPassword(false);
-                      }
- 
-                      return next;
-                    });
-                  }}
+                  onClick={() => setShowConfirmPassword((current) => !current)}
                 >
                   {showConfirmPassword ? (
                     <Eye className="w-4 h-4" />

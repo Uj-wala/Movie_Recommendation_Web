@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
-import SuccessModal from '../components/SuccessModal';
 import Logo from '../components/Logo';
 import {
   saveTeacherVerification
@@ -36,6 +34,7 @@ const filterVisibleSubjects = (subjects: SubjectOption[]) =>
     .filter((subject): subject is SubjectOption => Boolean(subject));
  
 const TeacherVerification = () => {
+  const navigate = useNavigate();
   const [schoolName, setSchoolName] = useState('');
   const [schoolNameError, setSchoolNameError] = useState('');
   const [availableSubjects, setAvailableSubjects] = useState<SubjectOption[]>([]);
@@ -43,8 +42,6 @@ const TeacherVerification = () => {
   const [loading, setLoading] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [error, setError] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [teacherId, setTeacherId] = useState('');
 
   useEffect(() => {
     const loadSubjects = async () => {
@@ -105,8 +102,16 @@ const TeacherVerification = () => {
         subject_ids: subjectIds,
       });
  
-      setTeacherId(response.teacher_id);
-      setIsModalOpen(true);
+      navigate('/registration-success', {
+        state: {
+          title: 'Registration Successful!!!',
+          message: `You can now access the platform${
+            response.teacher_id ? `\nTeacher ID: ${response.teacher_id}` : ''
+          }`,
+          buttonText: 'Go to Login',
+          redirectUrl: '/login',
+        },
+      });
  
     } catch (err: any) {
       if (err.response?.data?.detail) {
@@ -142,16 +147,6 @@ const TeacherVerification = () => {
   return (
     <>
       <SplitScreenLayout fitViewport>
-        {/* Back Button */}
-        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-            <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-              <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-            </div>
-            Back
-          </Link>
-        </div>
- 
         <div className="w-full max-w-[460px] pt-4 sm:pt-8 pb-12">
           <div className="flex justify-center w-full mb-8">
             <Logo />
@@ -237,15 +232,6 @@ const TeacherVerification = () => {
           </div>
         </div>
       </SplitScreenLayout>
- 
-      <SuccessModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Registration Successful!!!"
-        message={`You can now access the platform${teacherId ? `\nTeacher ID: ${teacherId}` : ''}`}
-        buttonText="Go to Login"
-        redirectUrl="/login"
-      />
     </>
   );
 };

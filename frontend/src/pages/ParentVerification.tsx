@@ -1,19 +1,16 @@
 
 
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-import SuccessModal from '../components/SuccessModal';
 import { saveParentVerification } from "../services/PhoneRegistrationService";
  
 const ParentVerification = () => {
+  const navigate = useNavigate();
   const [studentReferenceId, setStudentReferenceId] = useState('');
   const [loading,            setLoading]            = useState(false);
   const [error,              setError]              = useState('');
-  const [isModalOpen,        setIsModalOpen]        = useState(false);
-  const [parentId,           setParentId]           = useState('');
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +30,16 @@ const ParentVerification = () => {
       student_reference_id: studentReferenceId,
     });
     
-      setParentId(response.parent_id);
-      setIsModalOpen(true);
+      navigate('/registration-success', {
+        state: {
+          title: 'Registration Successful!!!',
+          message: `Your parent verification has been submitted successfully.${
+            response.parent_id ? `\nParent ID: ${response.parent_id}` : ''
+          }`,
+          buttonText: 'Go to Login',
+          redirectUrl: '/login',
+        },
+      });
  
     } catch (err: any) {
       if (err.response?.data?.detail) {
@@ -57,16 +62,6 @@ const ParentVerification = () => {
   return (
     <>
       <SplitScreenLayout fitViewport>
-        {/* Back Button */}
-        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-            <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-              <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-            </div>
-            Back
-          </Link>
-        </div>
- 
         <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
           <div className="flex justify-center w-full mb-8">
             <Logo />
@@ -112,15 +107,6 @@ const ParentVerification = () => {
           </div>
         </div>
       </SplitScreenLayout>
-
-      <SuccessModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Registration Successful!!!"
-        message={`Your parent verification has been submitted successfully.${parentId ? `\nParent ID: ${parentId}` : ''}`}
-        buttonText="Go to Login"
-        redirectUrl="/login"
-      />
     </>
   );
 };

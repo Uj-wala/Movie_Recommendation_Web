@@ -11,6 +11,7 @@ import ConfirmRole from "./pages/ConfirmRole";
 import StudentDetails from "./pages/StudentDetails";
 import TeacherVerification from "./pages/TeacherVerification";
 import ParentVerification from "./pages/ParentVerification";
+import SuccessPage from "./pages/SuccessPage";
 import Home from "./pages/Home";
 import SocialAuthCallback from "./pages/SocialAuthCallback";
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="/select-role" element={<SelectRole />} />
         <Route path="/confirm-role" element={<ConfirmRole />} />
         <Route path="/student-details" element={<StudentDetails />} />
+        <Route path="/registration-success" element={<SuccessPage />} />
         <Route path="/parent-verification" element={<ParentVerification />} />
         <Route path="/teacher-verification" element={<TeacherVerification />} />
         <Route path="*" element={<Navigate to="/" replace />} />
