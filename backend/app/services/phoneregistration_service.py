@@ -201,7 +201,7 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
 
     parent_profile = ParentProfile(
         user_id=data.user_id,
-        student_reference_id=data.student_reference_id
+        student_reference_id=student_profile.id
     )
   
    
