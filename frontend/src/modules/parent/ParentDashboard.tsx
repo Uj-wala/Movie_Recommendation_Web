@@ -1,21 +1,15 @@
-import { useState, useRef, useEffect } from "react";
-import type { KeyboardEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ChevronDown } from "lucide-react";
 import parentProfileImage from "../../assets/parent_profile .jpeg";
+import { ProfileMenu } from "../profile";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
 
   // State Management
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [isFilterActive, setIsFilterActive] = useState(false);
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const dropdownButtonRef = useRef<HTMLButtonElement>(null);
-  const dropdownItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // User Profile Data
   const [profile] = useState(() => ({
@@ -28,79 +22,29 @@ const ParentDashboard = () => {
     image: localStorage.getItem("profileImage") || parentProfileImage,
   }));
 
-  // Dropdown Auto-Close Handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Profile Menu Navigation Actions
-  const handleDropdownAction = (actionName: string) => {
-    setIsProfileOpen(false); 
-
-    if (actionName === "My Profile") {
-      navigate("/parent/profile");
-    } else if (actionName === "Settings") {
-      // Future settings logic
-    } else if (actionName === "Log Out") {
-      localStorage.removeItem("isAuthenticated");
-      localStorage.removeItem("userEmail");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("full_name");
-      localStorage.removeItem("name");
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user_role");
-      setActiveTab("Dashboard");
-      toast.success("Logged out successfully", {
-        id: "auth-logout-success",
-        duration: 3000,
-      });
-      navigate("/login", { replace: true });
-    }
+  const handleProfileClick = () => {
+    navigate("/parent/profile");
   };
 
-  const dropdownActions = [
-    { label: "My Profile", onSelect: () => handleDropdownAction("My Profile") },
-    { label: "Settings", onSelect: () => handleDropdownAction("Settings") },
-    { label: "Log Out", onSelect: () => handleDropdownAction("Log Out") },
-  ];
+  const handleSettingsClick = () => {
+    setActiveTab("Settings");
+  };
 
-  const handleProfileDropdownKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      setIsProfileOpen(false);
-      dropdownButtonRef.current?.focus();
-      return;
-    }
-
-    if ((event.key === "Enter" || event.key === " ") && !isProfileOpen) {
-      event.preventDefault();
-      setIsProfileOpen(true);
-      window.setTimeout(() => dropdownItemRefs.current[0]?.focus(), 0);
-      return;
-    }
-
-    if (!isProfileOpen) return;
-
-    const currentIndex = dropdownItemRefs.current.findIndex((item) => item === document.activeElement);
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      const nextIndex = currentIndex < dropdownActions.length - 1 ? currentIndex + 1 : 0;
-      dropdownItemRefs.current[nextIndex]?.focus();
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      const previousIndex = currentIndex > 0 ? currentIndex - 1 : dropdownActions.length - 1;
-      dropdownItemRefs.current[previousIndex]?.focus();
-    }
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("full_name");
+    localStorage.removeItem("name");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_role");
+    setActiveTab("Dashboard");
+    toast.success("Logged out successfully", {
+      id: "auth-logout-success",
+      duration: 3000,
+    });
+    navigate("/login", { replace: true });
   };
 
   const handleLogoClick = () => {
@@ -237,91 +181,15 @@ const ParentDashboard = () => {
               </p>
           </div>
 
-          {/* User Account Menu Header */}
-          <div className="relative" ref={dropdownRef} onKeyDown={handleProfileDropdownKeyDown}>
-            <button
-              ref={dropdownButtonRef}
-              type="button"
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex h-[40px] cursor-pointer select-none items-center gap-[10px] rounded-xl border-none bg-transparent p-0 outline-none transition-colors"
-              aria-haspopup="menu"
-              aria-expanded={isProfileOpen}
-            >
-              <img
-                src={profile.image}
-                alt={profile.name}
-                className="h-[40px] w-[42px] rounded-[11px] object-cover"
-              />
-              <div className="flex w-[120px] flex-col gap-[3px] text-left text-[#000000]">
-                <h4 className="m-0 h-[15px] w-[62px] overflow-hidden text-ellipsis whitespace-nowrap font-['Nunito',sans-serif] text-[11px] font-semibold leading-[100%] text-[#000000]">
-                  {profile.name}
-                </h4>
-                <p className="m-0 h-[15px] w-[120px] whitespace-nowrap font-['Nunito',sans-serif] text-[13px] font-normal leading-[100%] text-[#000000] opacity-50">
-                  {profile.email}
-                </p>
-              </div>
-              <div className="ml-1 flex h-[17px] w-[17px] items-center justify-center rounded-[9px] bg-[#D9D9D9] transition-transform duration-200">
-                <ChevronDown
-                  size={12}
-                  strokeWidth={3}
-                  className={`text-[#4B4B4B] ${isProfileOpen ? "rotate-180" : ""}`}
-                />
-              </div>
-            </button>
-
-            {/* Account Settings Menu Dropdown */}
-            {isProfileOpen && (
-              <div
-                className="absolute right-0 mt-2 bg-white border border-[#EAECF0] rounded-lg shadow-lg z-50 overflow-hidden w-[220px]"
-                role="menu"
-                onMouseLeave={() => setIsProfileOpen(false)}
-              >
-                <div className="p-3 border-b border-[#EAECF0] text-left">
-                  <p className="text-[11px] text-[#667085]">Signed in as</p>
-                  <p className="truncate font-bold text-gray-900 text-xs">
-                    {profile.email}
-                  </p>
-                </div>
-                <div className="py-1">
-                  <button 
-                    ref={(element) => {
-                      dropdownItemRefs.current[0] = element;
-                    }}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => handleDropdownAction("My Profile")}
-                    className="w-full cursor-pointer border-none bg-transparent px-4 py-2 text-left text-sm text-gray-700 outline-none transition-colors hover:bg-[#EEF8F1] hover:text-brand-green focus:bg-[#EEF8F1] focus:text-brand-green"
-                  >
-                    My Profile
-                  </button>
-                  <button 
-                    ref={(element) => {
-                      dropdownItemRefs.current[1] = element;
-                    }}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => handleDropdownAction("Settings")}
-                    className="w-full cursor-pointer border-none bg-transparent px-4 py-2 text-left text-sm text-gray-700 outline-none transition-colors hover:bg-[#EEF8F1] hover:text-brand-green focus:bg-[#EEF8F1] focus:text-brand-green"
-                  >
-                    Settings
-                  </button>
-                </div>
-                <div className="border-t border-[#EAECF0] py-1 text-left">
-                  <button 
-                    ref={(element) => {
-                      dropdownItemRefs.current[2] = element;
-                    }}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => handleDropdownAction("Log Out")}
-                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 focus:bg-red-50 transition-colors font-medium cursor-pointer border-none bg-transparent outline-none text-sm"
-                  >
-                    Log Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <ProfileMenu
+            userEmail={profile.email}
+            userName={profile.name}
+            userRole="Parent"
+            avatarSrc={profile.image}
+            onProfileClick={handleProfileClick}
+            onSettingsClick={handleSettingsClick}
+            onLogoutClick={handleLogout}
+          />
         </div>
 
         {/* SEARCH AND FILTER */}

@@ -18,8 +18,8 @@ import activityIcon4 from "../../../assets/teacher_module_recent_activity_4.jpeg
 import { useNavigate, useOutletContext } from "react-router-dom";
 import toast from "react-hot-toast";
 import teacherProfile from "../../../assets/teacher_profile.jpeg";
-import downarrow from "../../../assets/UpdateProfileIcons/DownArrow.svg";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
+import { ProfileMenu } from "../../profile";
  
 interface StatCard {
   id: number;
@@ -482,17 +482,12 @@ const TeacherDashboard: React.FC = () => {
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
     "teacher@thestackly.com";
- const [dropdownOpen, setDropdownOpen] = useState(false);
  const [activityPeriod, setActivityPeriod] = useState("Today");
  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
  const [profilePeriod, setProfilePeriod] = useState("Today");
  const [ratingPeriod, setRatingPeriod] = useState("This Week");
  const [overviewPeriod, setOverviewPeriod] = useState("This Week");
- const dropdownRef = useRef<HTMLDivElement>(null);
- const dropdownButtonRef = useRef<HTMLButtonElement>(null);
- const dropdownItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
  const handleLogout = () => {
-  setDropdownOpen(false);
   [
     "access_token",
     "refresh_token",
@@ -507,63 +502,6 @@ const TeacherDashboard: React.FC = () => {
   toast.dismiss();
   toast.success("Logged out successfully", { duration: 5000 });
   navigate("/");
- };
- const dropdownActions = [
-  {
-    label: "My Profile",
-    onSelect: () => navigate("/teacher/profile"),
-  },
-  {
-    label: "Settings",
-    onSelect: () => setActiveTab("settings"),
-  },
-  {
-    label: "Log Out",
-    onSelect: handleLogout,
-  },
- ];
-
- useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-      setDropdownOpen(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
- }, []);
-
- const handleProfileDropdownKeyDown = (event: React.KeyboardEvent) => {
-  if (event.key === "Escape") {
-    event.preventDefault();
-    setDropdownOpen(false);
-    dropdownButtonRef.current?.focus();
-    return;
-  }
-
-  if ((event.key === "Enter" || event.key === " ") && !dropdownOpen) {
-    event.preventDefault();
-    setDropdownOpen(true);
-    window.setTimeout(() => dropdownItemRefs.current[0]?.focus(), 0);
-    return;
-  }
-
-  if (!dropdownOpen) return;
-
-  const currentIndex = dropdownItemRefs.current.findIndex((item) => item === document.activeElement);
-
-  if (event.key === "ArrowDown") {
-    event.preventDefault();
-    const nextIndex = currentIndex < dropdownActions.length - 1 ? currentIndex + 1 : 0;
-    dropdownItemRefs.current[nextIndex]?.focus();
-  }
-
-  if (event.key === "ArrowUp") {
-    event.preventDefault();
-    const previousIndex = currentIndex > 0 ? currentIndex - 1 : dropdownActions.length - 1;
-    dropdownItemRefs.current[previousIndex]?.focus();
-  }
  };
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] p-8">
@@ -583,83 +521,15 @@ const TeacherDashboard: React.FC = () => {
         </div>
         {/* Top Bar */}
       <div className="flex mt-[-32px] mr-[-32px] justify-end items-center px-8 py-3">
-        <div className="relative" ref={dropdownRef} onKeyDown={handleProfileDropdownKeyDown}>
-          <button
-            ref={dropdownButtonRef}
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            aria-haspopup="menu"
-            aria-expanded={dropdownOpen}
-            className="h-[43px] flex items-center gap-3 rounded-xl transition-colors"
-          >
-            <img
-              src={teacherProfile}
-              alt={userName}
-              className="w-[45px] h-[43px] rounded-[12px] object-cover"
-            />
-            <span className="flex w-[130px] flex-col gap-1 text-left text-[#000000]">
-              <span className="w-[67px] h-4 font-['Nunito'] text-[12px] font-semibold leading-[100%] text-[#000000] whitespace-nowrap overflow-hidden text-ellipsis">
-                {userName}
-              </span>
-              <span className="w-auto h-4 font-['Nunito'] text-[14px] font-normal leading-[100%] text-[#000000] opacity-50 whitespace-nowrap">
-                {userEmail}
-              </span>
-            </span>
-            <img src={downarrow} alt="downarrow" className="w-[18px] h-[18px] bg-[#D9D9D9] rounded-[9px] py-[7px] px-[4px] ml-2" />
-          </button>
-
-          {dropdownOpen && (
-            <div
-              className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden"
-              role="menu"
-              onMouseLeave={() => setDropdownOpen(false)}
-            >
-              
-              {/* Signed in as */}
-              <div className="px-4 py-3 border-b border-gray-100">
-                <p className="text-xs text-gray-400">Signed in as</p>
-                <p className="text-sm font-bold text-gray-800 truncate">{userEmail}</p>
-              </div>
-
-              {/* Menu items */}
-              <div className="py-1">
-                {dropdownActions.slice(0, 2).map((item, index) => (
-                  <button
-                    key={item.label}
-                    ref={(element) => {
-                      dropdownItemRefs.current[index] = element;
-                    }}
-                    role="menuitem"
-                    onClick={() => {
-                      setDropdownOpen(false);
-                      item.onSelect();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#F1FFF6] focus:bg-[#F1FFF6] focus:text-[#238B45] focus:outline-none transition-colors"
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Log Out */}
-              <div className="border-t border-gray-100 py-1">
-                <button
-                  ref={(element) => {
-                    dropdownItemRefs.current[2] = element;
-                  }}
-                  role="menuitem"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    dropdownActions[2].onSelect();
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEF2F2] focus:bg-[#FEF2F2] focus:text-[#B91C1C] focus:outline-none transition-colors"
-                >
-                  Log Out
-                </button>
-              </div>
-
-            </div>
-          )}
-        </div>
+        <ProfileMenu
+          userEmail={userEmail}
+          userName={userName}
+          userRole="Teacher"
+          avatarSrc={teacherProfile}
+          onProfileClick={() => navigate("/teacher/profile")}
+          onSettingsClick={() => setActiveTab("settings")}
+          onLogoutClick={handleLogout}
+        />
       </div>
       </div>
  

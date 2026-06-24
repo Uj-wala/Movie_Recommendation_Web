@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import type { KeyboardEvent } from "react";
+import { useState } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiEdit } from "react-icons/fi";
@@ -10,6 +9,7 @@ import eyeShowIcon from "../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
 import SuccessModal from "./SuccessModal";
 import { fetchStudentDetailsByStudentId } from "../../services/parentProfileService";
+import { ProfileMenu } from "../profile";
  
 type NavItem = {
   label: string;
@@ -46,7 +46,6 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$/
 const studentIdRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]*$/;
  
 export default function ParentProfile() {
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
  
@@ -75,8 +74,6 @@ export default function ParentProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [dropdownActiveIndex, setDropdownActiveIndex] = useState(0);
  
   // Form State Data Mapping
   const [fullName, setFullName] = useState(
@@ -110,16 +107,6 @@ export default function ParentProfile() {
   const personalFieldTextCls =
     "flex-1 font-poppins text-sm text-gray-800 bg-transparent focus:outline-none";
   const errorTextCls = "mt-1 text-[11px] font-medium text-red-500";
- 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
  
   const navItems: NavItem[] = [
     { label: "Dashboard", id: "dashboard", icon: "/dashboard.png" },
@@ -458,7 +445,6 @@ export default function ParentProfile() {
   };
 
   const handleLogout = () => {
-    setShowDropdown(false);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
@@ -475,55 +461,13 @@ export default function ParentProfile() {
     navigate("/login", { replace: true });
   };
 
-  const handleDropdownSelect = (index: number) => {
-    if (index === 0) {
-      setShowDropdown(false);
-      setLocalActiveTab("dashboard");
-      navigate("/parent/profile");
-      return;
-    }
-
-    if (index === 1) {
-      setShowDropdown(false);
-      setLocalActiveTab("settings");
-      return;
-    }
-
-    handleLogout();
+  const handleProfileClick = () => {
+    setLocalActiveTab("dashboard");
+    navigate("/parent/profile");
   };
 
-  const handleDropdownKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!showDropdown && (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ")) {
-      event.preventDefault();
-      setDropdownActiveIndex(0);
-      setShowDropdown(true);
-      return;
-    }
-
-    if (!showDropdown) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setDropdownActiveIndex((current) => (current + 1) % 3);
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setDropdownActiveIndex((current) => (current + 2) % 3);
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
-      setShowDropdown(false);
-      return;
-    }
-
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleDropdownSelect(dropdownActiveIndex);
-    }
+  const handleSettingsClick = () => {
+    setLocalActiveTab("settings");
   };
  
   const getHeaderTitle = () => {
@@ -604,91 +548,15 @@ export default function ParentProfile() {
             </p>
           </div>
  
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setDropdownActiveIndex(0);
-                setShowDropdown(!showDropdown);
-              }}
-              onKeyDown={handleDropdownKeyDown}
-              className="flex h-[40px] items-center gap-[10px] rounded-xl border-none bg-transparent p-0 cursor-pointer transition-all select-none text-left"
-              aria-haspopup="menu"
-              aria-expanded={showDropdown}
-            >
-              <div className="flex h-[40px] w-[42px] items-center justify-center overflow-hidden rounded-[11px] bg-transparent">
-                <img
-                  src={profileImage || parentProfileImage}
-                  alt="Profile"
-                  className="h-full w-full rounded-[11px] object-cover"
-                />
-              </div>
-              <div className="hidden w-[120px] flex-col gap-[3px] text-left text-[#000000] sm:flex">
-                <p className="m-0 h-[15px] w-[62px] overflow-hidden text-ellipsis whitespace-nowrap font-['Nunito',sans-serif] text-[11px] font-semibold leading-[100%] text-[#000000]">{displayName}</p>
-                <p className="m-0 h-[15px] w-[120px] whitespace-nowrap font-['Nunito',sans-serif] text-[13px] font-normal leading-[100%] text-[#000000] opacity-50">{displayEmail}</p>
-              </div>
-              <div className="ml-1 flex h-[17px] w-[17px] items-center justify-center rounded-[9px] bg-[#D9D9D9]">
-                <svg
-                  width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-                  className={`text-[#4B4B4B] transform transition-transform duration-200 ${showDropdown ? "rotate-180" : "rotate-0"}`}
-                >
-                  <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </button>
- 
-            {showDropdown && (
-              <div
-                className="absolute right-0 mt-2 w-60 bg-white rounded-2xl shadow-xl border border-transparent z-50 overflow-hidden"
-                role="menu"
-                tabIndex={-1}
-                onKeyDown={handleDropdownKeyDown}
-                onMouseLeave={() => setShowDropdown(false)}
-              >
-                <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50/50">
-                  <p className="text-[11px] text-gray-400 font-medium">Signed in as</p>
-                  <p className="text-xs font-bold text-gray-900 mt-0.5 truncate">{displayEmail}</p>
-                </div>
-                <div className="py-1">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onMouseEnter={() => setDropdownActiveIndex(0)}
-                    onClick={() => handleDropdownSelect(0)}
-                    className={`block w-full px-5 py-2.5 text-left text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 ${
-                      dropdownActiveIndex === 0 ? "bg-gray-50" : ""
-                    }`}
-                  >
-                    My Profile
-                  </button>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onMouseEnter={() => setDropdownActiveIndex(1)}
-                    onClick={() => handleDropdownSelect(1)}
-                    className={`block w-full px-5 py-2.5 text-left text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 ${
-                      dropdownActiveIndex === 1 ? "bg-gray-50" : ""
-                    }`}
-                  >
-                    Settings
-                  </button>
-                </div>
-                <div className="border-t border-gray-100 py-1">
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onMouseEnter={() => setDropdownActiveIndex(2)}
-                    onClick={() => handleDropdownSelect(2)}
-                    className={`w-full px-5 py-2.5 text-left text-xs font-bold text-red-500 transition-colors hover:bg-red-50/50 ${
-                      dropdownActiveIndex === 2 ? "bg-red-50/50" : ""
-                    }`}
-                  >
-                    Log Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <ProfileMenu
+            userEmail={displayEmail}
+            userName={displayName}
+            userRole="Parent"
+            avatarSrc={profileImage || parentProfileImage}
+            onProfileClick={handleProfileClick}
+            onSettingsClick={handleSettingsClick}
+            onLogoutClick={handleLogout}
+          />
         </header>
  
         {/* SCROLLABLE WORKSPACE CONTAINER */}
