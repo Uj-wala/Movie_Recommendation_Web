@@ -140,7 +140,6 @@ const StudentDetails = () => {
       setIsModalOpen(true);
 
     } catch (err: any) {
-      console.error(err);
       const detail = err.response?.data?.detail;
 
       if (

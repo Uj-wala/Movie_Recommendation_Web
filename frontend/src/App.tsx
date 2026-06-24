@@ -47,7 +47,26 @@ import ProtectedRoute     from "./routes/ProtectedRoute";
 function App() {
   return (
     <Router>
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+      <Toaster
+        position="top-right"
+        containerStyle={{
+          top: 76,
+          right: 32,
+        }}
+        gutter={12}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            width: "min(360px, calc(100vw - 48px))",
+            minHeight: 64,
+            padding: "16px 18px",
+            borderRadius: 12,
+            fontSize: 16,
+            fontWeight: 600,
+            lineHeight: 1.5,
+          },
+        }}
+      />
       <Routes>
 
         {/* ── Home / Landing ────────────────────────────────────────────── */}

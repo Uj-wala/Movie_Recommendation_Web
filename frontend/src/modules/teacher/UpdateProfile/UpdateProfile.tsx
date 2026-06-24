@@ -19,6 +19,12 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import SuccessModalTwo from "./SuccessModel/SuccessModelTwo";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
+import {
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
+  isValidPasswordCharacters,
+  sanitizePasswordInput,
+} from "../../../utils/validation";
 
 interface Profile {
   id: number;
@@ -69,9 +75,10 @@ const YEARS_OPTIONS = [
 const passwordRules = [
   { label: "At least 8 characters", test: (v: string) => v.length >= 8 },
   { label: "No more than 12 characters", test: (v: string) => v.length <= PASSWORD_MAX_LENGTH },
+  { label: "No spaces or dots", test: isValidPasswordCharacters },
   { label: "At least one uppercase letter", test: (v: string) => /[A-Z]/.test(v) },
   { label: "At least one number", test: (v: string) => /[0-9]/.test(v) },
-  { label: "At least one special character (!@#$%^&*)", test: (v: string) => /[!@#$%^&*(),.?":{}|<>]/.test(v) },
+  { label: "At least one special character (!@#$%^&*)", test: (v: string) => /[!@#$%^&*(),?":{}|<>]/.test(v) },
 ];
 
 const phoneRegex = /^\+91[0-9]{10}$/;
@@ -84,23 +91,26 @@ const validationSchema = Yup.object({
     .matches(/^[A-Za-z\s'.-]+$/, "Full Name can only contain letters, spaces, apostrophe, hyphen, and period")
     .min(3, "Full Name must be at least 3 characters"),
   currentPassword: Yup.string()
-    .required("Current Password is required"),
+    .required("Current Password is required")
+    .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters),
   password: Yup.string()
     .required("New Password is required")
+    .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters)
     .min(8, "New Password must be at least 8 characters")
     .max(PASSWORD_MAX_LENGTH, "New Password cannot exceed 12 characters")
     .matches(/[A-Z]/, "Must contain at least one uppercase letter")
     .matches(/[0-9]/, "Must contain at least one number")
-    .matches(/[!@#$%^&*(),.?":{}|<>]/, "Must contain at least one special character"),
+    .matches(/[!@#$%^&*(),?":{}|<>]/, "Must contain at least one special character"),
   confirmPassword: Yup.string()
     .required("Confirm Password is required")
+    .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters)
     .max(PASSWORD_MAX_LENGTH, "Confirm Password cannot exceed 12 characters")
     .oneOf([Yup.ref("password")], "Passwords do not match"),
   yearsOfExperience: Yup.string().required("Please select years of experience"),
   qualification: Yup.string().required("Qualification is required"),
   subjects: Yup.array()
     .of(Yup.string().required())
-    .min(3, "Please select at least 3 subjects"),
+    .min(1, "Please select at least one subject."),
 });
 
 export default function UpdateProfile() {
@@ -144,6 +154,36 @@ export default function UpdateProfile() {
     }
   };
 
+  const handlePasswordKeyDown = (
+    event: KeyboardEvent<HTMLInputElement>,
+    field: "currentPassword" | "password" | "confirmPassword"
+  ) => {
+    blockPasswordClipboardShortcut(event);
+
+    if (event.key === " " || event.key === ".") {
+      event.preventDefault();
+      formik.setFieldTouched(field, true, false);
+      formik.setFieldError(field, PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
+  };
+
+  const handlePasswordFieldChange = (
+    field: "currentPassword" | "password" | "confirmPassword",
+    value: string,
+    maxLength = PASSWORD_MAX_LENGTH
+  ) => {
+    const sanitizedValue = sanitizePasswordInput(value).slice(0, maxLength);
+    formik.setFieldTouched(field, true, false);
+
+    if (hasRestrictedPasswordChars(value)) {
+      formik.setFieldValue(field, sanitizedValue, false);
+      formik.setFieldError(field, PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    formik.setFieldValue(field, sanitizedValue);
+  };
+
   const [phones, setPhones] = useState(InitialValuesProfile.phone.map((p) => ({ value: p, touched: false, error: "" })));
   const [emails, setEmails] = useState([{ value: displayEmail, touched: false, error: "" }]);
 
@@ -183,14 +223,6 @@ export default function UpdateProfile() {
       }
       localStorage.setItem("userPassword", values.password);
       toast.success("Password updated successfully.", { position: "bottom-right" });
-      console.log("Submitted:", {
-        username: values.username,
-        yearsOfExperience: values.yearsOfExperience,
-        qualification: values.qualification,
-        expertises: values.expertises,
-        subjects: values.subjects,
-        image: values.image,
-      });
       actions.resetForm({
         values: {
           ...values,
@@ -241,6 +273,10 @@ export default function UpdateProfile() {
       ? current.filter((s) => s !== subject)
       : [...current, subject];
     formik.setFieldValue("subjects", updated);
+    formik.setFieldTouched("subjects", true, false);
+    if (updated.length) {
+      formik.setFieldError("subjects", undefined);
+    }
   };
 
   const filteredSubjects = ALL_SUBJECTS.filter((s) =>
@@ -520,8 +556,8 @@ export default function UpdateProfile() {
                       onCut={blockPasswordClipboardAction}
                       onPaste={blockPasswordClipboardAction}
                       onContextMenu={blockPasswordContextMenu}
-                      onKeyDown={blockPasswordClipboardShortcut}
-                      onChange={formik.handleChange}
+                      onKeyDown={(e) => handlePasswordKeyDown(e, "currentPassword")}
+                      onChange={(e) => handlePasswordFieldChange("currentPassword", e.target.value)}
                       onBlur={formik.handleBlur}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
@@ -587,9 +623,9 @@ export default function UpdateProfile() {
                       onCut={blockPasswordClipboardAction}
                       onPaste={blockPasswordClipboardAction}
                       onContextMenu={blockPasswordContextMenu}
-                      onKeyDown={blockPasswordClipboardShortcut}
+                      onKeyDown={(e) => handlePasswordKeyDown(e, "password")}
                       onChange={(e) => {
-                        formik.setFieldValue("password", e.target.value.slice(0, PASSWORD_MAX_LENGTH));
+                        handlePasswordFieldChange("password", e.target.value);
                       }}
                       onBlur={(e) => { setPasswordFocused(false); formik.handleBlur(e); }}
                       onFocus={() => setPasswordFocused(true)}
@@ -633,9 +669,9 @@ export default function UpdateProfile() {
                       onCut={blockPasswordClipboardAction}
                       onPaste={blockPasswordClipboardAction}
                       onContextMenu={blockPasswordContextMenu}
-                      onKeyDown={blockPasswordClipboardShortcut}
+                      onKeyDown={(e) => handlePasswordKeyDown(e, "confirmPassword")}
                       onChange={(e) => {
-                        formik.setFieldValue("confirmPassword", e.target.value.slice(0, PASSWORD_MAX_LENGTH));
+                        handlePasswordFieldChange("confirmPassword", e.target.value);
                       }}
                       onBlur={formik.handleBlur}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
@@ -727,7 +763,7 @@ export default function UpdateProfile() {
                 </div>
                 {formik.touched.subjects && formik.errors.subjects && (
                   <p className="text-[11px] text-red-500 mt-1">
-                    {typeof formik.errors.subjects === "string" ? formik.errors.subjects : "Please select at least 3 subjects"}
+                    {typeof formik.errors.subjects === "string" ? formik.errors.subjects : "Please select at least one subject."}
                   </p>
                 )}
               </div>

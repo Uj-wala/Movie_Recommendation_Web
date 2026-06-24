@@ -39,13 +39,6 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use((response: any) => response,
  async (error: any) => {
-    if (error.response?.status === 401) {
-      console.log("Unauthorized");
-      // logout or refresh token logic here
-    } else if (error.response?.status === 403) {
-      console.log("Forbidden");
-    }
-
     return Promise.reject(
       error
     );

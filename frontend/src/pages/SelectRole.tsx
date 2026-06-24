@@ -48,10 +48,9 @@ const SelectRole = () => {
   const fetchRoles = async () => {
     try {
       const response = await fetchDropdownData('/dropdowns/roles');
-      // console.log("data",response)
       setRoles(sortRolesByDisplayOrder(response));
-    } catch (error) {
-      console.error('Error fetching roles:', error);
+    } catch {
+      setRoles([]);
     }
   };
 

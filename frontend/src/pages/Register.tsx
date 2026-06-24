@@ -17,9 +17,12 @@ import {
   EMAIL_FORMAT_ERROR,
   PASSWORD_COMPLEXITY_ERROR,
   PASSWORD_LENGTH_ERROR,
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
   isValidEmailFormat,
   isValidPasswordComplexity,
   isValidPasswordLength,
+  sanitizePasswordInput,
 } from "../utils/validation";
  
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
@@ -167,6 +170,18 @@ const Register = () => {
       e.preventDefault();
     }
   };
+
+  const blockRestrictedPasswordKey = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    setError: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    blockClipboardShortcut(e);
+
+    if (e.key === " " || e.key === ".") {
+      e.preventDefault();
+      setError(PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
+  };
  
   useEffect(() => {
     if (!shouldRestoreRegistrationDraft) {
@@ -226,6 +241,16 @@ const Register = () => {
  
     if (registrationType === "email" && email.trim() && !isValidEmailFormat(email)) {
       setEmailError(EMAIL_FORMAT_ERROR);
+      return;
+    }
+
+    if (hasRestrictedPasswordChars(password)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (hasRestrictedPasswordChars(confirmPassword)) {
+      setConfirmPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
       return;
     }
  
@@ -292,7 +317,6 @@ const Register = () => {
         registrationType === "phone"
           ? await phoneRegistration(payload)
           : await emailRegistration(payload);
-      console.log("Registration response:", response);
  
       const registeredUser = response?.data || response;
       const userId = registeredUser?.user_id || registeredUser?.id;
@@ -323,7 +347,6 @@ const Register = () => {
         },
       });
     } catch (error: any) {
-      console.error(error);
       setFormError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
@@ -500,11 +523,14 @@ const Register = () => {
                   onCut={blockClipboardAction}
                   onPaste={blockClipboardAction}
                   onContextMenu={blockClipboardAction}
-                  onKeyDown={blockClipboardShortcut}
+                  onKeyDown={(e) => blockRestrictedPasswordKey(e, setPasswordError)}
                   onChange={(e) => {
-                    const nextPassword = e.target.value;
- 
-                    if (nextPassword.length > PASSWORD_MAX_LENGTH) {
+                    const rawPassword = e.target.value;
+                    const nextPassword = sanitizePasswordInput(rawPassword);
+
+                    if (hasRestrictedPasswordChars(rawPassword)) {
+                      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+                    } else if (nextPassword.length > PASSWORD_MAX_LENGTH) {
                       setPasswordError(PASSWORD_LENGTH_ERROR);
                     } else {
                       setPasswordError("");
@@ -553,11 +579,14 @@ const Register = () => {
                   onCut={blockClipboardAction}
                   onPaste={blockClipboardAction}
                   onContextMenu={blockClipboardAction}
-                  onKeyDown={blockClipboardShortcut}
+                  onKeyDown={(e) => blockRestrictedPasswordKey(e, setConfirmPasswordError)}
                   onChange={(e) => {
-                    const nextConfirmPassword = e.target.value;
+                    const rawConfirmPassword = e.target.value;
+                    const nextConfirmPassword = sanitizePasswordInput(rawConfirmPassword);
  
-                    if (nextConfirmPassword.length > PASSWORD_MAX_LENGTH) {
+                    if (hasRestrictedPasswordChars(rawConfirmPassword)) {
+                      setConfirmPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+                    } else if (nextConfirmPassword.length > PASSWORD_MAX_LENGTH) {
                       setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
                     } else {
                       setConfirmPasswordError("");

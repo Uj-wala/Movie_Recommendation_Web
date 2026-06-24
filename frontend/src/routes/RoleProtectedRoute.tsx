@@ -11,19 +11,19 @@ const RoleProtectedRoute = ({ children, allowedRole }: Props) => {
   const token = localStorage.getItem("access_token");
   const role = localStorage.getItem("user_role") || "";
 
-  // if (!token) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // if (role && role !== allowedRole) {
-  //   const dashboardMap: Record<string, string> = {
-  //     admin: "/admin/dashboard",
-  //     teacher: "/teacher/dashboard",
-  //     parent: "/parent/dashboard",
-  //   };
-  //   const redirect = dashboardMap[role] || "/";
-  //   return <Navigate to={redirect} replace />;
-  // }
+  if (role && role !== allowedRole) {
+    const dashboardMap: Record<string, string> = {
+      admin: "/admin/users",
+      teacher: "/teacher/dashboard",
+      parent: "/parent/dashboard",
+    };
+    const redirect = dashboardMap[role] || "/";
+    return <Navigate to={redirect} replace />;
+  }
 
   return <>{children}</>;
 };

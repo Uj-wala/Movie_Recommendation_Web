@@ -15,8 +15,11 @@ import type { SocialAuthProvider } from "../services/authService";
 import {
   EMAIL_FORMAT_ERROR,
   PASSWORD_LENGTH_ERROR,
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
   isValidEmailFormat,
   isValidPasswordLength,
+  sanitizePasswordInput,
 } from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const TERMS_OF_USE_CONTENT = [
@@ -167,6 +170,11 @@ const Login = () => {
       return;
     }
 
+    if (hasRestrictedPasswordChars(password)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
     if (!isValidPasswordLength(password)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
@@ -230,11 +238,6 @@ const Login = () => {
     try {
 
       setLoading(true);
-
-      console.log(
-        "Login Identifier:",
-        identifier
-      );
 
       const response =
         await loginUser(
@@ -318,14 +321,27 @@ const Login = () => {
   };
 
   const handlePasswordChange = (value: string) => {
-    setPassword(value);
+    const sanitizedValue = sanitizePasswordInput(value);
+    setPassword(sanitizedValue);
 
-    if (value && !isValidPasswordLength(value)) {
+    if (hasRestrictedPasswordChars(value)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (sanitizedValue && !isValidPasswordLength(sanitizedValue)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
     }
 
     setPasswordError("");
+  };
+
+  const handlePasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === " " || event.key === ".") {
+      event.preventDefault();
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
   };
 
   return (
@@ -464,6 +480,7 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
+                  onKeyDown={handlePasswordKeyDown}
                   className={`block w-full pl-10 pr-10 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.2em] ${
                     passwordError
                       ? 'border-red-400 focus:ring-red-400 focus:border-red-400'

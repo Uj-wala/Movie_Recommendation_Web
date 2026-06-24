@@ -10,6 +10,11 @@ import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
 import SuccessModal from "./SuccessModal";
 import { fetchStudentDetailsByStudentId } from "../../services/parentProfileService";
 import { ProfileMenu } from "../profile";
+import {
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
+  sanitizePasswordInput,
+} from "../../utils/validation";
  
 type NavItem = {
   label: string;
@@ -150,6 +155,7 @@ export default function ParentProfile() {
 
   const validatePassword = (value: string) => {
     if (!value) return "New Password is required";
+    if (hasRestrictedPasswordChars(value)) return PASSWORD_RESTRICTED_CHAR_ERROR;
     if (value.length < 8) return "New Password must be at least 8 characters";
     if (value.length > PASSWORD_MAX_LENGTH) return "New Password cannot exceed 12 characters";
     if (!passwordRegex.test(value)) {
@@ -159,8 +165,15 @@ export default function ParentProfile() {
   };
 
   const handleCurrentPasswordChange = (value: string) => {
-    setCurrentPassword(value);
-    updateFieldError("currentPassword", value ? "" : "Current Password is required");
+    const sanitizedValue = sanitizePasswordInput(value).slice(0, PASSWORD_MAX_LENGTH);
+    setCurrentPassword(sanitizedValue);
+
+    if (hasRestrictedPasswordChars(value)) {
+      updateFieldError("currentPassword", PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    updateFieldError("currentPassword", sanitizedValue ? "" : "Current Password is required");
   };
 
   const handleFullNameChange = (value: string) => {
@@ -186,13 +199,21 @@ export default function ParentProfile() {
   };
 
   const handlePasswordChange = (value: string) => {
-    if (value.length > PASSWORD_MAX_LENGTH) {
+    const sanitizedValue = sanitizePasswordInput(value);
+
+    if (hasRestrictedPasswordChars(value)) {
+      setPassword(sanitizedValue.slice(0, PASSWORD_MAX_LENGTH));
+      updateFieldError("password", PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (sanitizedValue.length > PASSWORD_MAX_LENGTH) {
       updateFieldError("password", "Password cannot exceed 12 characters");
       return;
     }
-    setPassword(value);
-    updateFieldError("password", validatePassword(value));
-    if (confirmPassword && value !== confirmPassword) {
+    setPassword(sanitizedValue);
+    updateFieldError("password", validatePassword(sanitizedValue));
+    if (confirmPassword && sanitizedValue !== confirmPassword) {
       updateFieldError("confirmPassword", "Passwords do not match");
     } else if (confirmPassword) {
       updateFieldError("confirmPassword");
@@ -200,15 +221,37 @@ export default function ParentProfile() {
   };
 
   const handleConfirmPasswordChange = (value: string) => {
-    if (value.length > PASSWORD_MAX_LENGTH) {
+    const sanitizedValue = sanitizePasswordInput(value);
+
+    if (hasRestrictedPasswordChars(value)) {
+      setConfirmPassword(sanitizedValue.slice(0, PASSWORD_MAX_LENGTH));
+      updateFieldError("confirmPassword", PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (sanitizedValue.length > PASSWORD_MAX_LENGTH) {
       updateFieldError("confirmPassword", "Confirm Password cannot exceed 12 characters");
       return;
     }
-    setConfirmPassword(value);
+    setConfirmPassword(sanitizedValue);
     updateFieldError(
       "confirmPassword",
-      value !== password ? "Passwords do not match" : ""
+      sanitizedValue !== password ? "Passwords do not match" : ""
     );
+  };
+
+  const handlePasswordKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    field: keyof Pick<FieldErrors, "currentPassword" | "password" | "confirmPassword">
+  ) => {
+    if ((event.ctrlKey || event.metaKey) && ["c", "v", "x"].includes(event.key.toLowerCase())) {
+      event.preventDefault();
+    }
+
+    if (event.key === " " || event.key === ".") {
+      event.preventDefault();
+      updateFieldError(field, PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
   };
 
   const handleEmailChange = (value: string) => {
@@ -658,11 +701,7 @@ export default function ParentProfile() {
                           onCut={(e) => e.preventDefault()}
                           onPaste={(e) => e.preventDefault()}
                           onContextMenu={(e) => e.preventDefault()}
-                          onKeyDown={(e) => {
-                            if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
-                              e.preventDefault();
-                            }
-                          }}
+                          onKeyDown={(e) => handlePasswordKeyDown(e, "currentPassword")}
                           placeholder="Enter your current password"
                           className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                         />
@@ -731,11 +770,7 @@ export default function ParentProfile() {
                           onCut={(e) => e.preventDefault()}
                           onPaste={(e) => e.preventDefault()}
                           onContextMenu={(e) => e.preventDefault()}
-                          onKeyDown={(e) => {
-                            if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
-                              e.preventDefault();
-                            }
-                          }}
+                          onKeyDown={(e) => handlePasswordKeyDown(e, "password")}
                           placeholder="Enter your new password"
                           className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                         />
@@ -766,11 +801,7 @@ export default function ParentProfile() {
                           onCut={(e) => e.preventDefault()}
                           onPaste={(e) => e.preventDefault()}
                           onContextMenu={(e) => e.preventDefault()}
-                          onKeyDown={(e) => {
-                            if ((e.ctrlKey || e.metaKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
-                              e.preventDefault();
-                            }
-                          }}
+                          onKeyDown={(e) => handlePasswordKeyDown(e, "confirmPassword")}
                           placeholder="Confirm your password"
                           className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                         />
