@@ -394,6 +394,56 @@ export default function ParentProfile() {
     setShowSuccessModal(true);
   };
 
+  const handleSavePersonalDetails = () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+
+    const nextErrors: FieldErrors = {
+      fullName: fullName ? "" : "Full Name is required",
+      phoneNumber: phoneNumber
+        ? phoneNumber.length === PHONE_MAX_LENGTH
+          ? ""
+          : "Phone number must be 10 digits"
+        : "Phone number is required",
+      currentPassword: currentPassword ? "" : "Current Password is required",
+      password: validatePassword(password),
+      confirmPassword: confirmPassword
+        ? confirmPassword === password
+          ? ""
+          : "New Password and Confirm Password do not match."
+        : "Confirm Password is required",
+      emailAddress: emailRegex.test(emailAddress) ? "" : "Enter a valid email address",
+    };
+
+    const previousPassword =
+      localStorage.getItem("userPassword") ||
+      localStorage.getItem("password") ||
+      "";
+    if (currentPassword && currentPassword !== previousPassword) {
+      nextErrors.currentPassword = "Current password is incorrect. Please enter your existing password.";
+    }
+
+    setFieldErrors((current) => ({
+      ...current,
+      ...nextErrors,
+    }));
+
+    if (Object.values(nextErrors).some(Boolean)) return;
+
+    localStorage.setItem("userName", fullName);
+    localStorage.setItem("full_name", fullName);
+    localStorage.setItem("userEmail", emailAddress);
+    localStorage.setItem("userPassword", password);
+    toast.success("Personal details updated successfully.");
+    setCurrentPassword("");
+    setPassword("");
+    setConfirmPassword("");
+    setIsEditing(false);
+    setShowSuccessModal(true);
+  };
+
   const handleCancelEdit = () => {
     setCurrentPassword("");
     setPassword("");
@@ -652,7 +702,7 @@ export default function ParentProfile() {
               <div className="bg-white rounded-3xl border border-transparent p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                
                 {/* PROFILE PHOTO ROW */}
-                <div className="relative mb-10 flex h-[124px] w-[482px] flex-col items-center gap-[24px] border-b border-gray-100 pb-0 sm:flex-row">
+                <div className="relative mb-10 flex h-[124px] w-[482px] flex-col items-center gap-[24px] pb-0 sm:flex-row">
                  
                   {/* IMAGING CONTAINER */}
                   <label className={`flex h-[124px] w-[124px] flex-col items-center justify-center gap-[10px] overflow-hidden rounded-[24px] border-[1.5px] border-dashed border-[#4C535F] bg-[#EDF2F6] p-[10px] text-center transition-all select-none group relative ${isEditing ? "cursor-pointer hover:bg-[#E6EDF3] hover:border-[#238B45]" : "cursor-not-allowed opacity-80"}`}>
@@ -698,7 +748,17 @@ export default function ParentProfile() {
  
                 {/* PARENT INFORMATION BLOCK */}
                 <section className="mb-12 flex min-h-[440px] w-[1018px] flex-col gap-[24px]">
-                  <h2 className="m-0 h-[24px] w-[1018px] font-['Poppins',sans-serif] text-[22px] font-semibold leading-none tracking-[-0.01em] text-black">Manage Profile Details</h2>
+                  <div className="flex w-[1018px] items-center justify-between">
+                    <h2 className="m-0 h-[24px] font-['Poppins',sans-serif] text-[22px] font-semibold leading-none tracking-[-0.01em] text-black">Manage Personal Details</h2>
+                    <button
+                      type="button"
+                      disabled={!isEditing}
+                      onClick={handleSavePersonalDetails}
+                      className="flex h-[40px] min-w-[118px] items-center justify-center rounded-[8px] bg-[#238B45] px-5 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#238B45]"
+                    >
+                      Update
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 gap-x-[24px] gap-y-[24px] md:grid-cols-2">
                     <div className="order-1">
                       <label className={personalLabelCls}>Full Name</label>

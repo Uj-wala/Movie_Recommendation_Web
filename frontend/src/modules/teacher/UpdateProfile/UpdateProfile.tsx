@@ -603,7 +603,16 @@ export default function UpdateProfile() {
 
             {/* Personal Details */}
             <section className="w-[1018px] min-h-[360px] flex flex-col gap-6">
-              <h2 className="w-[1018px] h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Personal Details</h2>
+              <div className="flex w-[1018px] items-center justify-between">
+                <h2 className="h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Personal Details</h2>
+                <button
+                  type="submit"
+                  disabled={!isEditing}
+                  className="flex h-[40px] min-w-[118px] items-center justify-center rounded-[8px] bg-[#238B45] px-5 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#036724] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#238B45]"
+                >
+                  Update
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
                 {/* Full Name */}
@@ -688,7 +697,7 @@ export default function UpdateProfile() {
                             <button type="button" onClick={addPhone} className={addLinkCls}>Add New Phone Number</button>
                           )}
                           {i > 0 && <span />}
-                          <button type="button" onClick={() => handleUpdatePhone(i)} className={`${updateLinkCls} ml-auto`}>Update Phone Number</button>
+                          <button type="button" disabled={!isEditing} onClick={() => handleUpdatePhone(i)} className={`${updateLinkCls} ml-auto disabled:cursor-not-allowed disabled:opacity-50`}>Update Phone Number</button>
                         </div>
                       </div>
                     ))}
@@ -801,7 +810,7 @@ export default function UpdateProfile() {
                             <button type="button" onClick={addEmail} className={addLinkCls}>Add New Email Address</button>
                           )}
                           {i > 0 && <span />}
-                          <button type="button" onClick={() => handleUpdateEmail(i)} className={`${updateLinkCls} ml-auto`}>Update Email Address</button>
+                          <button type="button" disabled={!isEditing} onClick={() => handleUpdateEmail(i)} className={`${updateLinkCls} ml-auto disabled:cursor-not-allowed disabled:opacity-50`}>Update Email Address</button>
                         </div>
                       </div>
                     ))}

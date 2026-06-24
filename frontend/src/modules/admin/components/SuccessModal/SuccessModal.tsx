@@ -197,17 +197,121 @@
 
 
 import React from "react";
-import { FaTimes } from "react-icons/fa";
+import { Eye, Send, User, UserPlus, X } from "lucide-react";
 import "./SuccessModal.css";
+import type { UserOrRole } from "../../types";
+import adminPopUpLogo from "../../../../assets/admin_pop_up.jpeg";
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   message?: string;
+  variant?: "default" | "memberAdded";
+  member?: UserOrRole | null;
+  onAddAnother?: () => void;
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message }) => {
+const SuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  onClose,
+  message,
+  variant = "default",
+  member,
+  onAddAnother,
+}) => {
   if (!isOpen) return null;
+
+  if (variant === "memberAdded") {
+    const displayName = member?.name?.trim() || "John";
+    const firstName = displayName.split(" ")[0] || displayName;
+    const displayEmail = member?.email?.trim() || "highn";
+    const displayRole = member?.role?.trim() || "Teacher";
+
+    return (
+      <div className="success-modal-overlay member-success-overlay">
+        <div className="member-success-modal" role="dialog" aria-modal="true" aria-labelledby="member-success-title">
+          <button className="member-success-close" onClick={onClose} aria-label="Close modal">
+            <X size={20} strokeWidth={2} />
+          </button>
+
+          <div className="member-success-icon-wrap" aria-hidden="true">
+            <img className="member-success-logo" src={adminPopUpLogo} alt="" />
+          </div>
+
+          <h2 className="member-success-title" id="member-success-title">
+            Member Added Successfully! <span aria-hidden="true">🎉</span>
+          </h2>
+          <p className="member-success-subtitle">Invitation has been sent to {firstName}</p>
+
+          <div className="member-details-card">
+            <div className="member-avatar" aria-hidden="true">
+              <User size={31} strokeWidth={2.1} />
+            </div>
+            <div className="member-details-content">
+              <h3 className="member-name">{displayName}</h3>
+              <div className="member-meta-grid">
+                <div className="member-meta-item">
+                  <span>Email</span>
+                  <strong>{displayEmail}</strong>
+                </div>
+                <div className="member-meta-item">
+                  <span>Role</span>
+                  <strong className="member-role-pill">
+                    <User size={11} strokeWidth={2} />
+                    {displayRole}
+                  </strong>
+                </div>
+                <div className="member-meta-item">
+                  <span>Department</span>
+                  <strong>Finance</strong>
+                </div>
+                <div className="member-meta-item">
+                  <span>Location</span>
+                  <strong>New York Office</strong>
+                </div>
+                <div className="member-meta-item">
+                  <span>Employee ID</span>
+                  <strong>55615</strong>
+                </div>
+                <div className="member-meta-item">
+                  <span>Reports To</span>
+                  <strong>Mike Johnson</strong>
+                </div>
+                <div className="member-meta-item member-meta-wide">
+                  <span>Assigned Projects</span>
+                  <strong className="member-project-pill">Customer Portal</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="member-next-card">
+            <Send className="member-next-icon" size={22} strokeWidth={2.2} />
+            <div>
+              <h3>What happens next?</h3>
+              <ul>
+                <li>An email invitation has been sent to {displayEmail}</li>
+                <li>They will receive login credentials and onboarding instructions</li>
+                <li>Account status will change from "Pending" to "Active" once they accept</li>
+                <li>You can track their status in the members list below</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="member-success-actions">
+            <button className="member-secondary-btn" onClick={onClose}>
+              <Eye size={16} strokeWidth={2.1} />
+              View Members List
+            </button>
+            <button className="member-primary-btn" onClick={onAddAnother || onClose}>
+              <UserPlus size={16} strokeWidth={2.1} />
+              Add Another Member
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="success-modal-overlay">
@@ -221,7 +325,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, message })
             </div>
           </div>
           <button className="figma-close-btn" onClick={onClose} aria-label="Close modal">
-            <FaTimes className="figma-close-icon" />
+            <X className="figma-close-icon" size={18} strokeWidth={2.2} />
           </button>
         </div>
 

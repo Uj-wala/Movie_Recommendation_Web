@@ -24,6 +24,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalVariant, setSuccessModalVariant] = useState<"default" | "memberAdded">("default");
+  const [lastAddedMember, setLastAddedMember] = useState<UserOrRole | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const isFilterOpen = false;
   const [filters, setFilters] = useState({
@@ -43,18 +45,31 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
   };
 
   const handleSaveRole = (userData?: UserOrRole) => {
+    const roleName = userData?.role
+      ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
+      : '';
+
     if (userData && userData.name) {
       setUsers([...users, { 
         id: Date.now(), 
         name: userData.name, 
         email: userData.email || '', 
-        role: userData.role ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1) : '', 
+        role: roleName, 
         status: 'Active' 
       }]);
     }
+
+    const isTeacherRole = Boolean(userData) && roleName.toLowerCase() === 'teacher';
+    setSuccessModalVariant(isTeacherRole ? "memberAdded" : "default");
+    setLastAddedMember(isTeacherRole && userData ? { ...userData, role: roleName } : null);
     setIsRoleModalOpen(false);
     setIsSuccessModalOpen(true);
     if (setActiveTab) setActiveTab('users');
+  };
+
+  const handleAddAnotherMember = () => {
+    setIsSuccessModalOpen(false);
+    setIsRoleModalOpen(true);
   };
 
   const getFilteredAndSortedUsers = () => {
@@ -204,6 +219,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
         isOpen={isSuccessModalOpen} 
         onClose={() => setIsSuccessModalOpen(false)} 
         message="A new role has been created successfully."
+        variant={successModalVariant}
+        member={lastAddedMember}
+        onAddAnother={handleAddAnotherMember}
       />
     </div>
   );
