@@ -168,3 +168,11 @@ class ParentDashboardResponse(BaseModel):
     child: ChildDashboardResponse
     progress: dict
     tests: dict    
+    
+class StudentLookupResponse(BaseModel):
+    id: str
+    student_reference_id: str
+    registration_number: str
+    child_name: str
+    grade: str | None
+    school_name: str | None    

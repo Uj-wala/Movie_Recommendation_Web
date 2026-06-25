@@ -150,4 +150,20 @@ def get_parent_dashboard(
     return get_parent_dashboard_service(
         db,
         current_user
-    )    
+    )
+    
+@router.get(
+    "/student/{registration_number}",
+    response_model=StudentLookupResponse
+)
+def get_student_details(
+    registration_number: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(
+        required_role(["parent", "admin"])
+    )
+):
+    return get_student_details_service(
+        registration_number,
+        db
+    )        

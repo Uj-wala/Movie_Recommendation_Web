@@ -99,10 +99,13 @@ def update_parent_profile(
             detail="Parent profile not found"
         )
 
+    email = data.email.strip().lower()
+    phone_number = f"+{data.phone_number}"
+
     existing_user = (
         db.query(User)
         .filter(
-            User.email == data.email,
+            User.email == email,
             User.id != current_user.id
         )
         .first()
@@ -113,6 +116,21 @@ def update_parent_profile(
             status_code=400,
             detail="Email already exists"
         )
+        
+    existing_phone_user = (
+    db.query(User)
+    .filter(
+        User.phone_number == phone_number,
+        User.id != current_user.id
+    )
+    .first()
+    )
+
+    if existing_phone_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Phone number already exists"
+        )    
 
     parent_profile.relationship_type = (
         data.relationship_type
@@ -123,16 +141,12 @@ def update_parent_profile(
     )
 
     current_user.phone_number = (
-        data.phone_number
+        phone_number
     )
 
-    current_user.email = (
-        data.email
-    )
+    current_user.email = email
 
     db.commit()
-
-    db.refresh(parent_profile)
 
     return {
         "message":
@@ -434,4 +448,74 @@ def get_parent_dashboard_service(
             "ongoing": 0,
             "completed": 0
         }
+    }    
+    
+    
+def get_student_details_service(
+    registration_number: str,
+    db: Session
+):
+
+    student = (
+        db.query(User)
+        .filter(
+            User.registration_number
+            == registration_number
+        )
+        .first()
+    )
+
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    role = (
+        db.query(Role)
+        .filter(
+            Role.id == student.role_id
+        )
+        .first()
+    )
+
+    if (
+        not role
+        or role.name.lower() != "student"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="User is not a student"
+        )
+
+    student_profile = (
+        db.query(StudentProfile)
+        .filter(
+            StudentProfile.user_id
+            == student.id
+        )
+        .first()
+    )
+    
+    if(not student_profile):
+        raise HTTPException(
+            status_code=400,
+            detail="Student profile not found"
+        )
+
+    return {
+        "id": student.id,
+        "student_reference_id": student.id,
+        "registration_number":
+            student.registration_number,
+        "child_name":
+            student.full_name,
+        "grade":
+            student_profile.grade
+            if student_profile
+            else None,
+        "school_name":
+            student_profile.school_name
+            if student_profile
+            else None
     }    

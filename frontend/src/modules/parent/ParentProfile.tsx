@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiEdit } from "react-icons/fi";
@@ -8,7 +8,6 @@ import phoneIcon from "../../assets/UpdateProfileIcons/phone.svg";
 import eyeShowIcon from "../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
 import SuccessModal from "../../components/SuccessModal";
-import { fetchStudentDetailsByStudentId } from "../../services/parentProfileService";
 import { ProfileMenu } from "../profile";
 import Logout from "../../components/Logout";
 import { useLogoNavigation } from "../../hooks/useLogoNavigation";
@@ -17,17 +16,27 @@ import {
   hasRestrictedPasswordChars,
   sanitizePasswordInput,
 } from "../../utils/validation";
- 
+
+import {
+  getParentProfile,
+  updateParentProfile,
+  addChild,
+  removeChild,
+  updateParentPassword,
+  fetchStudentDetailsByRegistrationNumber
+} from "../../services/ParentDashboardProfileService";
+
 type NavItem = {
   label: string;
   id: string;
   icon: string;
 };
- 
+
 type ChildDetail = {
   id: string;
+  studentReferenceId?: string;
   childName: string;
-  studentId: string;
+  registrationNumber: string;
   schoolName: string;
   grade: string;
 };
@@ -45,33 +54,34 @@ type FieldErrors = {
 type ChildFieldErrors = Record<string, Partial<Record<keyof ChildDetail, string>>>;
 
 const PASSWORD_MAX_LENGTH = 12;
-const PHONE_MAX_LENGTH = 10;
+const PHONE_MAX_LENGTH = 15;
 const NAME_MAX_LENGTH = 24;
-const STUDENT_ID_MAX_LENGTH = 20;
+const SCHOOL_MAX_LENGTH = 16;
+const REGISTRATION_NUMBER_MAX_LENGTH = 15;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$/;
-const studentIdRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]*$/;
- 
+const registrationNumberRegex =
+  /^STU-\d{4}-\d{6}$/;
 export default function ParentProfile() {
   const location = useLocation();
   const navigate = useNavigate();
   const handleLogoClick = useLogoNavigation();
- 
+
   // State Management for active view strictly controlled within this page layout
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const currentPath = pathSegments[pathSegments.length - 1] || "dashboard";
- 
+
   const isDashboardRoot =
     currentPath.toLowerCase() === "dashboard" ||
     currentPath.toLowerCase() === "profile" ||
     currentPath.toLowerCase() === "parentprofile" ||
     currentPath.toLowerCase() === "parentdashboard";
-   
+
   // Using a local state fallback to handle inner-tab switching cleanly without page redirects
   const [localActiveTab, setLocalActiveTab] = useState<string>("");
- 
+
   const activeTab = localActiveTab || (isDashboardRoot ? "dashboard" : currentPath);
- 
+
   // State Management
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(
@@ -82,7 +92,8 @@ export default function ParentProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
- 
+  const [profileData, setProfileData] = useState<any>(null);
+
   // Form State Data Mapping
   const [fullName, setFullName] = useState(
     () =>
@@ -96,18 +107,20 @@ export default function ParentProfile() {
     () => localStorage.getItem("userEmail") || "parent@thestackly.com"
   );
   const [currentPassword, setCurrentPassword] = useState("");
+
   const [password, setPassword] = useState("");
+
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [childErrors, setChildErrors] = useState<ChildFieldErrors>({});
   const [studentLookupLoading, setStudentLookupLoading] = useState<Record<string, boolean>>({});
- 
+
   const [children, setChildren] = useState<ChildDetail[]>([
-    { id: crypto.randomUUID(), childName: "", studentId: "", schoolName: "", grade: "" }
+    { id: crypto.randomUUID(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
   ]);
- 
-  const displayName = fullName || "Easin Arafat";
-  const displayEmail = emailAddress || "parent@thestackly.com";
+
+  const displayName = fullName || "";
+  const displayEmail = emailAddress || "";
   const personalLabelCls =
     "block w-auto min-w-[117px] h-[16px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2 whitespace-nowrap";
   const personalFieldCls = (disabled: boolean) =>
@@ -115,7 +128,74 @@ export default function ParentProfile() {
   const personalFieldTextCls =
     "flex-1 font-poppins text-sm text-gray-800 bg-transparent focus:outline-none";
   const errorTextCls = "mt-1 text-[11px] font-medium text-red-500";
- 
+
+  const loadProfile = async () => {
+    try {
+      const response = await getParentProfile();
+
+      setProfileData(response);
+
+      setFullName(
+        response.full_name || ""
+      );
+
+      setPhoneNumber(
+        response.phone_number
+          ? response.phone_number.replace(/^\+/, "")
+          : ""
+      );
+
+      setEmailAddress(
+        response.email || ""
+      );
+
+      setRelationship(
+        response.relationship_type || ""
+      );
+
+      setProfileImage(
+        response.profile_image_url ||
+        parentProfileImage
+      );
+
+      setChildren(
+        response.children.length
+          ? response.children.map(
+            (child: any) => ({
+              id: child.id,
+              studentReferenceId: child.student_reference_id,
+              childName: child.child_name,
+              registrationNumber:
+                child.registration_number,
+              schoolName:
+                child.school_name || "",
+              grade:
+                child.grade || "",
+            })
+          )
+          : [
+            {
+              id: crypto.randomUUID(),
+              studentReferenceId: "",
+              childName: "",
+              registrationNumber: "",
+              schoolName: "",
+              grade: "",
+            },
+          ]
+      );
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to load profile";
+
+      toast.error(message);
+    }
+  };
+
   const navItems: NavItem[] = [
     { label: "Dashboard", id: "dashboard", icon: "/dashboard.png" },
     { label: "Child Courses", id: "child-courses", icon: "/Child course.png" },
@@ -124,18 +204,52 @@ export default function ParentProfile() {
     { label: "Assessments", id: "assessments", icon: "/Assesment.png" },
     { label: "Settings", id: "settings", icon: "/Setting.png" },
   ];
- 
-  const addChild = () => {
+
+  const addChildRow = () => {
     if (!isEditing) return;
     setChildren([
       ...children,
-      { id: crypto.randomUUID(), childName: "", studentId: "", schoolName: "", grade: "" }
+      { id: crypto.randomUUID(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
     ]);
   };
 
-  const removeChild = (index: number) => {
-    if (!isEditing || index === 0) return;
-    setChildren((current) => current.filter((_, childIndex) => childIndex !== index));
+  const removeChildRow = async (
+    index: number
+  ) => {
+    if (!isEditing) return;
+
+    if (children.length === 1) {
+      toast.error(
+        "At least one child must be linked to the parent account"
+      );
+      return;
+    }
+    const child = children[index];
+
+    try {
+      if (child.studentReferenceId) {
+        await removeChild(child.studentReferenceId);
+      }
+
+      setChildren((current) =>
+        current.filter(
+          (_, childIndex) =>
+            childIndex !== index
+        )
+      );
+
+      toast.success(
+        "Child removed successfully"
+      );
+    } catch (error: any) {
+      console.error(error);
+
+      toast.error(
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to remove child"
+      );
+    }
   };
 
   const updateFieldError = (field: keyof FieldErrors, message = "") => {
@@ -190,15 +304,24 @@ export default function ParentProfile() {
 
   const handlePhoneChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "");
-    if (value !== digitsOnly) {
-      updateFieldError("phoneNumber", "Phone number allows numbers only");
-    }
+
     if (digitsOnly.length > PHONE_MAX_LENGTH) {
-      updateFieldError("phoneNumber", "Phone number cannot exceed 10 digits");
+      updateFieldError(
+        "phoneNumber",
+        "Phone number cannot exceed 15 digits"
+      );
       return;
     }
+
     setPhoneNumber(digitsOnly);
-    if (value === digitsOnly) updateFieldError("phoneNumber");
+
+    updateFieldError(
+      "phoneNumber",
+      digitsOnly.length > 0 &&
+        digitsOnly.length < 10
+        ? "Phone number must be at least 10 digits"
+        : ""
+    );
   };
 
   const handlePasswordChange = (value: string) => {
@@ -269,86 +392,191 @@ export default function ParentProfile() {
     setRelationship(value);
     updateFieldError("relationship", value ? "" : "Please select relationship type");
   };
- 
-  const handleChildInputChange = (index: number, field: keyof ChildDetail, value: string) => {
+
+  const handleChildInputChange = (
+    index: number,
+    field: keyof ChildDetail,
+    value: string
+  ) => {
     const child = children[index];
+
     if (!child) return;
 
-    if (field !== "studentId") return;
+    if (field === "registrationNumber") {
+      const formattedValue = value.toUpperCase();
 
-    if (value.length > STUDENT_ID_MAX_LENGTH) {
-      updateChildError(child.id, field, "Student ID cannot exceed 12 characters");
-      return;
-    }
+      if (
+        formattedValue.length >
+        REGISTRATION_NUMBER_MAX_LENGTH
+      ) {
+        updateChildError(
+          child.id,
+          "registrationNumber",
+          "Registration Number cannot exceed 15 characters"
+        );
 
-    if (!studentIdRegex.test(value)) {
+        return;
+      }
+
+      if (
+        formattedValue.length ===
+        REGISTRATION_NUMBER_MAX_LENGTH &&
+        !registrationNumberRegex.test(
+          formattedValue
+        )
+      ) {
+        updateChildError(
+          child.id,
+          "registrationNumber",
+          "Registration Number must be in the format STU-XXXX-XXXXXX"
+        );
+      } else {
+        updateChildError(
+          child.id,
+          "registrationNumber"
+        );
+      }
+
+      const updatedChildren = [...children];
+
+      updatedChildren[index] = {
+        ...updatedChildren[index],
+        registrationNumber:
+          formattedValue,
+        childName: "",
+        schoolName: "",
+        grade: "",
+      };
+
+      setChildren(updatedChildren);
+
       updateChildError(
         child.id,
-        field,
-        "Student ID can contain alphabets, numbers, and special characters only"
+        "childName"
       );
+
+      updateChildError(
+        child.id,
+        "schoolName"
+      );
+
+      updateChildError(
+        child.id,
+        "grade"
+      );
+
       return;
     }
 
     const updatedChildren = [...children];
+
     updatedChildren[index] = {
       ...updatedChildren[index],
-      studentId: value,
-      childName: "",
-      schoolName: "",
-      grade: "",
+      [field]: value,
     };
+
     setChildren(updatedChildren);
-    updateChildError(child.id, "studentId");
-    updateChildError(child.id, "childName");
-    updateChildError(child.id, "schoolName");
-    updateChildError(child.id, "grade");
+
+    updateChildError(
+      child.id,
+      field
+    );
   };
 
-  const lookupStudentDetails = async (index: number) => {
+  const lookupStudentDetails = async (
+    index: number
+  ) => {
     const child = children[index];
+
     if (!child) return;
 
-    const studentId = child.studentId.trim();
-    if (!studentId) {
-      updateChildError(child.id, "studentId", "Student ID is required");
+    const registrationNumber =
+      child.registrationNumber.trim();
+
+    if (!registrationNumber) {
+      updateChildError(
+        child.id,
+        "registrationNumber",
+        "Registration Number is required"
+      );
+
       return;
     }
 
-    setStudentLookupLoading((current) => ({ ...current, [child.id]: true }));
-    updateChildError(child.id, "studentId");
+    setStudentLookupLoading(
+      (current) => ({
+        ...current,
+        [child.id]: true,
+      })
+    );
+
+    updateChildError(
+      child.id,
+      "registrationNumber"
+    );
 
     try {
-      const student = await fetchStudentDetailsByStudentId(studentId);
+      const student =
+        await fetchStudentDetailsByRegistrationNumber(
+          registrationNumber
+        );
 
       if (!student) {
-        updateChildError(child.id, "studentId", "Student not found");
+        updateChildError(
+          child.id,
+          "registrationNumber",
+          "Student not found"
+        );
+
         return;
       }
 
       const updatedChildren = [...children];
+
       updatedChildren[index] = {
         ...updatedChildren[index],
-        childName: student.child_name || "",
-        schoolName: student.school_name || "",
-        grade: student.grade || "",
+        childName:
+          student.child_name || "",
+        schoolName:
+          student.school_name || "",
+        grade:
+          student.grade || "",
       };
 
       setChildren(updatedChildren);
-      updateChildError(child.id, "childName");
-      updateChildError(child.id, "schoolName");
-      updateChildError(child.id, "grade");
-    } catch {
+
       updateChildError(
         child.id,
-        "studentId",
+        "childName"
+      );
+
+      updateChildError(
+        child.id,
+        "schoolName"
+      );
+
+      updateChildError(
+        child.id,
+        "grade"
+      );
+
+    } catch (error: any) {
+      updateChildError(
+        child.id,
+        "registrationNumber",
+        error?.response?.data?.detail ||
         "Unable to fetch student details. Please try again."
       );
     } finally {
-      setStudentLookupLoading((current) => ({ ...current, [child.id]: false }));
+      setStudentLookupLoading(
+        (current) => ({
+          ...current,
+          [child.id]: false,
+        })
+      );
     }
   };
- 
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!isEditing) return;
     const file = event.target.files?.[0];
@@ -364,129 +592,201 @@ export default function ParentProfile() {
     const imageUrl = URL.createObjectURL(file);
     setProfileImage(imageUrl);
   };
- 
-  const handleSave = () => {
+
+  const handleSave = async () => {
     const nextErrors: FieldErrors = {
-      fullName: fullName ? "" : "Full Name is required",
+      fullName: fullName
+        ? ""
+        : "Full Name is required",
+
       phoneNumber: phoneNumber
-        ? phoneNumber.length === PHONE_MAX_LENGTH
+        ? phoneNumber.length >= 10 &&
+          phoneNumber.length <= 15
           ? ""
-          : "Phone number must be 10 digits"
+          : "Phone number must be between 10 and 15 digits"
         : "Phone number is required",
-      currentPassword: currentPassword ? "" : "Current Password is required",
-      password: validatePassword(password),
-      confirmPassword: confirmPassword
-        ? confirmPassword === password
-          ? ""
-          : "New Password and Confirm Password do not match."
-        : "Confirm Password is required",
-      emailAddress: emailRegex.test(emailAddress) ? "" : "Enter a valid email address",
-      relationship: relationship ? "" : "Please select relationship type",
+
+      emailAddress: emailRegex.test(
+        emailAddress
+      )
+        ? ""
+        : "Enter a valid email address",
+
+      relationship: relationship
+        ? ""
+        : "Please select relationship type",
     };
 
-    const previousPassword =
-      localStorage.getItem("userPassword") ||
-      localStorage.getItem("password") ||
-      "";
-    if (currentPassword && currentPassword !== previousPassword) {
-      nextErrors.currentPassword = "Current password is incorrect. Please enter your existing password.";
-    }
+    const nextChildErrors: ChildFieldErrors =
+      {};
 
-    const nextChildErrors: ChildFieldErrors = {};
     children.forEach((child) => {
       nextChildErrors[child.id] = {
-        childName: child.childName ? "" : "Child Name is required",
-        studentId: child.studentId ? "" : "Student ID is required",
-        schoolName: child.schoolName ? "" : "School Name is required",
-        grade: child.grade ? "" : "Please choose child grade",
+        registrationNumber:
+          !child.registrationNumber
+            ? "Registration Number is required"
+            : !registrationNumberRegex.test(
+              child.registrationNumber
+            )
+              ? "Registration Number must be in the format STU-XXXX-XXXXXX"
+              : "",
       };
     });
-
-    setFieldErrors(nextErrors);
-    setChildErrors(nextChildErrors);
-
-    const hasFieldErrors = Object.values(nextErrors).some(Boolean);
-    const hasChildErrors = Object.values(nextChildErrors).some((childError) =>
-      Object.values(childError).some(Boolean)
-    );
-
-    if (hasFieldErrors || hasChildErrors) return;
-
-    localStorage.setItem("userName", fullName);
-    localStorage.setItem("full_name", fullName);
-    localStorage.setItem("userEmail", emailAddress);
-    localStorage.setItem("userPassword", password);
-    toast.success("Password updated successfully.");
-    if (profileImage) {
-      localStorage.setItem("profileImage", profileImage);
-    }
-    setCurrentPassword("");
-    setPassword("");
-    setConfirmPassword("");
-    setIsEditing(false);
-    setShowSuccessModal(true);
-  };
-
-  const handleSavePersonalDetails = () => {
-    if (!isEditing) {
-      setIsEditing(true);
-      return;
-    }
-
-    const nextErrors: FieldErrors = {
-      fullName: fullName ? "" : "Full Name is required",
-      phoneNumber: phoneNumber
-        ? phoneNumber.length === PHONE_MAX_LENGTH
-          ? ""
-          : "Phone number must be 10 digits"
-        : "Phone number is required",
-      currentPassword: currentPassword ? "" : "Current Password is required",
-      password: validatePassword(password),
-      confirmPassword: confirmPassword
-        ? confirmPassword === password
-          ? ""
-          : "New Password and Confirm Password do not match."
-        : "Confirm Password is required",
-      emailAddress: emailRegex.test(emailAddress) ? "" : "Enter a valid email address",
-    };
-
-    const previousPassword =
-      localStorage.getItem("userPassword") ||
-      localStorage.getItem("password") ||
-      "";
-    if (currentPassword && currentPassword !== previousPassword) {
-      nextErrors.currentPassword = "Current password is incorrect. Please enter your existing password.";
-    }
 
     setFieldErrors((current) => ({
       ...current,
       ...nextErrors,
     }));
 
-    if (Object.values(nextErrors).some(Boolean)) return;
+    setChildErrors(nextChildErrors);
 
-    localStorage.setItem("userName", fullName);
-    localStorage.setItem("full_name", fullName);
-    localStorage.setItem("userEmail", emailAddress);
-    localStorage.setItem("userPassword", password);
-    toast.success("Personal details updated successfully.");
-    setCurrentPassword("");
-    setPassword("");
-    setConfirmPassword("");
-    setIsEditing(false);
-    setShowSuccessModal(true);
+    const hasFieldErrors =
+      Object.values(nextErrors).some(Boolean);
+
+    const hasChildErrors =
+      Object.values(nextChildErrors).some(
+        (childError) =>
+          Object.values(childError).some(Boolean)
+      );
+
+    if (
+      hasFieldErrors ||
+      hasChildErrors
+    ) {
+      return;
+    }
+
+    try {
+      await updateParentProfile({
+        full_name: fullName,
+        email: emailAddress,
+        phone_number: phoneNumber,
+        relationship_type: relationship,
+      });
+
+      for (const child of children) {
+        if (
+          !child.studentReferenceId &&
+          child.registrationNumber?.trim()
+        ) {
+          await addChild({
+            student_registration_number:
+              child.registrationNumber.trim(),
+          });
+        }
+      }
+
+      if (profileImage) {
+        localStorage.setItem(
+          "profileImage",
+          profileImage
+        );
+      }
+
+      await loadProfile();
+      setIsEditing(false);
+      setShowSuccessModal(true);
+
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to save changes";
+
+      toast.error(message);
+    }
   };
 
-  const handleCancelEdit = () => {
+  const handleUpdatePassword = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+
+    const nextErrors: FieldErrors = {
+      password: password.trim()
+        ? validatePassword(password)
+        : "",
+
+      currentPassword:
+        password.trim()
+          ? (
+            currentPassword.trim()
+              ? ""
+              : "Current password is required"
+          )
+          : "",
+
+      confirmPassword: password.trim()
+        ? (
+          confirmPassword === password
+            ? ""
+            : "Passwords do not match"
+        )
+        : "",
+    };
+
+    setFieldErrors((current) => ({
+      ...current,
+      ...nextErrors,
+    }));
+
+    if (
+      Object.values(nextErrors).some(Boolean)
+    ) {
+      return;
+    }
+
+    if (
+      !currentPassword.trim() &&
+      !password.trim() &&
+      !confirmPassword.trim()
+    ) {
+      toast.error(
+        "Please enter password details"
+      );
+      return;
+    }
+
+    try {
+      await updateParentPassword({
+        current_password: currentPassword,
+        new_password: password,
+        confirm_password: confirmPassword,
+      });
+
+      setCurrentPassword("");
+      setPassword("");
+      setConfirmPassword("");
+      setIsEditing(false);
+      toast.success(
+        "Password updated successfully"
+      );
+
+    } catch (error: any) {
+      console.error(error);
+
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        "Failed to update password";
+
+      toast.error(message);
+    }
+  };
+
+  const handleCancelEdit = async () => {
     setCurrentPassword("");
     setPassword("");
     setConfirmPassword("");
-    setFieldErrors((current) => ({
-      ...current,
-      currentPassword: undefined,
-      password: undefined,
-      confirmPassword: undefined,
-    }));
+
+    setFieldErrors({});
+    setChildErrors({});
+
+    await loadProfile();
+
     setIsEditing(false);
   };
 
@@ -498,7 +798,7 @@ export default function ParentProfile() {
   const handleSettingsClick = () => {
     setLocalActiveTab("settings");
   };
- 
+
   const getHeaderTitle = () => {
     switch (activeTab) {
       case "child-courses": return "Child Courses Workspace";
@@ -509,10 +809,14 @@ export default function ParentProfile() {
       default: return "Manage Profile Details";
     }
   };
- 
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
   return (
     <div className="min-h-screen w-screen bg-[#FDFFFE] font-['Poppins',sans-serif] antialiased text-gray-900 flex overflow-hidden">
-     
+
       {/* SIDEBAR PANEL */}
       <aside className="w-[280px] min-w-[280px] h-screen border-transparent flex flex-col pt-8 px-6 bg-white shrink-0 sticky top-0 font-['Poppins',sans-serif]">
         <button
@@ -534,7 +838,7 @@ export default function ParentProfile() {
             </span>
           </div>
         </button>
- 
+
         <nav className="flex-1 mt-12">
           <ul className="space-y-1.5">
             {navItems.map((item) => {
@@ -543,11 +847,10 @@ export default function ParentProfile() {
                   <button
                     type="button"
                     onClick={() => setLocalActiveTab(item.id)}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-[16px] font-normal font-['Poppins',sans-serif] transition-all duration-200 ${
-                      activeTab === item.id
-                        ? "bg-[#E8F5E9] text-[#15803D]"
-                        : "text-[#64748B] hover:bg-gray-50 hover:text-gray-900"
-                    }`}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-[16px] font-normal font-['Poppins',sans-serif] transition-all duration-200 ${activeTab === item.id
+                      ? "bg-[#E8F5E9] text-[#15803D]"
+                      : "text-[#64748B] hover:bg-gray-50 hover:text-gray-900"
+                      }`}
                   >
                     <img
                       src={item.icon}
@@ -562,10 +865,10 @@ export default function ParentProfile() {
           </ul>
         </nav>
       </aside>
- 
+
       {/* CORE WORKSPACE VIEW */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[#FDFFFE] font-['Poppins',sans-serif]">
-       
+
         {/* SHARED DYNAMIC HEADER TOOLBAR */}
         <header className="w-full h-[100px] min-h-[100px] px-12 flex items-center justify-between border-b border-transparent bg-white">
           <div className="flex min-h-[56px] min-w-0 flex-col justify-center">
@@ -576,7 +879,7 @@ export default function ParentProfile() {
               {activeTab === "dashboard" ? "Manage your Account Details" : "View and manage active information screens"}
             </p>
           </div>
- 
+
           <Logout redirectTo="/login" toastDuration={3000}>
             {({ logout }) => (
               <ProfileMenu
@@ -591,20 +894,20 @@ export default function ParentProfile() {
             )}
           </Logout>
         </header>
- 
+
         {/* SCROLLABLE WORKSPACE CONTAINER */}
-        <main className="flex-1 overflow-y-auto px-12 py-10 bg-[#FDFFFE]">
+        < main className="flex-1 overflow-y-auto px-12 py-10 bg-[#FDFFFE]" >
           <div className="w-full max-w-[1000px]">
-           
+
             <Outlet />
- 
+
             {/* PROFILE FORM - Only visible on 'dashboard' tab */}
             {activeTab === "dashboard" && (
               <div className="bg-white rounded-3xl border border-transparent p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-               
+
                 {/* PROFILE PHOTO ROW */}
                 <div className="relative mb-10 flex h-[124px] w-[482px] flex-col items-center gap-[24px] pb-0 sm:flex-row">
-                 
+
                   {/* IMAGING CONTAINER */}
                   <label className={`flex h-[124px] w-[124px] flex-col items-center justify-center gap-[10px] overflow-hidden rounded-[24px] border-[1.5px] border-dashed border-[#4C535F] bg-[#EDF2F6] p-[10px] text-center transition-all select-none group relative ${isEditing ? "cursor-pointer hover:bg-[#E6EDF3] hover:border-[#238B45]" : "cursor-not-allowed opacity-80"}`}>
                     {profileImage ? (
@@ -630,12 +933,12 @@ export default function ParentProfile() {
                       disabled={!isEditing}
                     />
                   </label>
- 
+
                   <div className="w-[334px] text-left">
                     <h3 className="m-0 h-[24px] w-[334px] font-['Poppins',sans-serif] text-[20px] font-semibold leading-none tracking-[-0.01em] text-black">Profile Photo</h3>
                     <p className="mt-[12px] h-[16px] w-[334px] font-['Poppins',sans-serif] text-[14px] font-normal leading-none tracking-[-0.01em] text-[#4C535F]">Upload a new photo or change your existing one</p>
                   </div>
-                 
+
                   {!isEditing && (
                     <button
                       onClick={() => setIsEditing(true)}
@@ -646,7 +949,7 @@ export default function ParentProfile() {
                     </button>
                   )}
                 </div>
- 
+
                 {/* PARENT INFORMATION BLOCK */}
                 <section className="mb-12 flex min-h-[440px] w-[1018px] flex-col gap-[24px]">
                   <div className="flex w-[1018px] items-center justify-between">
@@ -654,10 +957,10 @@ export default function ParentProfile() {
                     <button
                       type="button"
                       disabled={!isEditing}
-                      onClick={handleSavePersonalDetails}
+                      onClick={handleUpdatePassword}
                       className="flex h-[40px] min-w-[118px] items-center justify-center rounded-[8px] bg-[#238B45] px-5 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#238B45]"
                     >
-                      Update
+                      Update Password
                     </button>
                   </div>
                   <div className="grid grid-cols-1 gap-x-[24px] gap-y-[24px] md:grid-cols-2">
@@ -854,14 +1157,14 @@ export default function ParentProfile() {
                           className={`box-border h-[48px] w-[238px] appearance-none rounded-[8px] border py-[12px] pl-[16px] pr-10 text-xs font-bold outline-none transition-all ${isEditing ? "bg-white border-[#CBD5E1] focus:border-[#16A34A] focus:ring-1 focus:ring-[#16A34A] text-gray-800" : "bg-gray-50/50 border-gray-100 text-gray-500 cursor-not-allowed"}`}
                         >
                           <option value="">Choose Relation Type</option>
-                          <option value="Father">Father</option>
-                          <option value="Mother">Mother</option>
-                          <option value="Brother / Sister">Brother / Sister</option>
-                          <option value="Guardian">Guardian</option>
+                          <option value="FATHER">Father</option>
+                          <option value="MOTHER">Mother</option>
+                          <option value="GUARDIAN">Guardian</option>
+                          <option value="OTHER">Other</option>
                         </select>
                         <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center">
                           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </div>
                       </div>
@@ -871,7 +1174,7 @@ export default function ParentProfile() {
                     </div>
                   </div>
                 </section>
- 
+
                 {/* CHILD DETAILS REPEATER */}
                 <section className="pt-4 border-t border-transparent">
                   <h2 className="mb-6 h-[24px] w-[1018px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Child Details</h2>
@@ -894,29 +1197,53 @@ export default function ParentProfile() {
                           )}
                         </div>
                         <div>
-                          <label className={personalLabelCls}>Student ID</label>
+                          <label className={personalLabelCls}>
+                            Student ID
+                          </label>
+
                           <div className="flex h-[48px] w-[497px] items-center gap-2">
                             <input
                               type="text"
-                              value={child.studentId}
-                              disabled={!isEditing || studentLookupLoading[child.id]}
-                              onChange={(e) => handleChildInputChange(index, "studentId", e.target.value)}
-                              onBlur={() => lookupStudentDetails(index)}
-                              placeholder="Enter Student ID"
-                              className={`h-[48px] flex-1 rounded-[8px] bg-gray-50 px-4 py-3 font-poppins text-sm text-gray-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60`}
+                              value={child.registrationNumber}
+                              disabled={
+                                !isEditing ||
+                                !!child.studentReferenceId
+                              } onChange={(e) =>
+                                handleChildInputChange(
+                                  index,
+                                  "registrationNumber",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Enter Registration Number"
+                              className="h-[48px] flex-1 rounded-[8px] bg-gray-50 px-4 py-3 font-poppins text-sm text-gray-800 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                             />
+
                             <button
                               type="button"
-                              disabled={!isEditing || studentLookupLoading[child.id]}
-                              onMouseDown={(event) => event.preventDefault()}
-                              onClick={() => lookupStudentDetails(index)}
+                              disabled={
+                                !isEditing ||
+                                !!child.studentReferenceId ||
+                                studentLookupLoading[child.id]
+                              }
+                              onMouseDown={(event) =>
+                                event.preventDefault()
+                              }
+                              onClick={() =>
+                                lookupStudentDetails(index)
+                              }
                               className="h-[48px] w-[104px] rounded-[8px] bg-[#238B45] px-4 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              {studentLookupLoading[child.id] ? "Loading" : "Search"}
+                              {studentLookupLoading[child.id]
+                                ? "Loading"
+                                : "Search"}
                             </button>
                           </div>
-                          {childErrors[child.id]?.studentId && (
-                            <p className={errorTextCls}>{childErrors[child.id]?.studentId}</p>
+
+                          {childErrors[child.id]?.registrationNumber && (
+                            <p className={errorTextCls}>
+                              {childErrors[child.id]?.registrationNumber}
+                            </p>
                           )}
                         </div>
                         <div>
@@ -961,7 +1288,7 @@ export default function ParentProfile() {
                             </select>
                             <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center">
                               <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </div>
                           </div>
@@ -969,11 +1296,11 @@ export default function ParentProfile() {
                             <p className={errorTextCls}>{childErrors[child.id]?.grade}</p>
                           )}
                         </div>
-                        {index > 0 && (
+                        {children.length > 1 && (
                           <div className="md:col-span-2">
                             <button
                               type="button"
-                              onClick={() => removeChild(index)}
+                              onClick={() => removeChildRow(index)}
                               className="inline-flex h-[40px] items-center justify-center rounded-[8px] border border-red-200 bg-white px-4 font-poppins text-[14px] font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                               disabled={!isEditing}
                             >
@@ -984,17 +1311,17 @@ export default function ParentProfile() {
                       </div>
                     ))}
                   </div>
-                 
+
                   <button
                     type="button"
-                    onClick={addChild}
-                    className="mt-6 inline-flex h-[48px] w-[229px] items-center justify-center gap-[8px] rounded-[8px] bg-[#238B45] px-[24px] py-[12px] font-poppins text-[16px] font-semibold leading-[100%] text-white opacity-100 transition-all hover:bg-[#1C6E36]"
+                    disabled={!isEditing}
+                    onClick={addChildRow} className="mt-6 inline-flex h-[48px] w-[229px] items-center justify-center gap-[8px] rounded-[8px] bg-[#238B45] px-[24px] py-[12px] font-poppins text-[16px] font-semibold leading-[100%] text-white opacity-100 transition-all hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="flex h-[24px] w-[24px] items-center justify-center text-[24px] font-semibold leading-none">+</span>
                     <span className="h-[24px] w-[149px] leading-[24px]">Add Another Child</span>
                   </button>
                 </section>
- 
+
                 {/* FOOTER FORM ACTIONS */}
                 {isEditing && (
                   <div className="mt-12 flex justify-end gap-3 border-t border-gray-100 pt-6">
@@ -1010,24 +1337,27 @@ export default function ParentProfile() {
                       onClick={handleSave}
                       className="flex h-[48px] w-[215px] items-center justify-center gap-[12px] rounded-[8px] bg-[#238B45] p-[12px] font-poppins text-[20px] font-semibold capitalize leading-[100%] text-white opacity-100 transition-colors hover:bg-[#1C6E36]"
                     >
-                      <span className="h-[18px] w-[183px] leading-[18px]">Save Permissions</span>
+                      <span className="h-[18px] w-[183px] leading-[18px]">Save Changes</span>
                     </button>
                   </div>
                 )}
               </div>
-            )}
- 
+            )
+            }
+
             {/* Empty views layout for other active tabs */}
-            {activeTab !== "dashboard" && (
-              <div className="w-full min-h-[300px] flex items-center justify-center border border-dashed border-transparent rounded-3xl bg-white/50">
-                {/* Kept empty on page purpose per request */}
-              </div>
-            )}
- 
-          </div>
-        </main>
-      </div>
- 
+            {
+              activeTab !== "dashboard" && (
+                <div className="w-full min-h-[300px] flex items-center justify-center border border-dashed border-transparent rounded-3xl bg-white/50">
+                  {/* Kept empty on page purpose per request */}
+                </div>
+              )
+            }
+
+          </div >
+        </main >
+      </div >
+
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -1040,6 +1370,6 @@ export default function ParentProfile() {
           navigate("/parent/profile");
         }}
       />
-    </div>
+    </div >
   );
 }

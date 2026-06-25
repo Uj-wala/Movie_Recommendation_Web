@@ -20,7 +20,7 @@ api.interceptors.request.use(
     const token = localStorage.getItem("access_token");
 
     if (token && config.headers) {
-      config.headers.Authorization =`Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -41,7 +41,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    console.log("interceptor error",error)
+    console.log("interceptor error", error)
     if (
       error.response?.status === 401 &&
       !originalRequest._retry
@@ -78,7 +78,7 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     } else if (
-      error.response?.status === 403 
+      error.response?.status === 403
     ) {
       console.log("Forbidden");
     }
