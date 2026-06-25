@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import parentProfileImage from "../../assets/parent_profile .jpeg";
 import { ProfileMenu } from "../profile";
+import Logout from "../../components/Logout";
+import { useLogoNavigation } from "../../hooks/useLogoNavigation";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
+  const handleLogoClick = useLogoNavigation();
 
   // State Management
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -28,27 +30,6 @@ const ParentDashboard = () => {
 
   const handleSettingsClick = () => {
     setActiveTab("Settings");
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("full_name");
-    localStorage.removeItem("name");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_role");
-    setActiveTab("Dashboard");
-    toast.success("Logged out successfully", {
-      id: "auth-logout-success",
-      duration: 3000,
-    });
-    navigate("/login", { replace: true });
-  };
-
-  const handleLogoClick = () => {
-    navigate("/");
   };
 
   // Sidebar Menu 
@@ -181,15 +162,19 @@ const ParentDashboard = () => {
               </p>
           </div>
 
-          <ProfileMenu
-            userEmail={profile.email}
-            userName={profile.name}
-            userRole="Parent"
-            avatarSrc={profile.image}
-            onProfileClick={handleProfileClick}
-            onSettingsClick={handleSettingsClick}
-            onLogoutClick={handleLogout}
-          />
+          <Logout redirectTo="/login" toastDuration={3000}>
+            {({ logout }) => (
+              <ProfileMenu
+                userEmail={profile.email}
+                userName={profile.name}
+                userRole="Parent"
+                avatarSrc={profile.image}
+                onProfileClick={handleProfileClick}
+                onSettingsClick={handleSettingsClick}
+                onLogoutClick={logout}
+              />
+            )}
+          </Logout>
         </div>
 
         {/* SEARCH AND FILTER */}

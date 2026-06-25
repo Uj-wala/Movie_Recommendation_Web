@@ -22,24 +22,15 @@ export default function AdminLayout() {
   const [highlightedTab, setHighlightedTab] = useState(activeTab);
 
   useEffect(() => {
-    setHighlightedTab(activeTab);
+    const syncTab = window.setTimeout(() => setHighlightedTab(activeTab), 0);
+
+    return () => window.clearTimeout(syncTab);
   }, [activeTab]);
 
   const setActiveTab = (tab: string) => {
     setHighlightedTab(tab);
     if (HIGHLIGHT_ONLY_TABS.has(tab)) return;
     navigate(`/admin/${tab}`);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("full_name");
-    localStorage.removeItem("name");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_role");
   };
 
   // Dashboard/roles/reports/settings are highlight-only; keep the current page visible.
@@ -51,7 +42,6 @@ export default function AdminLayout() {
     <Layout
       activeTab={highlightedTab}
       setActiveTab={setActiveTab}
-      handleLogout={handleLogout}
       userEmail={userEmail}
     >
       {renderPage()}

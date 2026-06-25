@@ -31,10 +31,13 @@
 }
 
 .logo-brand {
+  background: transparent;
+  border: 0;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   gap: 12px;
+  font: inherit;
   padding-left: 0;
   flex: 1;
   cursor: pointer;

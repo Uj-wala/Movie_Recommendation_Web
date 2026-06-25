@@ -16,10 +16,10 @@ import activityIcon2 from "../../../assets/teacher_module_recent_activity_2.jpeg
 import activityIcon3 from "../../../assets/teacher_module_recent_activity_3.jpeg";
 import activityIcon4 from "../../../assets/teacher_module_recent_activity_4.jpeg";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import toast from "react-hot-toast";
 import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
+import Logout from "../../../components/Logout";
  
 interface StatCard {
   id: number;
@@ -487,22 +487,6 @@ const TeacherDashboard: React.FC = () => {
  const [profilePeriod, setProfilePeriod] = useState("Today");
  const [ratingPeriod, setRatingPeriod] = useState("This Week");
  const [overviewPeriod, setOverviewPeriod] = useState("This Week");
- const handleLogout = () => {
-  [
-    "access_token",
-    "refresh_token",
-    "isAuthenticated",
-    "user_role",
-    "userEmail",
-    "userName",
-    "full_name",
-    "name",
-    "userPassword",
-  ].forEach((key) => localStorage.removeItem(key));
-  toast.dismiss();
-  toast.success("Logged out successfully", { duration: 5000 });
-  navigate("/");
- };
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] p-8">
  
@@ -521,15 +505,19 @@ const TeacherDashboard: React.FC = () => {
         </div>
         {/* Top Bar */}
       <div className="flex mt-[-32px] mr-[-32px] justify-end items-center px-8 py-3">
-        <ProfileMenu
-          userEmail={userEmail}
-          userName={userName}
-          userRole="Teacher"
-          avatarSrc={teacherProfile}
-          onProfileClick={() => navigate("/teacher/profile")}
-          onSettingsClick={() => setActiveTab("settings")}
-          onLogoutClick={handleLogout}
-        />
+        <Logout redirectTo="/" toastDuration={5000} dismissExistingToasts>
+          {({ logout }) => (
+            <ProfileMenu
+              userEmail={userEmail}
+              userName={userName}
+              userRole="Teacher"
+              avatarSrc={teacherProfile}
+              onProfileClick={() => navigate("/teacher/profile")}
+              onSettingsClick={() => setActiveTab("settings")}
+              onLogoutClick={logout}
+            />
+          )}
+        </Logout>
       </div>
       </div>
  

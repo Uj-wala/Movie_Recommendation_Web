@@ -29,7 +29,11 @@
 }
 
 .login-logo {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   margin-bottom: 8px;
+  padding: 0;
 }
 
 .login-title {

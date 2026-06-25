@@ -1,5 +1,5 @@
 import Logo from "../../components/Logo";
-import { Link } from "react-router-dom";
+import { useLogoNavigation } from "../../hooks/useLogoNavigation";
 
 const categoryLinks: string[] = [
   "Creative Writing",
@@ -97,7 +97,12 @@ const footerStyles = `
 }
 
 .footer-brand-link {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
   display: block;
+  padding: 0;
+  text-align: left;
   text-decoration: none;
 }
 
@@ -376,6 +381,8 @@ const footerStyles = `
 `;
 
 const Footer = () => {
+  const handleLogoClick = useLogoNavigation();
+
   return (
     <>
       <style>{footerStyles}</style>
@@ -384,10 +391,10 @@ const Footer = () => {
           <div className="footer-brand-column">
             <div className="footer-logo-row">
               <Logo className="footer-logo" imgClassName="footer-logo-image" />
-              <Link to="/" className="footer-brand-link" aria-label="Go to Home Page">
+              <button type="button" onClick={handleLogoClick} className="footer-brand-link" aria-label="Go to Home Page">
                 <p className="footer-brand-name">E-Learning</p>
                 <p className="footer-brand-subtitle">AI-Powered</p>
-              </Link>
+              </button>
             </div>
 
             <address className="footer-address">

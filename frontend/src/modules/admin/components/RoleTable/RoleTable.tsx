@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './RoleTable.css';
 import EditRoleModal from '../EditRoleModal/EditRoleModal';
 import EditStatusModal from '../EditStatusModal/EditStatusModal';
-import SuccessModal from '../SuccessModal/SuccessModal';
+import SuccessModal from '../../../../components/SuccessModal';
 import type { Role, UserOrRole } from '../../types';
 
 interface RoleTableProps {
@@ -116,6 +116,8 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
         <SuccessModal
           isOpen={isSuccessModalOpen}
           onClose={() => setIsSuccessModalOpen(false)}
+          title="Congratulations!"
+          message="Your role changes has updated successfully."
         />
       )}
     </div>

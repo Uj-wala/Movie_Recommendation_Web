@@ -3,7 +3,7 @@ import './UserManagement.css';
 import { Search, Plus } from 'lucide-react';
 import UserTable from '../../components/UserTable/UserTable';
 import EditRoleModal from '../../components/EditRoleModal/EditRoleModal';
-import SuccessModal from '../../components/SuccessModal/SuccessModal';
+import SuccessModal from '../../../../components/SuccessModal';
 import type { User, UserOrRole } from '../../types';
 
 const INITIAL_USERS = [
@@ -219,6 +219,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
         isOpen={isSuccessModalOpen} 
         onClose={() => setIsSuccessModalOpen(false)} 
         message="A new role has been created successfully."
+        title="Congratulations!"
+        buttonText="Continue"
         variant={successModalVariant}
         member={lastAddedMember}
         onAddAnother={handleAddAnotherMember}

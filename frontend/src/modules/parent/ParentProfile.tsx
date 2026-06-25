@@ -7,9 +7,11 @@ import parentProfileImage from "../../assets/parent_profile .jpeg";
 import phoneIcon from "../../assets/UpdateProfileIcons/phone.svg";
 import eyeShowIcon from "../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
-import SuccessModal from "./SuccessModal";
+import SuccessModal from "../../components/SuccessModal";
 import { fetchStudentDetailsByStudentId } from "../../services/parentProfileService";
 import { ProfileMenu } from "../profile";
+import Logout from "../../components/Logout";
+import { useLogoNavigation } from "../../hooks/useLogoNavigation";
 import {
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
@@ -53,6 +55,7 @@ const studentIdRegex = /^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]*$/;
 export default function ParentProfile() {
   const location = useLocation();
   const navigate = useNavigate();
+  const handleLogoClick = useLogoNavigation();
  
   // State Management for active view strictly controlled within this page layout
   const pathSegments = location.pathname.split("/").filter(Boolean);
@@ -487,23 +490,6 @@ export default function ParentProfile() {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("full_name");
-    localStorage.removeItem("name");
-    localStorage.removeItem("profileImage");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_role");
-    toast.success("Logged out successfully", {
-      id: "auth-logout-success",
-      duration: 3000,
-    });
-    navigate("/login", { replace: true });
-  };
-
   const handleProfileClick = () => {
     setLocalActiveTab("dashboard");
     navigate("/parent/profile");
@@ -531,7 +517,7 @@ export default function ParentProfile() {
       <aside className="w-[280px] min-w-[280px] h-screen border-transparent flex flex-col pt-8 px-6 bg-white shrink-0 sticky top-0 font-['Poppins',sans-serif]">
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={handleLogoClick}
           className="flex items-start gap-3 w-full text-left cursor-pointer transition-all hover:opacity-80 active:scale-98 rounded-lg p-1"
         >
           <img
@@ -591,15 +577,19 @@ export default function ParentProfile() {
             </p>
           </div>
  
-          <ProfileMenu
-            userEmail={displayEmail}
-            userName={displayName}
-            userRole="Parent"
-            avatarSrc={profileImage || parentProfileImage}
-            onProfileClick={handleProfileClick}
-            onSettingsClick={handleSettingsClick}
-            onLogoutClick={handleLogout}
-          />
+          <Logout redirectTo="/login" toastDuration={3000}>
+            {({ logout }) => (
+              <ProfileMenu
+                userEmail={displayEmail}
+                userName={displayName}
+                userRole="Parent"
+                avatarSrc={profileImage || parentProfileImage}
+                onProfileClick={handleProfileClick}
+                onSettingsClick={handleSettingsClick}
+                onLogoutClick={logout}
+              />
+            )}
+          </Logout>
         </header>
  
         {/* SCROLLABLE WORKSPACE CONTAINER */}
@@ -1041,7 +1031,10 @@ export default function ParentProfile() {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        onVisitProfile={() => {
+        title="Congratulations!"
+        message="Your Profile has been Updated successfully."
+        buttonText="Visit My Profile Screen"
+        onPrimaryAction={() => {
           setShowSuccessModal(false);
           setLocalActiveTab("dashboard");
           navigate("/parent/profile");

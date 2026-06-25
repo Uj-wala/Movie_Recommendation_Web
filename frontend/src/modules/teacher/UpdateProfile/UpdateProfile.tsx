@@ -16,9 +16,10 @@ import profilePictureDefault from "../../../assets/UpdateProfileIcons/profilepic
 import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import profileData from "../../../data/profile.json";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import SuccessModalTwo from "./SuccessModel/SuccessModelTwo";
+import SuccessModal from "../../../components/SuccessModal";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
+import Logout from "../../../components/Logout";
 import {
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
@@ -363,23 +364,6 @@ export default function UpdateProfile() {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
-    [
-      "access_token",
-      "refresh_token",
-      "isAuthenticated",
-      "user_role",
-      "userEmail",
-      "userName",
-      "full_name",
-      "name",
-      "userPassword",
-    ].forEach((key) => localStorage.removeItem(key));
-    toast.dismiss();
-    toast.success("Logged out successfully", { duration: 5000 });
-    navigate("/");
-  };
-
   const handleSuccessClose = () => {
     setShowSuccess(false);
     setIsEditing(false);
@@ -405,15 +389,19 @@ export default function UpdateProfile() {
     <div className="flex-1 flex flex-col min-h-screen bg-[#F5F5F5]">
       {/* Top Bar */}
       <div className="flex justify-end items-center px-8 py-3">
-        <ProfileMenu
-          userEmail={displayEmail}
-          userName={displayName}
-          userRole="Teacher"
-          avatarSrc={formik.values.image || teacherProfile || profilePictureDefault}
-          onProfileClick={() => navigate("/teacher/dashboard")}
-          onSettingsClick={() => setActiveTab("settings")}
-          onLogoutClick={handleLogout}
-        />
+        <Logout redirectTo="/" toastDuration={5000} dismissExistingToasts>
+          {({ logout }) => (
+            <ProfileMenu
+              userEmail={displayEmail}
+              userName={displayName}
+              userRole="Teacher"
+              avatarSrc={formik.values.image || teacherProfile || profilePictureDefault}
+              onProfileClick={() => navigate("/teacher/dashboard")}
+              onSettingsClick={() => setActiveTab("settings")}
+              onLogoutClick={logout}
+            />
+          )}
+        </Logout>
       </div>
 
       {/* Page Content */}
@@ -850,13 +838,13 @@ export default function UpdateProfile() {
           </div>
         </form>
       </div>
-      <SuccessModalTwo
+      <SuccessModal
         isOpen={showSuccess}
         onClose={handleSuccessClose}
-      //   onVisitProfile={() => {
-      //     setShowSuccess(false);
-      //     // navigate("/profile") if you want to route somewhere
-      //  }}
+        title="Congratulations!"
+        message="Your Profile has been Updated successfully."
+        buttonText="Visit My Profile Screen"
+        redirectUrl="/teacher/dashboard"
       />
     </div>
   );

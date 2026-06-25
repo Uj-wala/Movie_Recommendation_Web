@@ -1,10 +1,10 @@
-  import { Link } from "react-router-dom";
-  import logo from "../../../../assets/sidebar_icons/Learning_Logo.svg";
-  import dashboard from "../../../../assets/sidebar_icons/dashboard.svg";
-  import courses from "../../../../assets/sidebar_icons/courses.svg";
-  import students from "../../../../assets/sidebar_icons/students.svg";
-  import assignments from "../../../../assets/sidebar_icons/assignments.svg";
-  import settings from "../../../../assets/sidebar_icons/settings.svg";
+import logo from "../../../../assets/sidebar_icons/Learning_Logo.svg";
+import { useLogoNavigation } from "../../../../hooks/useLogoNavigation";
+import dashboard from "../../../../assets/sidebar_icons/dashboard.svg";
+import courses from "../../../../assets/sidebar_icons/courses.svg";
+import students from "../../../../assets/sidebar_icons/students.svg";
+import assignments from "../../../../assets/sidebar_icons/assignments.svg";
+import settings from "../../../../assets/sidebar_icons/settings.svg";
 
 
   const navItems = [
@@ -41,18 +41,20 @@
   };
 
   export default function Sidebar({ activeTab = "dashboard", setActiveTab }: SidebarProps) {
+    const handleLogoClick = useLogoNavigation();
+
     return (
       <aside className="font-poppins w-[278px] min-h-screen bg-[#FFFFFF] flex flex-col shrink-0">
         {/* Logo */}
         <div className="px-6 pt-8 pb-8">
-          <Link to="/" className="flex items-center gap-4 mb-2">
+          <button type="button" onClick={handleLogoClick} className="flex items-center gap-4 mb-2 border-0 bg-transparent p-0 text-left cursor-pointer">
             <div className="w-7 h-7 bg-white rounded-md flex items-center justify-center">
               <img src={logo} alt="logo" />
             </div>
             <span className="w-[134px] h-[24px] text-[#238B45] text-[24px] font-semibold leading-[100%] flex items-center">
               E-Learning
             </span>
-          </Link>
+          </button>
           <p className="w-[134px] h-[30px] ml-[47px] text-[#292D32] font-semibold text-[11px] leading-[100%] px-4 bg-[#F5F5F5] rounded-[5px] whitespace-nowrap flex items-center justify-center">
             Teacher Dashboard
           </p>

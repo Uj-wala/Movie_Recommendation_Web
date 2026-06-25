@@ -1,7 +1,6 @@
-// Force Vite reload
 import React from 'react';
-import { Link } from 'react-router-dom';
 import './Sidebar.css';
+import { useLogoNavigation } from '../../../../hooks/useLogoNavigation';
 
 interface SidebarProps {
   activeTab?: string;
@@ -11,10 +10,12 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab = 'users', setActiveTab, isOpen, setIsOpen }) => {
+  const handleLogoClick = useLogoNavigation();
+
   return (
     <div className={`sidebar-container ${isOpen ? 'sidebar-open' : ''}`}>
       <div className="logo-section">
-        <Link to="/" className="logo-brand">
+        <button type="button" onClick={handleLogoClick} className="logo-brand">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginTop: '-2px' }}>
             <rect width="24" height="24" rx="4" fill="#238B45"/>
             <path d="M9.83006 8.0767C11.2766 6.53824 12.7231 6.53824 14.1697 8.0767" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
@@ -25,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab = 'users', setActiveTab, is
             <div className="brand-text">E-Learning</div>
             <div className="admin-badge">Admin Dashboard</div>
           </div>
-        </Link>
+        </button>
         {setIsOpen && (
           <button className="sidebar-close-btn" onClick={() => setIsOpen(false)}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#292D32" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
