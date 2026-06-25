@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
+from sqlalchemy.exc import IntegrityError
 from app.models import (
     UserPermission,
     Role,
@@ -12,8 +12,14 @@ from app.repository.roles_permission_repository import (
     PermissionRepository,
     RolePermissionRepository
 )
-
-
+from app.schemas.permission_schema import CreateUserSchema
+from app.models import User
+from app.utils.temp_password_generate import generate_temp_password
+from app.core.security import pwd_context
+from app.utils.send_generated_pasword_mail import send_generated_password_mail
+from app.utils.registration_number_util import (
+    generate_registration_number,
+) 
 class PermissionService:
 
     @staticmethod
@@ -102,73 +108,113 @@ class PermissionService:
         }
 
     @staticmethod
-    def update_permissions(
+    def create_user_with_permissions(
         db: Session,
-        user_id: str,
-        payload
+        payload: CreateUserSchema
     ):
-
-        user = (
-            PermissionRepository
-            .get_user(
+        try:
+            # 1. Check duplicate email
+            existing_user = PermissionRepository.get_user_by_email(
                 db,
-                user_id
+                payload.email
             )
-        )
+            if existing_user:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email already exists"
+                )
 
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        PermissionRepository\
-            .delete_user_permissions(
+            # 2. Validate role
+            role = PermissionRepository.get_role_by_id(
                 db,
-                user_id
+                payload.role_id
+            )
+            if not role:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Role not found"
+                )
+
+            # 3. Validate permission IDs
+            permissions = PermissionRepository.get_permissions_by_ids(
+                db,
+                payload.permissions
             )
 
-        permission_objects = []
+            if len(permissions) != len(set(payload.permissions)):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid permission ids"
+                )
 
-        # Granted permissions
-        for permission_id in (
-            payload.granted_permission_ids
-        ):
+            # 4. Generate temp password
+            temp_password = generate_temp_password(
+                payload.name,
+                payload.email
+            )
+            hashed_password = pwd_context.hash(temp_password)
+            registration_number = generate_registration_number(db, role.name)  
+            # 5. Create user
+            new_user = User(
+                full_name=payload.name,
+                email=payload.email,
+                role_id=payload.role_id,
+                password_hash=hashed_password,
+                registration_number=registration_number,
+                is_active=True
+            )
 
-            permission_objects.append(
+            db.add(new_user)
+            db.flush()  
+
+            # 6. Create user permissions
+            permission_objects = [
                 UserPermission(
-                    user_id=user_id,
-                    permission_id=
-                    permission_id,
+                    user_id=new_user.id,
+                    permission_id=permission.id,
                     is_granted=True
                 )
+                for permission in permissions
+            ]
+
+            if permission_objects:
+                db.add_all(permission_objects)
+            send_generated_password_mail(new_user.email ,new_user.full_name ,temp_password)
+            db.commit()
+            db.refresh(new_user)
+
+            return {
+                "message": "User created successfully",
+                "user": {
+                    "id": str(new_user.id),
+                    "name": new_user.full_name,
+                    "email": new_user.email,
+                    "role_id": str(new_user.role_id),
+                    "role_name": role.name,
+                    "is_active": new_user.is_active,
+                    "registration_number":new_user.registration_number,
+                    "temp_password": temp_password
+                }
+            }
+
+        except HTTPException:
+            db.rollback()
+            raise
+
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=400,
+                detail="Email already exists"
             )
 
-        # Revoked permissions
-        for permission_id in (
-            payload.revoked_permission_ids
-        ):
-
-            permission_objects.append(
-                UserPermission(
-                    user_id=user_id,
-                    permission_id=
-                    permission_id,
-                    is_granted=False
-                )
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to create user: {str(e)}"
             )
-
-        PermissionRepository\
-            .bulk_create_permissions(
-                db,
-                permission_objects
-            )
-
-        return {
-            "message":
-            "Permissions updated successfully"
-        }
-
+    
     @staticmethod
     def clear_user_permissions(
         db: Session,

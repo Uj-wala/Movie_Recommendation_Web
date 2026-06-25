@@ -44,10 +44,10 @@ class User(Base, BaseModel):
     )
      
     security_question: Mapped[SecurityQuestion] = mapped_column(
-        Enum(SecurityQuestion), nullable=False
+        Enum(SecurityQuestion), nullable=True
     )
  
-    security_answer_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    security_answer_hash: Mapped[str] = mapped_column(String(255), nullable=True)
  
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
  
@@ -146,5 +146,4 @@ class User(Base, BaseModel):
     back_populates="user",
     cascade="all, delete-orphan"
     )
- 
- 
+

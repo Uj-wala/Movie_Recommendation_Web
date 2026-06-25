@@ -1,13 +1,15 @@
 export interface User {
-  id: number;
+  id?: string;
   name: string;
   email: string;
-  role: string;
-  status: string;
+  role_name: string;
+  role_id: string | null;
+  is_active: number;
+  registration_number:string;
 }
 
 export interface Role {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

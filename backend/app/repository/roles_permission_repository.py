@@ -7,7 +7,8 @@ from app.models import (
     User,
     RolePermission,
     UserPermission,
-    Permission
+    Permission,
+    Role
 )
 
 
@@ -90,16 +91,33 @@ class PermissionRepository:
         db.commit()
 
     @staticmethod
-    def get_all_permissions(
+    def get_all_permissions(    
         db: Session
     ):
         return db.query(
             Permission
         ).all()
+    @staticmethod
+    def get_user_by_email(db: Session, email: str):
+        return db.query(User).filter(User.email == email).first()
 
-
+    @staticmethod
+    def get_role_by_id(db: Session, role_id: str):
+        return db.query(Role).filter(Role.id == role_id).first()
+    @staticmethod
+    def get_permissions_by_ids(
+        db: Session,
+        permission_ids: list[str]
+    ):
+        return (
+            db.query(Permission)
+            .filter(Permission.id.in_(permission_ids))
+            .all()
+        )
+    
 class RolePermissionRepository:
 
+    
     @staticmethod
     def delete_role_permissions(
         db: Session,

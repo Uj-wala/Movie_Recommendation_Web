@@ -4,17 +4,17 @@ import EditRoleModal from '../EditRoleModal/EditRoleModal';
 import EditStatusModal from '../EditStatusModal/EditStatusModal';
 import SuccessModal from '../../../../components/SuccessModal';
 import type { User, UserOrRole } from '../../types';
-
+import { toggleUserActiveStatus } from '../../../../services/adminService';
 interface UserTableProps {
   users: User[];
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
-
+  fetchUserDetails: () => Promise<void>;
   showAddRoleAction?: boolean;
   customEditLabel?: string;
   isRolesSection?: boolean;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleAction, customEditLabel, isRolesSection }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, setUsers, fetchUserDetails, showAddRoleAction, customEditLabel, isRolesSection }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -42,30 +42,30 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
     setSelectedStatusUser(null);
   };
 
-  const handleSaveSuccess = (updatedData?: UserOrRole) => {
-    const activeUser = isModalOpen ? selectedUser : selectedStatusUser;
+  const handleSaveSuccess = () => {
+    // const activeUser = isModalOpen ? selectedUser : selectedStatusUser;
 
-    if (activeUser && updatedData) {
-      const roleName = updatedData.role && updatedData.role !== 'Choose Role Type' 
-        ? updatedData.role.charAt(0).toUpperCase() + updatedData.role.slice(1) 
-        : updatedData.role || '';
+    // if (activeUser && updatedData) {
+    //   const roleName = updatedData.role_name && updatedData.role_name !== 'Choose Role Type'
+    //     ? updatedData.role_name.charAt(0).toUpperCase() + updatedData.role_name.slice(1)
+    //     : updatedData.role_name || '';
 
-      setUsers(users.map(u => 
-        u.id === activeUser.id ? { ...u, ...updatedData, role: roleName } as User : u
-      ));
-    }
-    
+    //   setUsers(users.map(u =>
+    //     u.id === activeUser.id ? { ...u, ...updatedData, role: roleName } as User : u
+    //   ));
+    // }
+    fetchUserDetails();
     setIsModalOpen(false);
     setIsStatusModalOpen(false);
     setIsSuccessModalOpen(true);
   };
 
-  const handleToggleStatus = (user: User) => {
-    setUsers(users.map((item) => (
-      item.id === user.id
-        ? { ...item, status: user.status === 'Active' ? 'Blocked' : 'Active' }
-        : item
-    )));
+  const handleToggleStatus = async (user: User) => {
+    const res = await toggleUserActiveStatus((user.id != undefined ? user.id : ''), !user.is_active);
+    console.log("Toggle status response::", res)
+    if (res && res.status === 200) {
+      fetchUserDetails();
+    }
   };
 
   return (
@@ -84,67 +84,68 @@ const UserTable: React.FC<UserTableProps> = ({ users, setUsers, showAddRoleActio
 
       <div className="user-table-scroll">
         <table className="user-table user-table-body">
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.name}</td>
-              <td>{user.email}</td>
-              <td>{user.role}</td>
-              <td>
-                <span className={`status-badge ${user.status === 'Active' ? 'status-active' : 'status-blocked'}`}>
-                  {user.status === 'Active' ? 'Active' : 'Blocked'}
-                </span>
-              </td>
-              <td>
-                <div className="actions-cell">
-                  {user.status === 'Active' ? (
-                    <>
-                      {showAddRoleAction && (
-                        <>
-                          <span className="action-add-role" onClick={() => handleEditClick(user)}>Add Role</span>
-                          <div className="action-divider"></div>
-                        </>
-                      )}
-                      <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
-                      <div className="action-divider"></div>
-                      <span className="action-disable" onClick={() => handleToggleStatus(user)}>Disable</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
-                      <div className="action-divider"></div>
-                      <span className="action-activate" onClick={() => handleToggleStatus(user)}>Activate</span>
-                    </>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.role_name}</td>
+                <td>
+                  <span className={`status-badge ${user.is_active ? 'status-active' : 'status-blocked'}`}>
+                    {user.is_active ? 'Active' : 'Blocked'}
+                  </span>
+                </td>
+                <td>
+                  <div className="actions-cell">
+                    {user.is_active ? (
+                      <>
+                        {showAddRoleAction && (
+                          <>
+                            <span className="action-add-role" onClick={() => handleEditClick(user)}>Add Role</span>
+                            <div className="action-divider"></div>
+                          </>
+                        )}
+                        <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
+                        <div className="action-divider"></div>
+                        <span className="action-disable" onClick={() => handleToggleStatus(user)}>Disable</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="action-edit" onClick={() => handleEditClick(user)}>{customEditLabel || 'Edit'}</span>
+                        <div className="action-divider"></div>
+                        <span className="action-activate" onClick={() => handleToggleStatus(user)}>Activate</span>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {isModalOpen && (
-        <EditRoleModal 
-          isOpen={isModalOpen} 
-          onClose={handleCloseModal} 
+        <EditRoleModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
           onSave={handleSaveSuccess}
-          user={selectedUser} 
+          user={selectedUser}
         />
       )}
 
       {isStatusModalOpen && (
-        <EditStatusModal 
-          isOpen={isStatusModalOpen} 
-          onClose={handleCloseStatusModal} 
+        <EditStatusModal
+          isOpen={isStatusModalOpen}
+          onClose={handleCloseStatusModal}
           onSave={handleSaveSuccess}
-          user={selectedStatusUser} 
+          fetchUserDetails={fetchUserDetails}
+          user={selectedStatusUser}
         />
       )}
 
-      <SuccessModal 
-        isOpen={isSuccessModalOpen} 
-        onClose={() => setIsSuccessModalOpen(false)} 
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
         message="Your role changes has updated successfully."
         title="Congratulations!"
       />

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './EditStatusModal.css';
 import { X } from 'lucide-react';
 import type { UserOrRole } from '../../types';
+import { fetchDropdownData } from '../../../../services/ListApiService';
+import { editUser } from '../../../../services/adminService';
 
 const USER_NAME_MAX_LENGTH = 24;
 
@@ -9,33 +11,51 @@ interface EditStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (data?: UserOrRole) => void;
+  fetchUserDetails: () => Promise<void>;
   user: UserOrRole | null;
 }
 
-const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSave, user }) => {
-  const [status, setStatus] = useState(user?.status === 'Active' ? 'Active' : 'Deactivate');
-  const [selectedRole, setSelectedRole] = useState(user?.role?.toLowerCase() || 'student');
+const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSave, fetchUserDetails, user }) => {
+  const [status, setStatus] = useState(user?.is_active ? 'Active' : 'Deactivate');
+  const [selectedRole, setSelectedRole] = useState(user?.role_id || 'student');
   const [userName, setUserName] = useState(user?.name || "Kumar Gandham");
   const [userNameError, setUserNameError] = useState("");
+  const [role, setRole] = useState<{ id: string, name: string }[]>([]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async() => {
     if (!userName.trim()) {
       setUserNameError("Please enter a user name");
       return;
     }
-
-    if (onSave) {
-      onSave({ 
-        name: userName,
-        role: selectedRole, 
-        status: status === 'Active' ? 'Active' : 'Blocked' 
-      });
-    } else {
-      onClose();
+    const res =await editUser((user?.id ? user?.id : ''), {
+      role_id: selectedRole,
+      is_active: status === 'Active' ? true : false
+    });
+    fetchUserDetails();
+    onClose();
+    // if (onSave) {
+    //   onSave({
+    //     name: userName,
+    //     role_id: selectedRole,
+    //     status: status === 'Active' ? 'Active' : 'Blocked'
+    //   });
+    // } else {
+    //   onClose();
+    // }
+  };
+  const fetchRoles = async () => {
+    try {
+      const response = await fetchDropdownData('/dropdowns/roles');
+      setRole(response);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
     }
   };
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   return (
     <div className="status-modal-overlay">
@@ -47,10 +67,10 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
 
         <div className="status-input-group">
           <label className="status-input-label">User Name:</label>
-          <input 
-            type="text" 
-            className="status-text-input" 
-            placeholder="Enter User Name" 
+          <input
+            type="text"
+            className="status-text-input"
+            placeholder="Enter User Name"
             value={userName}
             onChange={(e) => {
               const nextUserName = e.target.value;
@@ -72,15 +92,18 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
 
         <div className="status-input-group">
           <label className="status-input-label">Role:</label>
-          <select 
-            className="status-dropdown" 
+          <select
+            className="status-dropdown"
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
           >
-            <option value="student">Student</option>
+            {/* <option value="student">Student</option>
             <option value="teacher">Teacher</option>
             <option value="parent">Parent</option>
-            <option value="admin">Admin</option>
+            <option value="admin">Admin</option> */}
+            {role.map((r) => (
+              <option key={r.id} value={r.id}>{r.name}</option>
+            ))}
           </select>
         </div>
 
@@ -88,10 +111,10 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
           <label className="status-input-label" style={{ minWidth: '60px' }}>Status:</label>
           <div className="status-radio-group">
             <label className="status-radio-item">
-              <input 
-                type="radio" 
-                name="userStatus" 
-                value="Active" 
+              <input
+                type="radio"
+                name="userStatus"
+                value="Active"
                 checked={status === 'Active'}
                 onChange={() => setStatus('Active')}
                 className="status-radio-input"
@@ -99,10 +122,10 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
               <span className={`status-radio-label ${status === 'Active' ? 'active-text' : 'deactive-text'}`}>Active</span>
             </label>
             <label className="status-radio-item">
-              <input 
-                type="radio" 
-                name="userStatus" 
-                value="Deactivate" 
+              <input
+                type="radio"
+                name="userStatus"
+                value="Deactivate"
                 checked={status === 'Deactivate'}
                 onChange={() => setStatus('Deactivate')}
                 className="status-radio-input"

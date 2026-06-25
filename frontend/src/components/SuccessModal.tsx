@@ -7,7 +7,8 @@ import adminPopUpLogo from "../assets/admin_pop_up.jpeg";
 type SuccessMember = {
   name?: string;
   email?: string;
-  role?: string;
+  role_name?: string;
+  registration_number?:string;
 };
 
 interface SuccessModalProps {
@@ -41,7 +42,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
     const displayName = member?.name?.trim() || "John";
     const firstName = displayName.split(" ")[0] || displayName;
     const displayEmail = member?.email?.trim() || "highn";
-    const displayRole = member?.role?.trim() || "Teacher";
+    const displayRole = member?.role_name?.trim() || "Teacher";
+    const displayRegistrationNumber = member?.registration_number?.trim() || "Teacher";
 
     return (
       <div className="success-modal-overlay member-success-overlay">
@@ -87,7 +89,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
                 </div>
                 <div className="member-meta-item">
                   <span>Employee ID</span>
-                  <strong>55615</strong>
+                  <strong>{displayRegistrationNumber}</strong>
                 </div>
                 <div className="member-meta-item">
                   <span>Reports To</span>

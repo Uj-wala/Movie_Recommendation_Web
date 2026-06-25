@@ -1,43 +1,119 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './UserManagement.css';
 import { Search, Plus } from 'lucide-react';
+
 import UserTable from '../../components/UserTable/UserTable';
 import EditRoleModal from '../../components/EditRoleModal/EditRoleModal';
 import SuccessModal from '../../../../components/SuccessModal';
 import type { User, UserOrRole } from '../../types';
-
-const INITIAL_USERS = [
-  { id: 1, name: 'John Richardson', email: 'John@gmail.com', role: 'Student', status: 'Active' },
-  { id: 2, name: 'Sarah Elizabeth', email: 'sarah@gmail.com', role: 'Teacher', status: 'Active' },
-  { id: 3, name: 'David Jack Sparrow', email: 'David@emaiil.com', role: 'Parent', status: 'Blocked' },
-  { id: 4, name: 'John Richardson', email: 'John@gmail.com', role: 'Student', status: 'Active' },
-  { id: 5, name: 'Sarah Elizabeth', email: 'sarah@gmail.com', role: 'Teacher', status: 'Active' },
-  { id: 6, name: 'David Jack Sparrow', email: 'David@emaiil.com', role: 'Parent', status: 'Blocked' },
-  { id: 7, name: 'John Richardson', email: 'John@gmail.com', role: 'Student', status: 'Active' },
-];
+import api from '../../../../api/axios';
+import { fetchDropdownData } from '../../../../services/ListApiService';
 
 interface UserManagementProps {
   setActiveTab?: (tab: string) => void;
 }
 
+interface RoleOption {
+  id: string;
+  name: string;
+}
+
+interface FiltersState {
+  selectedRoleIds: string[];
+  active: boolean;
+  deactive: boolean;
+}
+
 const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successModalVariant, setSuccessModalVariant] = useState<"default" | "memberAdded">("default");
-  const [lastAddedMember, setLastAddedMember] = useState<UserOrRole | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const isFilterOpen = false;
-  const [filters, setFilters] = useState({
-    student: false,
-    teacher: false,
-    parent: false,
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const [filters, setFilters] = useState<FiltersState>({
+    selectedRoleIds: [],
     active: false,
     deactive: false,
   });
 
-  const toggleFilter = (key: keyof typeof filters) => {
-    setFilters(prev => ({ ...prev, [key]: !prev[key] }));
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successModalVariant, setSuccessModalVariant] = useState<'default' | 'memberAdded'>('default');
+  const [lastAddedMember, setLastAddedMember] = useState<UserOrRole | null>(null);
+
+  const fetchRoles = async () => {
+    try {
+      const res = await fetchDropdownData('/dropdowns/roles');
+      setRoles(res || []);
+    } catch (error) {
+      console.log('Error fetching roles:', error);
+    }
+  };
+
+  const fetchUserDetails = async (
+    searchValue: string = searchQuery,
+    currentFilters: FiltersState = filters
+  ) => {
+    try {
+
+      const params: Record<string, any> = {};
+
+      if (searchValue.trim()) {
+        params.search = searchValue.trim();
+      }
+
+      if (currentFilters.selectedRoleIds.length > 0) {
+        params.role_ids = currentFilters.selectedRoleIds;
+      }
+
+      if (currentFilters.active && !currentFilters.deactive) {
+        params.is_active = true;
+      } else if (!currentFilters.active && currentFilters.deactive) {
+        params.is_active = false;
+      }
+
+      const response = await api.get('/admin/users', { params });
+      setUsers(response.data || []);
+    } catch (error) {
+      console.log('Error fetching user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      fetchUserDetails(searchQuery, filters);
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery, filters]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const toggleRoleFilter = (roleId: string) => {
+    setFilters((prev) => {
+      const alreadySelected = prev.selectedRoleIds.includes(roleId);
+
+      return {
+        ...prev,
+        selectedRoleIds: alreadySelected
+          ? prev.selectedRoleIds.filter((id) => id !== roleId)
+          : [...prev.selectedRoleIds, roleId],
+      };
+    });
+  };
+
+  const toggleStatusFilter = (key: 'active' | 'deactive') => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   const handleAddRoleClick = () => {
@@ -45,81 +121,29 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
   };
 
   const handleSaveRole = (userData?: UserOrRole) => {
-    const roleName = userData?.role
-      ? userData.role.charAt(0).toUpperCase() + userData.role.slice(1)
+    const roleName = userData?.role_name
+      ? userData.role_name.charAt(0).toUpperCase() + userData.role_name.slice(1)
       : '';
 
-    if (userData && userData.name) {
-      setUsers([...users, { 
-        id: Date.now(), 
-        name: userData.name, 
-        email: userData.email || '', 
-        role: roleName, 
-        status: 'Active' 
-      }]);
-    }
+    fetchUserDetails();
 
     const isTeacherRole = Boolean(userData) && roleName.toLowerCase() === 'teacher';
-    setSuccessModalVariant(isTeacherRole ? "memberAdded" : "default");
-    setLastAddedMember(isTeacherRole && userData ? { ...userData, role: roleName } : null);
+
+    setSuccessModalVariant(isTeacherRole ? 'memberAdded' : 'default');
+    setLastAddedMember(isTeacherRole && userData ? { ...userData } : null);
+
     setIsRoleModalOpen(false);
     setIsSuccessModalOpen(true);
-    if (setActiveTab) setActiveTab('users');
+
+    if (setActiveTab) {
+      setActiveTab('users');
+    }
   };
 
   const handleAddAnotherMember = () => {
     setIsSuccessModalOpen(false);
     setIsRoleModalOpen(true);
   };
-
-  const getFilteredAndSortedUsers = () => {
-    let result = [...users];
-
-    // Apply role filters
-    const roleFilters: string[] = [];
-    if (filters.student) roleFilters.push('student');
-    if (filters.teacher) roleFilters.push('teacher');
-    if (filters.parent) roleFilters.push('parent');
-
-    if (roleFilters.length > 0) {
-      result = result.filter(user => roleFilters.includes(user.role.toLowerCase()));
-    }
-
-    // Apply status filters
-    const statusFilters: string[] = [];
-    if (filters.active) statusFilters.push('active');
-    if (filters.deactive) statusFilters.push('blocked'); // Blocked corresponds to Deactivate visually
-
-    if (statusFilters.length > 0) {
-      result = result.filter(user => statusFilters.includes(user.status.toLowerCase()));
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(user => 
-        user.name.toLowerCase().includes(query) || 
-        user.id.toString().includes(query)
-      );
-
-      result.sort((a, b) => {
-        const aName = a.name.toLowerCase();
-        const bName = b.name.toLowerCase();
-        
-        const aStartsWith = aName.startsWith(query);
-        const bStartsWith = bName.startsWith(query);
-
-        if (aStartsWith && !bStartsWith) return -1;
-        if (!aStartsWith && bStartsWith) return 1;
-
-        return aName.localeCompare(bName);
-      });
-    }
-
-    return result;
-  };
-
-  const displayedUsers = getFilteredAndSortedUsers();
 
   return (
     <div className="user-management-page">
@@ -131,19 +155,22 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
       <div className="search-filter-section">
         <div className="search-input-wrapper">
           <Search className="search-icon" size={24} />
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="Search by user name, user ID.." 
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search by user name, user ID..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
+
         <div className="filter-wrapper">
           <button
             className="filter-button disabled"
             disabled
             aria-disabled="true"
+            type="button"
+            onClick={() => setIsFilterOpen((prev) => !prev)}
           >
             <svg
               className="filter-icon"
@@ -165,28 +192,44 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
           {isFilterOpen && (
             <div className="filter-dropdown">
               <h4 className="filter-dropdown-title">Roles</h4>
-              <label className="filter-checkbox-item">
-                <input type="checkbox" className="filter-checkbox-input" checked={filters.student} onChange={() => toggleFilter('student')} />
-                <span className="filter-checkbox-label">Student</span>
-              </label>
-              <label className="filter-checkbox-item">
-                <input type="checkbox" className="filter-checkbox-input" checked={filters.teacher} onChange={() => toggleFilter('teacher')} />
-                <span className="filter-checkbox-label">Teacher</span>
-              </label>
-              <label className="filter-checkbox-item">
-                <input type="checkbox" className="filter-checkbox-input" checked={filters.parent} onChange={() => toggleFilter('parent')} />
-                <span className="filter-checkbox-label">Parent</span>
-              </label>
+
+              {roles.length > 0 ? (
+                roles.map((role) => (
+                  <label className="filter-checkbox-item" key={role.id}>
+                    <input
+                      type="checkbox"
+                      className="filter-checkbox-input"
+                      checked={filters.selectedRoleIds.includes(role.id)}
+                      onChange={() => toggleRoleFilter(role.id)}
+                    />
+                    <span className="filter-checkbox-label">{role.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="filter-empty-text">No roles available</p>
+              )}
 
               <div className="filter-section-divider"></div>
 
               <h4 className="filter-dropdown-title">Status</h4>
+
               <label className="filter-checkbox-item">
-                <input type="checkbox" className="filter-checkbox-input" checked={filters.active} onChange={() => toggleFilter('active')} />
+                <input
+                  type="checkbox"
+                  className="filter-checkbox-input"
+                  checked={filters.active}
+                  onChange={() => toggleStatusFilter('active')}
+                />
                 <span className="filter-checkbox-label">Active</span>
               </label>
+
               <label className="filter-checkbox-item">
-                <input type="checkbox" className="filter-checkbox-input" checked={filters.deactive} onChange={() => toggleFilter('deactive')} />
+                <input
+                  type="checkbox"
+                  className="filter-checkbox-input"
+                  checked={filters.deactive}
+                  onChange={() => toggleStatusFilter('deactive')}
+                />
                 <span className="filter-checkbox-label">Deactive</span>
               </label>
             </div>
@@ -202,22 +245,30 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
             <span>Add Role</span>
           </button>
         </div>
-        <UserTable users={displayedUsers} setUsers={setUsers} />
+
+        <UserTable
+          users={users}
+          setUsers={setUsers}
+          fetchUserDetails={fetchUserDetails}
+        />
       </div>
 
-      <EditRoleModal 
-        isOpen={isRoleModalOpen} 
+      <EditRoleModal
+        isOpen={isRoleModalOpen}
         onClose={() => {
           setIsRoleModalOpen(false);
-          if (setActiveTab) setActiveTab('users');
-        }} 
+          if (setActiveTab) {
+            setActiveTab('users');
+          }
+        }}
         onSave={handleSaveRole}
         user={null}
         existingEmails={users.map((user) => user.email)}
       />
-      <SuccessModal 
-        isOpen={isSuccessModalOpen} 
-        onClose={() => setIsSuccessModalOpen(false)} 
+
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
         message="A new role has been created successfully."
         title="Congratulations!"
         buttonText="Continue"

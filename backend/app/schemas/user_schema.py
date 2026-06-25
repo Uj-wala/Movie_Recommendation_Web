@@ -222,7 +222,14 @@ class LogoutRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+    user_id: str
+    role_id: str
+    role_name: str
     token_type: str = "bearer"
+class RefreshTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    
  
  
 class RefreshTokenRequest(BaseModel):

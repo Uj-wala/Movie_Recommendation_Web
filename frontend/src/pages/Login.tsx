@@ -36,12 +36,7 @@ const PRIVACY_POLICY_CONTENT = [
   "Reasonable technical and organizational measures are used to protect user information. You should also keep your password secure and avoid sharing account access with others.",
   "You may request support for account or privacy-related questions through the appropriate Alcademy support channel.",
 ];
-const ADMIN_EMAIL = "admin@thestackly.com";
-const ADMIN_PASSWORD = "Stackly@123";
-const TEACHER_EMAIL = "teacher@thestackly.com";
-const TEACHER_PASSWORD = "Stackly@123";
-const PARENT_EMAIL = "parent@thestackly.com";
-const PARENT_PASSWORD = "Stackly@123";
+
 const LOGIN_TOAST_ID = "auth-login-success";
 
 const showLoginToast = () => {
@@ -180,56 +175,6 @@ const Login = () => {
       return;
     }
 
-    if (
-      identifier.toLowerCase() === ADMIN_EMAIL &&
-      password.trim() === ADMIN_PASSWORD
-    ) {
-      localStorage.setItem("access_token", "admin-local-session");
-      localStorage.setItem("refresh_token", "admin-local-session");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user_role", "admin");
-      localStorage.setItem("userEmail", ADMIN_EMAIL);
-      localStorage.setItem("userName", "Admin");
-      localStorage.setItem("userPassword", ADMIN_PASSWORD);
-      showLoginToast();
-      navigate("/admin/users");
-      return;
-    }
-
-    if (
-      identifier.toLowerCase() === TEACHER_EMAIL &&
-      password.trim() === TEACHER_PASSWORD
-    ) {
-      localStorage.setItem("access_token", "teacher-local-session");
-      localStorage.setItem("refresh_token", "teacher-local-session");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user_role", "teacher");
-      localStorage.setItem("userEmail", TEACHER_EMAIL);
-      localStorage.setItem("userName", "Teacher");
-      localStorage.setItem("full_name", "Teacher");
-      localStorage.setItem("userPassword", TEACHER_PASSWORD);
-      showLoginToast();
-      navigate("/teacher/dashboard");
-      return;
-    }
-
-    if (
-      identifier.toLowerCase() === PARENT_EMAIL &&
-      password.trim() === PARENT_PASSWORD
-    ) {
-      localStorage.setItem("access_token", "parent-local-session");
-      localStorage.setItem("refresh_token", "parent-local-session");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user_role", "parent");
-      localStorage.setItem("userEmail", PARENT_EMAIL);
-      localStorage.setItem("userName", "Parent");
-      localStorage.setItem("full_name", "Parent");
-      localStorage.setItem("userPassword", PARENT_PASSWORD);
-      showLoginToast();
-      navigate("/parent/dashboard");
-      return;
-    }
-
     if (!captchaRef.current?.validate()) {
       setError("Incorrect CAPTCHA.");
       return;
@@ -256,8 +201,8 @@ const Login = () => {
       );
 
       // Store role if returned by API so RoleDashboardRedirect can forward correctly
-      if (response.role) {
-        localStorage.setItem("user_role", response.role.toLowerCase());
+      if (response.role_name) {
+        localStorage.setItem("user_role", response.role_name);
       }
 
       localStorage.setItem("userEmail", getLoginEmail(response, identifier));
@@ -269,9 +214,17 @@ const Login = () => {
       } else {
         localStorage.removeItem("userName");
       }
-
       showLoginToast();
-      navigate("/dashboard");
+      
+      if (response.role_name === "admin") {
+        navigate("/admin/users");
+      } else if (response.role_name === "teacher") {
+        navigate("/teacher/dashboard");
+      } else if (response.role_name === "parent") {
+        navigate("/parent/dashboard");
+      } else if (response.role_name === "student") {
+        navigate("/dashboard");
+      }
 
     } catch (error: any) {
 
@@ -388,15 +341,13 @@ const Login = () => {
                   }}
                   onChange={(e) => handleEmailChange(e.target.value)}
                   required={!phoneNumber}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 ${
-                    emailError
-                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
-                      : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
-                  } ${
-                    isEmailDisabled
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 ${emailError
+                    ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                    : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
+                    } ${isEmailDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70 cursor-not-allowed'
                       : 'bg-white'
-                  }`}
+                    }`}
                   placeholder="Enter Your Email Address"
                   aria-invalid={Boolean(emailError)}
                   aria-describedby={emailError ? "login-email-error" : undefined}
@@ -453,16 +404,14 @@ const Login = () => {
                   }}
                   enableSearch={true}
                   containerClass="!w-full !h-full"
-                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${
-                    isPhoneDisabled
-                      ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
-                      : '!bg-white'
-                  }`}
-                  buttonClass={`!border-gray-200 !rounded-l-md ${
-                    isPhoneDisabled
-                      ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
-                      : '!bg-gray-50'
-                  }`}
+                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${isPhoneDisabled
+                    ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
+                    : '!bg-white'
+                    }`}
+                  buttonClass={`!border-gray-200 !rounded-l-md ${isPhoneDisabled
+                    ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
+                    : '!bg-gray-50'
+                    }`}
                 />
               </div>
             </div>

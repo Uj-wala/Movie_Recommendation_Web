@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field , EmailStr
 from typing import List, Optional
 
 
@@ -23,6 +23,11 @@ class UserPermissionResponse(BaseModel):
         PermissionItem
     ]
 
+class CreateUserSchema(BaseModel):
+    name: str
+    email: EmailStr
+    role_id: str
+    permissions: List[str] = []
 
 class UpdateUserPermissionSchema(
     BaseModel

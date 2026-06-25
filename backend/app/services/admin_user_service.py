@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from app.models.user_model import User
 from app.models.role_model import Role
-
-
+from typing import List, Optional
+from app.utils.registration_number_util import (
+    generate_registration_number,
+) 
 class UserService:
 
     @staticmethod
@@ -52,7 +54,7 @@ class UserService:
             user.role_id = (
                 payload.role_id
             )
-
+            user.registration_number=generate_registration_number(db, role.name)
         # -------------------------
         # Update Status
         # -------------------------
@@ -81,87 +83,44 @@ class UserService:
     
     @staticmethod
     def get_all_users(
-        db: Session,
-        role_id: str = None,
-        is_active: bool = None,
-        search: str = None
+    db: Session,
+    role_ids: Optional[List[str]] = None,
+    is_active: Optional[bool] = None,
+    search: Optional[str] = None
     ):
-
         query = (
             db.query(User)
             .filter(User.email != "admin@aipeta.com")
-            .options(
-                joinedload(User.role)
-            )
+            .options(joinedload(User.role))
         )
 
-        # -------------------------
-        # Filter by Role
-        # -------------------------
-
-        if role_id:
-            query = query.filter(
-                User.role_id == role_id
-            )
-
-        # -------------------------
-        # Filter by Active Status
-        # -------------------------
+        if role_ids:
+            query = query.filter(User.role_id.in_(role_ids))
 
         if is_active is not None:
-            query = query.filter(
-                User.is_active == is_active
-            )
+            query = query.filter(User.is_active == is_active)
 
-        # -------------------------
-        # Search
-        # -------------------------
-
-        if search:
-
-            search_term = (
-                f"%{search.strip()}%"
-            )
-
+        if search and search.strip():
+            search_term = f"%{search.strip()}%"
             query = query.filter(
                 or_(
-                    User.full_name.ilike(
-                        search_term
-                    ),
-                    User.email.ilike(
-                        search_term
-                    )
+                    User.full_name.ilike(search_term),
+                    User.email.ilike(search_term)
                 )
             )
 
         users = query.all()
 
         response = []
-
         for user in users:
-
             response.append({
-                "id":
-                user.id,
-
-                "full_name":
-                user.full_name,
-
-                "email":
-                user.email,
-
-                "role_id":
-                user.role_id,
-
-                "role_name":
-                (
-                    user.role.name
-                    if user.role
-                    else None
-                ),
-
-                "is_active":
-                user.is_active
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email,
+                "role_id": user.role_id,
+                "role_name": user.role.name if user.role else None,
+                "register_number":user.registration_number,
+                "is_active": user.is_active
             })
 
         return response
@@ -194,7 +153,7 @@ class UserService:
             "id":
             user.id,
 
-            "full_name":
+            "name":
             getattr(
                 user,
                 "full_name",

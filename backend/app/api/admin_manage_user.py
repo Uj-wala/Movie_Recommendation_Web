@@ -3,7 +3,7 @@ from fastapi import (
     Depends
 )
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional,List
 from fastapi import Query
 from app.core.database import (
     get_db
@@ -11,6 +11,7 @@ from app.core.database import (
 
 from app.schemas.permission_schema import (
     CreateRolePermissionSchema,
+    CreateUserSchema,
     UpdateUserPermissionSchema,
     UpdateUserRoleStatusSchema
 )
@@ -37,30 +38,17 @@ router = APIRouter(
 
 
 @router.get("/users")
-def get_all_users(
-
-    role_id: Optional[str] = None,
-
-    is_active: Optional[bool] = None,
-
-    search: Optional[str] = Query(
-        None,
-        description="Search by name/email"
-    ),
-
-    db: Session = Depends(
-        get_db
-    )
+def get_users(
+    role_ids: Optional[List[str]] = Query(None, alias="role_ids[]"),
+    is_active: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
 ):
-
-    return (
-        UserService
-        .get_all_users(
-            db=db,
-            role_id=role_id,
-            is_active=is_active,
-            search=search
-        )
+    return UserService.get_all_users(
+        db=db,
+        role_ids=role_ids,
+        is_active=is_active,
+        search=search
     )
 
 
@@ -101,26 +89,12 @@ def get_user_permissions(
     )
 
 
-@router.put(
-    "/users/{user_id}/permissions"
-)
-def update_permissions(
-    user_id: str,
-    payload:
-    UpdateUserPermissionSchema,
-    db: Session = Depends(
-        get_db
-    )
+@router.post("/users-create/")
+def create_user(
+    payload: CreateUserSchema,
+    db: Session = Depends(get_db)
 ):
-
-    return (
-        PermissionService
-        .update_permissions(
-            db,
-            user_id,
-            payload
-        )
-    )
+    return PermissionService.create_user_with_permissions(db, payload)
 
 
 @router.put(
