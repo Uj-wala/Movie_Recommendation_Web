@@ -56,7 +56,7 @@ type ChildFieldErrors = Record<string, Partial<Record<keyof ChildDetail, string>
 const PASSWORD_MAX_LENGTH = 12;
 const PHONE_MAX_LENGTH = 15;
 const NAME_MAX_LENGTH = 24;
-const SCHOOL_MAX_LENGTH = 16;
+// const SCHOOL_MAX_LENGTH = 16;
 const REGISTRATION_NUMBER_MAX_LENGTH = 15;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$/;
@@ -92,7 +92,7 @@ export default function ParentProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
+  // const [profileData, setProfileData] = useState<any>(null);
 
   // Form State Data Mapping
   const [fullName, setFullName] = useState(
@@ -133,7 +133,7 @@ export default function ParentProfile() {
     try {
       const response = await getParentProfile();
 
-      setProfileData(response);
+      // setProfileData(response);
 
       setFullName(
         response.full_name || ""
@@ -599,18 +599,17 @@ export default function ParentProfile() {
         ? ""
         : "Full Name is required",
 
-      phoneNumber: phoneNumber
-        ? phoneNumber.length >= 10 &&
-          phoneNumber.length <= 15
-          ? ""
-          : "Phone number must be between 10 and 15 digits"
-        : "Phone number is required",
+    phoneNumber: phoneNumber
+  ? phoneNumber.length >= 10 && phoneNumber.length <= 15
+    ? ""
+    : "Phone number must be between 10 and 15 digits"
+  : "",
 
-      emailAddress: emailRegex.test(
-        emailAddress
-      )
-        ? ""
-        : "Enter a valid email address",
+emailAddress: emailAddress
+  ? emailRegex.test(emailAddress)
+    ? ""
+    : "Enter a valid email address"
+  : "",
 
       relationship: relationship
         ? ""
@@ -658,11 +657,11 @@ export default function ParentProfile() {
 
     try {
       await updateParentProfile({
-        full_name: fullName,
-        email: emailAddress,
-        phone_number: phoneNumber,
-        relationship_type: relationship,
-      });
+  full_name: fullName,
+  relationship_type: relationship,
+  email: emailAddress.trim() === "" ? null : emailAddress,
+  phone_number: phoneNumber.trim() === "" ? null : phoneNumber,
+});
 
       for (const child of children) {
         if (

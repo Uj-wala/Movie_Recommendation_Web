@@ -2,9 +2,9 @@ import api from "../api/axios";
 
 export interface UpdateParentProfileRequest {
     full_name: string;
-    email: string;
-    phone_number: string;
     relationship_type: string;
+    email?: string | null;
+    phone_number?: string | null;
 }
 
 export interface ParentPasswordUpdateRequest {

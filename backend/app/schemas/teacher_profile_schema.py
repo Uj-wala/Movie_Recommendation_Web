@@ -108,12 +108,15 @@ class TeacherProfileUpdate(BaseModel):
     def validate_bio(cls, value: str | None) -> str | None:
         if value is None:
             return value
-
+ 
         value = value.strip()
-
-        if len(value) < 10:
-            raise ValueError("Bio must contain at least 10 characters")
-
+ 
+        if len(value) < 4:
+            raise ValueError("Bio must contain at least 4 characters")
+ 
+        if len(value) > 12:
+            raise ValueError("Bio must not exceed 12 characters")
+ 
         return value
 
     @field_validator("subject_ids")

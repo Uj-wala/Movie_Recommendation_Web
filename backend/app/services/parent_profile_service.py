@@ -99,60 +99,57 @@ def update_parent_profile(
             detail="Parent profile not found"
         )
 
-    email = data.email.strip().lower()
-    phone_number = f"+{data.phone_number}"
+    # Update relationship type and full name
+    parent_profile.relationship_type = data.relationship_type
+    current_user.full_name = data.full_name
 
-    existing_user = (
-        db.query(User)
-        .filter(
-            User.email == email,
-            User.id != current_user.id
+    # Update email only if provided
+    if data.email:
+        email = data.email.strip().lower()
+
+        existing_user = (
+            db.query(User)
+            .filter(
+                User.email == email,
+                User.id != current_user.id
+            )
+            .first()
         )
-        .first()
-    )
 
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already exists"
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Email already exists"
+            )
+
+        current_user.email = email
+
+    # Update phone number only if provided
+    if data.phone_number:
+        phone_number = f"+{data.phone_number}"
+
+        existing_phone_user = (
+            db.query(User)
+            .filter(
+                User.phone_number == phone_number,
+                User.id != current_user.id
+            )
+            .first()
         )
-        
-    existing_phone_user = (
-    db.query(User)
-    .filter(
-        User.phone_number == phone_number,
-        User.id != current_user.id
-    )
-    .first()
-    )
 
-    if existing_phone_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Phone number already exists"
-        )    
+        if existing_phone_user:
+            raise HTTPException(
+                status_code=400,
+                detail="Phone number already exists"
+            )
 
-    parent_profile.relationship_type = (
-        data.relationship_type
-    )
-
-    current_user.full_name = (
-        data.full_name
-    )
-
-    current_user.phone_number = (
-        phone_number
-    )
-
-    current_user.email = email
+        current_user.phone_number = phone_number
 
     db.commit()
 
     return {
-        "message":
-        "Parent profile updated successfully"
+        "message": "Parent profile updated successfully"
     }
- 
 
 def add_child(
     data,
@@ -518,4 +515,4 @@ def get_student_details_service(
             student_profile.school_name
             if student_profile
             else None
-    }    
+    }
