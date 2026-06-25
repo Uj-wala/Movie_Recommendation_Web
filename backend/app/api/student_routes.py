@@ -14,10 +14,12 @@ from app.schemas.student_profile_schema import (
     StudentDashboardResponse,
     StudentProfileResponse,
     StudentProfileUpdate,
+    StudentPasswordUpdate,
 )
 from app.services.student_profile_service import (
     get_student_dashboard_service,
     get_student_profile_service,
+    update_student_password_service,
     update_student_profile_service,
     upload_student_profile_image_service,
 )
@@ -55,6 +57,21 @@ def update_student_profile(
         db,
         current_user,
         payload,
+    )
+
+@router.patch(
+    "/profile/password",
+    status_code=status.HTTP_200_OK,
+)
+def update_student_password(
+    password_update: StudentPasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_student),
+) -> dict:
+    return update_student_password_service(
+        db,
+        current_user,
+        password_update,
     )
 
 

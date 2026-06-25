@@ -378,24 +378,11 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
             detail="Invalid refresh token"
         )
  
-    revoke_refresh_token(stored_token)
- 
-    new_refresh_token, expires_at = create_refresh_token(user.id)
- 
-    create_refresh_token_record(
-        db=db,
-        user_id=user.id,
-        token_hash=hash_token(new_refresh_token),
-        expires_at=expires_at
-    )
- 
-    db.commit()
- 
     return {
-        "access_token": create_access_token(user.id, user.role_id),
-        "refresh_token": new_refresh_token,
-        "token_type": "bearer",
-    }
+    "access_token": create_access_token(user.id, user.role_id),
+    "refresh_token": payload.refresh_token,
+    "token_type": "bearer",
+}
  
  
 def forgot_password(db: Session, payload):

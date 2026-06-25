@@ -80,6 +80,11 @@ def update_teacher_profile_service(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Teacher profile not found",
         )
+    
+    phone = teacher_update.phone_number
+    if phone and not phone.startswith("+"):
+        phone = f"+{phone}"
+ 
 
     try:
         if teacher_update.full_name is not None:
@@ -95,6 +100,9 @@ def update_teacher_profile_service(
 
         if teacher_update.bio is not None:
             profile.bio = teacher_update.bio
+
+        if teacher_update.phone_number is not None:
+            current_user.phone_number = phone
 
         if teacher_update.subject_ids is not None:
             subjects = get_subjects_by_ids(
@@ -248,6 +256,6 @@ def get_teacher_dashboard_service(
         years_of_experience=profile.years_of_experience,
         qualification=profile.qualification,
         subjects_handling=0,
-        assessments_assigned=0,
+        assignments_assigned=0,
         students_above_80=0,
     )
