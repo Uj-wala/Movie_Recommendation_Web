@@ -39,10 +39,13 @@ from app.schemas.user_schema import (
 )
  
 from app.utils.email_utils import send_email_otp
-from app.utils.sms_utils import send_sms_otp, verify_sms_otp
+from app.utils.sms_utils import send_sms_otp, verify_sms_otp, is_sms_otp_expired
 from app.utils.token_utils import hash_token
  
  
+OTP_EXPIRY_MINUTES = 5
+
+
 ACCOUNT_BLOCKED_DETAIL = {
     "title": "Account Blocked",
     "message": "Your account has been temporarily Locked due to multiple failed login attempts. To reset your password, Please answer your security Question",
@@ -125,7 +128,7 @@ from app.schemas.user_schema import (
     RefreshTokenRequest
 )
 from app.utils.email_utils import send_email_otp
-from app.utils.sms_utils import send_sms_otp, verify_sms_otp
+from app.utils.sms_utils import send_sms_otp, verify_sms_otp, is_sms_otp_expired
 from app.utils.token_utils import hash_token
 from app.repository.otp_repository import OTPRepository
 from app.core.enums import OTPType, OTPChannel
@@ -416,7 +419,7 @@ def forgot_password(db: Session, payload):
             otp_code=otp,
             otp_type=OTPType.PASSWORD_RESET,
             channel=OTPChannel.EMAIL,
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES),
             is_used=False,
             attempts=0
         )
@@ -449,16 +452,31 @@ def verify_forgot_password_otp(db: Session, payload):
  
     if payload.email:
  
+        now = datetime.now(timezone.utc)
+
+        expired_otp_record = db.query(OTPVerification).filter(
+            OTPVerification.user_id == user.id,
+            OTPVerification.channel == OTPChannel.EMAIL,
+            OTPVerification.otp_type == OTPType.PASSWORD_RESET,
+            OTPVerification.is_used == False,
+            OTPVerification.expires_at <= now
+        ).order_by(OTPVerification.created_at.desc()).first()
+
+        if expired_otp_record and expired_otp_record.otp_code == payload.otp:
+            expired_otp_record.is_used = True
+            db.commit()
+            raise HTTPException(status_code=400, detail="OTP Expired")
+
         otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.channel == OTPChannel.EMAIL,
             OTPVerification.otp_type == OTPType.PASSWORD_RESET,
             OTPVerification.is_used == False,
-            OTPVerification.expires_at > datetime.now(timezone.utc)
+            OTPVerification.expires_at > now
         ).order_by(OTPVerification.created_at.desc()).first()
  
         if not otp_record:
-            raise HTTPException(status_code=400, detail="OTP expired or not found")
+            raise HTTPException(status_code=400, detail="OTP Expired")
  
         if otp_record.otp_code != payload.otp:
             raise HTTPException(status_code=400, detail="Invalid OTP")
@@ -476,6 +494,12 @@ def verify_forgot_password_otp(db: Session, payload):
 
         if not phone.startswith("+"):
             phone = f"+{phone}"
+
+        if is_sms_otp_expired(phone, payload.otp):
+            raise HTTPException(
+                status_code=400,
+                detail="OTP Expired"
+            )
 
         verified = verify_sms_otp(
             phone,

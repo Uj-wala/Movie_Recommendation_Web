@@ -1,24 +1,87 @@
-import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
-import SuccessModal from '../components/SuccessModal';
 import Logo from '../components/Logo';
 import {
   saveTeacherVerification
 } from '../services/PhoneRegistrationService';
+import { fetchDropdownData } from '../services/ListApiService';
+ 
+const sanitizeInstitutionName = (value: string) =>
+  value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
+ 
+const MAX_SCHOOL_NAME_LENGTH = 30;
+const visibleSubjectNames = [
+  'English',
+  'Computer Science',
+  'Data Analytics',
+  'AI Chart Tools',
+  'Data Science',
+];
+const defaultSelectedSubjectNames = ['English', 'AI Chart Tools'];
+ 
+const getSubjectKey = (subjectName: string) => subjectName.trim().toLowerCase();
+
+type SubjectOption = { id: string; name: string };
+
+const filterVisibleSubjects = (subjects: SubjectOption[]) =>
+  visibleSubjectNames
+    .map((subjectName) =>
+      subjects.find(
+        (subject) => getSubjectKey(subject.name) === getSubjectKey(subjectName)
+      )
+    )
+    .filter((subject): subject is SubjectOption => Boolean(subject));
  
 const TeacherVerification = () => {
-  const [schoolName,   setSchoolName]   = useState('');
-  const [subject,      setSubject]      = useState('');
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState('');
-  const [isModalOpen,  setIsModalOpen]  = useState(false);
-  const [teacherId,    setTeacherId]    = useState('');
+  const navigate = useNavigate();
+  const [schoolName, setSchoolName] = useState('');
+  const [schoolNameError, setSchoolNameError] = useState('');
+  const [availableSubjects, setAvailableSubjects] = useState<SubjectOption[]>([]);
+  const [subjectIds, setSubjectIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        setError('');
+        setLoadingSubjects(true);
+
+        const subjects = await fetchDropdownData('/dropdowns/subjects');
+        const visibleSubjects = filterVisibleSubjects(subjects);
+
+        setAvailableSubjects(visibleSubjects);
+        setSubjectIds(
+          visibleSubjects
+            .filter((subject) =>
+              defaultSelectedSubjectNames.some(
+                (subjectName) =>
+                  getSubjectKey(subject.name) === getSubjectKey(subjectName)
+              )
+            )
+            .map((subject) => subject.id)
+        );
+      } catch {
+        setError('Unable to load subjects. Please try again.');
+      } finally {
+        setLoadingSubjects(false);
+      }
+    };
+
+    loadSubjects();
+  }, []);
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+ 
+    if (schoolName.length > MAX_SCHOOL_NAME_LENGTH) {
+      setSchoolNameError(`School Name must not exceed ${MAX_SCHOOL_NAME_LENGTH} characters.`);
+      return;
+    }
+ 
     try {
       setLoading(true);
  
@@ -28,15 +91,27 @@ const TeacherVerification = () => {
         return;
       }
  
-     
+      if (!subjectIds.length) {
+        setError('Please select a subject.');
+        return;
+      }
+ 
       const response = await saveTeacherVerification({
-        user_id:     userId,
+        user_id: userId,
         school_name: schoolName,
-        subject:     subject,
+        subject_ids: subjectIds,
       });
  
-      setTeacherId(response.teacher_id);
-      setIsModalOpen(true);
+      navigate('/registration-success', {
+        state: {
+          title: 'Registration Successful!!!',
+          message: `You can now access the platform${
+            response.teacher_id ? `\nTeacher ID: ${response.teacher_id}` : ''
+          }`,
+          buttonText: 'Go to Login',
+          redirectUrl: '/login',
+        },
+      });
  
     } catch (err: any) {
       if (err.response?.data?.detail) {
@@ -56,19 +131,22 @@ const TeacherVerification = () => {
     }
   };
  
+  const handleSchoolNameChange = (value: string) => {
+    const sanitizedValue = sanitizeInstitutionName(value);
+ 
+    if (sanitizedValue.length > MAX_SCHOOL_NAME_LENGTH) {
+      setSchoolNameError(`School Name must not exceed ${MAX_SCHOOL_NAME_LENGTH} characters.`);
+      setSchoolName(sanitizedValue.slice(0, MAX_SCHOOL_NAME_LENGTH));
+      return;
+    }
+ 
+    setSchoolNameError('');
+    setSchoolName(sanitizedValue);
+  };
+ 
   return (
     <>
-      <SplitScreenLayout>
-        {/* Back Button */}
-        <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/confirm-role" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-            <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-              <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-            </div>
-            Back
-          </Link>
-        </div>
- 
+      <SplitScreenLayout fitViewport>
         <div className="w-full max-w-[460px] pt-4 sm:pt-8 pb-12">
           <div className="flex justify-center w-full mb-8">
             <Logo />
@@ -94,15 +172,23 @@ const TeacherVerification = () => {
                 </label>
                 <input
                   type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="Public School"
+                  className={`block w-full px-4 py-3.5 border rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 shadow-sm ${
+                    schoolNameError
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
+                  }`}
+                  placeholder="Enter School Name"
                   value={schoolName}
-                  onChange={(e) => setSchoolName(e.target.value)}
-                  onInput={(e) => {
-                    e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
-                  }}
+                  onChange={(e) => handleSchoolNameChange(e.target.value)}
+                  aria-invalid={Boolean(schoolNameError)}
+                  aria-describedby={schoolNameError ? 'school-name-error' : undefined}
                   required
                 />
+                {schoolNameError && (
+                  <p id="school-name-error" className="mt-2 text-sm text-red-600">
+                    {schoolNameError}
+                  </p>
+                )}
               </div>
  
               {/* Subject */}
@@ -110,22 +196,33 @@ const TeacherVerification = () => {
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Subject
                 </label>
-                <input
-                  type="text"
-                  className="block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green shadow-sm"
-                  placeholder="Enter the subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  onInput={(e) => {
-                    e.currentTarget.value = e.currentTarget.value.replace(/[^a-zA-Z\s]/g, '');
-                  }}
-                  required
-                />
+                <div className="space-y-2">
+                  {availableSubjects.map((subject) => (
+                    <label key={subject.id} className="flex items-center text-[14px] text-[#1F2937]">
+                      <input
+                        type="checkbox"
+                        checked={subjectIds.includes(subject.id)}
+                        onChange={(e) => {
+                          setSubjectIds((currentSubjectIds) =>
+                            e.target.checked
+                              ? [...currentSubjectIds, subject.id]
+                              : currentSubjectIds.filter((id) => id !== subject.id)
+                          );
+                        }}
+                        className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded mr-3"
+                      />
+                      {subject.name}
+                    </label>
+                  ))}
+                </div>
+                {loadingSubjects && (
+                  <p className="mt-2 text-sm text-gray-500">Loading subjects...</p>
+                )}
               </div>
  
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || loadingSubjects}
                 className="bg-[#299555] hover:bg-[#238148] text-white font-bold py-3 px-10 rounded-lg transition-colors text-[15px] disabled:opacity-50"
               >
                 {loading ? 'Please wait...' : 'Continue'}
@@ -135,15 +232,6 @@ const TeacherVerification = () => {
           </div>
         </div>
       </SplitScreenLayout>
- 
-      <SuccessModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Registration Successful!!!"
-        message={`You can now access the platform${teacherId ? `\nTeacher ID: ${teacherId}` : ''}`}
-        buttonText="Go to Login"
-        redirectUrl="/login"
-      />
     </>
   );
 };

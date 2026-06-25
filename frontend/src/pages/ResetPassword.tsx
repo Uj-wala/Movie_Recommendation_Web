@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { createNewPassword } from '../services/authService';
-import { ArrowLeft, Lock, EyeOff, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Lock, EyeOff, Eye } from 'lucide-react';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import PasswordChangedModal from '../components/PasswordChangedModal';
 import Logo from '../components/Logo';
+import {
+  PASSWORD_COMPLEXITY_ERROR,
+  PASSWORD_LENGTH_ERROR,
+  isValidPasswordComplexity,
+  isValidPasswordLength,
+} from '../utils/validation';
+
+const PASSWORD_MAX_LENGTH = 12;
 
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +36,40 @@ const ResetPassword = () => {
 
   const [error, setError] =
     useState("");
+  const [passwordError, setPasswordError] =
+    useState("");
+  const [confirmPasswordError, setConfirmPasswordError] =
+    useState("");
+
+  const handlePasswordChange = (value: string) => {
+    const nextPassword = value.slice(0, PASSWORD_MAX_LENGTH);
+
+    if (value.length > PASSWORD_MAX_LENGTH) {
+      setPasswordError(PASSWORD_LENGTH_ERROR);
+    } else if (nextPassword && !isValidPasswordLength(nextPassword)) {
+      setPasswordError(PASSWORD_LENGTH_ERROR);
+    } else if (nextPassword && !isValidPasswordComplexity(nextPassword)) {
+      setPasswordError(PASSWORD_COMPLEXITY_ERROR);
+    } else {
+      setPasswordError("");
+    }
+
+    setPassword(nextPassword);
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    const nextConfirmPassword = value.slice(0, PASSWORD_MAX_LENGTH);
+
+    if (value.length > PASSWORD_MAX_LENGTH) {
+      setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
+    } else if (nextConfirmPassword && !isValidPasswordLength(nextConfirmPassword)) {
+      setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
+    } else {
+      setConfirmPasswordError("");
+    }
+
+    setConfirmPassword(nextConfirmPassword);
+  };
 
   const handleSubmit = async (
     e: React.FormEvent
@@ -37,6 +78,23 @@ const ResetPassword = () => {
     e.preventDefault();
 
     setError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
+
+    if (!isValidPasswordLength(password)) {
+      setPasswordError(PASSWORD_LENGTH_ERROR);
+      return;
+    }
+
+    if (!isValidPasswordComplexity(password)) {
+      setPasswordError(PASSWORD_COMPLEXITY_ERROR);
+      return;
+    }
+
+    if (!isValidPasswordLength(confirmPassword)) {
+      setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
+      return;
+    }
 
     if (password !== confirmPassword) {
 
@@ -78,16 +136,6 @@ const ResetPassword = () => {
   return (
     <>
       <SplitScreenLayout>
-        {/* Back Button */}
-        <div className="absolute top-12 left-12 lg:left-16 xl:left-24 z-10">
-          <Link to="/verify-otp" className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans">
-            <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
-              <ArrowLeft className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
-            </div>
-            Back
-          </Link>
-        </div>
-
         <div className="w-full max-w-[420px] flex flex-col items-center">
           {/* Logo */}
           <Logo />
@@ -113,12 +161,12 @@ const ResetPassword = () => {
                       : 'password'
                   }
                   value={password}
-                  onChange={(e) =>
-                    setPassword(
-                      e.target.value
-                    )
-                  }
-                  className="block w-full pl-11 pr-10 py-3.5 border border-gray-100 bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.25em]"
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  className={`block w-full pl-11 pr-10 py-3.5 border bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.25em] ${
+                    passwordError
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'border-gray-100 focus:ring-brand-green focus:border-brand-green'
+                  }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -134,7 +182,15 @@ const ResetPassword = () => {
                 </button>
               </div>
             </div>
-            <p className="text-[11px] text-gray-500 mb-5">Must be at least 8-12 characters.</p>
+            {passwordError ? (
+              <p id="reset-password-error" className="text-red-500 text-sm mb-5">
+                {passwordError}
+              </p>
+            ) : (
+              <p className="text-[11px] text-gray-500 mb-5">
+                Must be 8 to 12 characters with a number and special character.
+              </p>
+            )}
 
             <div className="mb-2">
               <label className="block text-[13px] font-semibold text-[#1F2937] mb-2">
@@ -151,12 +207,12 @@ const ResetPassword = () => {
                       : 'password'
                   }
                   value={confirmPassword}
-                  onChange={(e) =>
-                    setConfirmPassword(
-                      e.target.value
-                    )
-                  }
-                  className="block w-full pl-11 pr-10 py-3.5 border border-gray-100 bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.25em]"
+                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  className={`block w-full pl-11 pr-10 py-3.5 border bg-[#FCFCFD] rounded-lg text-[15px] placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.25em] ${
+                    confirmPasswordError
+                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                      : 'border-gray-100 focus:ring-brand-green focus:border-brand-green'
+                  }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -172,7 +228,15 @@ const ResetPassword = () => {
                 </button>
               </div>
             </div>
-            <p className="text-[11px] text-gray-500 mb-8">Both Passwords must Match.</p>
+            {confirmPasswordError ? (
+              <p id="reset-confirm-password-error" className="text-red-500 text-sm mb-8">
+                {confirmPasswordError}
+              </p>
+            ) : (
+              <p className="text-[11px] text-gray-500 mb-8">
+                Both Passwords must Match.
+              </p>
+            )}
             {error && (
               <div className="mb-4">
                 <p className="text-red-500 text-sm">

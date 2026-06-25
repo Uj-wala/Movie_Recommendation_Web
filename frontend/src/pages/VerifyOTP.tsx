@@ -9,9 +9,19 @@ import {
   forgotPassword
 } from "../services/authService";
 
+const OTP_TIMER_SECONDS = 5 * 60;
+const formatTimer = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+    .toString()
+    .padStart(2, '0')}`;
+};
+
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(OTP_TIMER_SECONDS);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const navigate = useNavigate();
 
@@ -25,6 +35,8 @@ const VerifyOTP = () => {
 
   const [error, setError] =
     useState("");
+  const [otpSent, setOtpSent] =
+    useState(Boolean(email || phone_number));
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -43,12 +55,14 @@ const VerifyOTP = () => {
 
       try {
 
+        setOtpSent(false);
+
         await forgotPassword(
           email,
           phone_number
         );
 
-        setTimer(30);
+        setTimer(OTP_TIMER_SECONDS);
 
         setOtp([
           '',
@@ -58,6 +72,8 @@ const VerifyOTP = () => {
           '',
           ''
         ]);
+
+        setOtpSent(true);
 
       } catch (error) {
 
@@ -188,6 +204,16 @@ const VerifyOTP = () => {
               </p>
             </div>
           )}
+          {otpSent && timer > 0 && (
+            <p className="text-green-600 text-sm mb-4">
+              OTP sent successfully.
+            </p>
+          )}
+          {timer === 0 && (
+            <p className="text-red-500 text-sm mb-4">
+              OTP expired.
+            </p>
+          )}
 
           <p className="text-sm text-gray-500 mb-6 mt-2">
             Didn't Receive any code?{' '}
@@ -199,7 +225,7 @@ const VerifyOTP = () => {
             >
               Request a new Code
             </button>
-            {timer > 0 && <span className="text-gray-500"> in 00:{timer.toString().padStart(2, '0')}</span>}
+            {timer > 0 && <span className="text-gray-500"> in {formatTimer(timer)}</span>}
           </p>
 
           <button

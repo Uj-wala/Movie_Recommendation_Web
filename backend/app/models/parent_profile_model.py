@@ -19,15 +19,7 @@ class ParentProfile(Base, BaseModel):
         nullable=False
     )
 
-    child_name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
-
-    child_grade: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False
-    )
+    
 
     student_reference_id: Mapped[str | None] = mapped_column(
         String(255),

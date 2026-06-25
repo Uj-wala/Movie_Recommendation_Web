@@ -11,9 +11,19 @@ from app.schemas.user_schema import (
     RegisterRequest,
     ConfirmRoleRequest,
     StudentDetailsRequest,
-    ParentVerificationRequest,
-    TeacherVerificationRequest
-)
+    ParentVerificationRequest    
+    )
+from app.models.subject_model import Subject
+from app.models.teacher_subject_model import TeacherSubject
+from app.schemas.teacher_profile_schema import TeacherProfileCreateRequest
+
+TEACHER_SUBJECT_NAMES = {
+    "English",
+    "Computer Science",
+    "Data Analytics",
+    "AI Chart Tools",
+    "Data Science",
+}
  
 def register_by_phone(data: RegisterRequest, db: Session):
  
@@ -145,14 +155,57 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
             status_code=400,
             detail="Parent profile already exists"
         )
+    
+    student_profile = (
+        db.query(StudentProfile)
+        .filter(
+            StudentProfile.id == data.student_reference_id
+        )
+        .first()
+    )
+
+    if not student_profile:
+        student_profile = (
+            db.query(StudentProfile)
+            .filter(
+                StudentProfile.user_id == data.student_reference_id
+            )
+            .first()
+        )
  
+    if not student_profile:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    student_user = (
+        db.query(User)
+        .filter(
+            User.id == student_profile.user_id
+        )
+        .first()
+    )
+
+    if not student_user:
+        raise HTTPException(
+            status_code=404,
+            detail="Student user not found"
+        )
+
+    if student_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=400,
+            detail="Referenced user is not a student"
+        )
+
     parent_profile = ParentProfile(
         user_id=data.user_id,
-        child_name=data.child_name,
-        child_grade=data.child_grade,
-        student_reference_id=data.student_reference_id
+        student_reference_id=student_profile.id
     )
- 
+  
+   
+   
     db.add(parent_profile)
     user.profile_completed = True
     db.commit()
@@ -165,7 +218,10 @@ def save_parent_verification(data: ParentVerificationRequest, db: Session):
     }
  
  
-def save_teacher_verification(data: TeacherVerificationRequest, db: Session):
+def save_teacher_verification(
+    data: TeacherProfileCreateRequest,
+    db: Session
+):
  
     user = db.query(User).filter(
         User.id == data.user_id
@@ -177,7 +233,9 @@ def save_teacher_verification(data: TeacherVerificationRequest, db: Session):
             detail="User not found"
         )
  
-    existing_profile = db.query(TeacherProfile).filter(
+    existing_profile = db.query(
+        TeacherProfile
+    ).filter(
         TeacherProfile.user_id == data.user_id
     ).first()
  
@@ -189,12 +247,49 @@ def save_teacher_verification(data: TeacherVerificationRequest, db: Session):
  
     teacher_profile = TeacherProfile(
         user_id=data.user_id,
-        school_name=data.school_name,
-        subject=data.subject
+        school_name=data.school_name
     )
  
     db.add(teacher_profile)
-    user.profile_completed = True
+ 
+    db.flush()
+   
+    if len(data.subject_ids) != len(set(data.subject_ids)):
+        raise HTTPException(
+            status_code=400,
+            detail="Duplicate subjects are not allowed"
+        )
+   
+    subjects = (
+        db.query(Subject)
+        .filter(
+            Subject.id.in_(data.subject_ids)
+        )
+        .all()
+    )
+ 
+    if len(subjects) != len(data.subject_ids):
+        raise HTTPException(
+            status_code=400,
+            detail="One or more subjects are invalid"
+        )
+
+    if any(subject.name not in TEACHER_SUBJECT_NAMES for subject in subjects):
+        raise HTTPException(
+            status_code=400,
+            detail="One or more subjects are not allowed"
+        )
+ 
+    for subject_id in data.subject_ids:
+ 
+        teacher_subject = TeacherSubject(
+            teacher_profile_id=teacher_profile.id,
+            subject_id=subject_id
+        )
+ 
+        db.add(teacher_subject)
+        user.profile_completed = True
+ 
     db.commit()
     db.refresh(teacher_profile)
  

@@ -14,6 +14,15 @@ const Home = () => {
     "Portuguese",
     "Indonesia",
     "Turkey",
+    "Spanish",
+    "French",
+    "Italian",
+    "Hindi",
+    "Arabic",
+    "Chinese",
+    "Japanese",
+    "Korean",
+    "Russian",
   ];
 
   const getLanguageCode = (lang: string) => {
@@ -24,6 +33,15 @@ const Home = () => {
       case "Portuguese": return "PT";
       case "Indonesia": return "ID";
       case "Turkey": return "TR";
+      case "Spanish": return "ES";
+      case "French": return "FR";
+      case "Italian": return "IT";
+      case "Hindi": return "HI";
+      case "Arabic": return "AR";
+      case "Chinese": return "ZH";
+      case "Japanese": return "JA";
+      case "Korean": return "KO";
+      case "Russian": return "RU";
       default: return "EN";
     }
   };
@@ -84,7 +102,7 @@ const Home = () => {
             </button>
 
             {isLangOpen && (
-              <div className="absolute right-0 mt-4 w-48 bg-[#defaeb] rounded-md shadow-lg py-2 z-10">
+              <div className="absolute right-0 mt-4 w-48 max-h-[300px] overflow-y-auto bg-[#defaeb] rounded-md shadow-lg py-2 z-10">
                 {languages.map((lang) => (
                   <button
                     key={lang}
@@ -92,7 +110,7 @@ const Home = () => {
                       setSelectedLanguage(lang);
                       setIsLangOpen(false);
                     }}
-                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-green-100 flex items-center justify-between"
+                    className="w-full text-left px-4 py-3 text-base text-gray-700 hover:bg-green-100 flex items-center justify-between"
                   >
                     {lang}
                     {lang === selectedLanguage && (

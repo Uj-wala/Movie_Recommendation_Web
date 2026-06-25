@@ -24,12 +24,13 @@ class TeacherProfile(Base, BaseModel):
         nullable=False
     )
 
-    subject: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False
-    )
-
     user = relationship(
         "User",
         back_populates="teacher_profile"
+    )
+
+    subjects = relationship(
+        "TeacherSubject",
+        back_populates="teacher_profile",
+        cascade="all, delete-orphan"
     )

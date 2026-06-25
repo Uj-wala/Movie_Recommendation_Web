@@ -12,6 +12,16 @@ import {
   getApiErrorMessage,
 } from "../services/PhoneRegistrationService";
 
+const OTP_TIMER_SECONDS = 5 * 60;
+const formatTimer = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+};
+
 const VerifyAccount = () => {
   const navigate = useNavigate();
 
@@ -19,9 +29,11 @@ const VerifyAccount = () => {
   const email = localStorage.getItem("email");
   const registrationType = localStorage.getItem("registration_type") || "phone";
   const role = localStorage.getItem("selected_role") || "student";
+  const roleId = localStorage.getItem("selected_role_id") || role;
+  const confirmRoleRoute = `/confirm-role?role=${role.toLowerCase()}&role_id=${roleId}`;
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(OTP_TIMER_SECONDS);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -122,7 +134,7 @@ const VerifyAccount = () => {
 
       setOtp(["", "", "", "", "", ""]);
       setOtpSent(true);
-      setTimer(30);
+      setTimer(OTP_TIMER_SECONDS);
       inputRefs.current[0]?.focus();
     } catch (error: any) {
       setError(getApiErrorMessage(error));
@@ -180,10 +192,10 @@ const VerifyAccount = () => {
   };
 
   return (
-    <SplitScreenLayout>
+    <SplitScreenLayout fitViewport>
       <div className="absolute top-6 left-6 sm:top-12 sm:left-12 lg:left-16 xl:left-24 z-10">
         <Link
-          to="/register"
+          to={confirmRoleRoute}
           className="flex items-center text-gray-700 hover:text-gray-900 font-semibold font-sans"
         >
           <div className="flex items-center justify-center w-6 h-6 border border-gray-400 rounded-full mr-2">
@@ -250,14 +262,20 @@ const VerifyAccount = () => {
             {timer > 0 && (
               <span className="text-gray-500">
                 {" "}
-                in 00:{timer.toString().padStart(2, "0")}
+                in {formatTimer(timer)}
               </span>
             )}
           </p>
 
-          {otpSent && (
+          {otpSent && timer > 0 && (
             <p className="text-green-600 text-sm mb-4">
-              OTP sent successfully. Check backend terminal.
+              OTP sent successfully.
+            </p>
+          )}
+
+          {timer === 0 && (
+            <p className="text-red-500 text-sm mb-4">
+              OTP expired.
             </p>
           )}
 
