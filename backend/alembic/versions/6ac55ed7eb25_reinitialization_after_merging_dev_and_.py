@@ -1,16 +1,8 @@
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-"""Initiazing database in server
+"""ReInitialization after merging dev and development changes.
 
-Revision ID: 8c9bdb83e4c7
+Revision ID: 6ac55ed7eb25
 Revises: 
-Create Date: 2026-06-19 21:51:36.287936
-========
-"""Initialize schema freshly along with sprint 2 models.
-
-Revision ID: e0b540a131ee
-Revises: 
-Create Date: 2026-06-12 17:34:19.183776
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
+Create Date: 2026-06-25 20:25:33.125600
 
 """
 from typing import Sequence, Union
@@ -20,11 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-revision: str = '8c9bdb83e4c7'
-========
-revision: str = 'e0b540a131ee'
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
+revision: str = '6ac55ed7eb25'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -46,8 +34,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_countries_iso_code'), 'countries', ['iso_code'], unique=True)
     op.create_index(op.f('ix_countries_name'), 'countries', ['name'], unique=True)
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
     op.create_table('permissions',
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
@@ -66,7 +52,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_roles')),
     sa.UniqueConstraint('name', name=op.f('uq_roles_name'))
     )
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     op.create_table('subjects',
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
@@ -76,8 +61,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_subjects')),
     sa.UniqueConstraint('name', name=op.f('uq_subjects_name'))
     )
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
     op.create_table('role_permissions',
     sa.Column('role_id', sa.String(length=36), nullable=False),
     sa.Column('permission_id', sa.String(length=36), nullable=False),
@@ -89,27 +72,24 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_role_permissions')),
     sa.UniqueConstraint('role_id', 'permission_id', name='uq_role_permission')
     )
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     op.create_table('users',
     sa.Column('full_name', sa.String(length=255), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('phone_number', sa.String(length=20), nullable=True),
     sa.Column('country_id', sa.String(length=36), nullable=True),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
-    sa.Column('role_id', sa.String(length=36), nullable=False),
-    sa.Column('security_question', sa.Enum('FAVORITE_FOOD', 'FAVORITE_COUNTRY', 'FAVORITE_SPORT', name='securityquestion'), nullable=False),
-    sa.Column('security_answer_hash', sa.String(length=255), nullable=False),
+    sa.Column('role_id', sa.String(length=36), nullable=True),
+    sa.Column('security_question', sa.Enum('FAVORITE_FOOD', 'FAVORITE_COUNTRY', 'FAVORITE_SPORT', name='securityquestion'), nullable=True),
+    sa.Column('security_answer_hash', sa.String(length=255), nullable=True),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_blocked', sa.Boolean(), nullable=False),
     sa.Column('agree_to_terms', sa.Boolean(), nullable=False),
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
     sa.Column('profile_image_url', sa.String(length=500), nullable=True),
     sa.Column('preferred_language', sa.String(length=50), nullable=True),
     sa.Column('email_notifications', sa.Boolean(), nullable=False),
     sa.Column('sms_notifications', sa.Boolean(), nullable=False),
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
+    sa.Column('registration_number', sa.String(length=30), nullable=True),
     sa.Column('profile_completed', sa.Boolean(), nullable=False),
     sa.Column('failed_login_attempts', sa.Integer(), nullable=False),
     sa.Column('blocked_until', sa.DateTime(timezone=True), nullable=True),
@@ -125,6 +105,7 @@ def upgrade() -> None:
     op.create_index('ix_user_country_phone', 'users', ['country_id', 'phone_number'], unique=False)
     op.create_index(op.f('ix_users_country_id'), 'users', ['country_id'], unique=False)
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_index(op.f('ix_users_registration_number'), 'users', ['registration_number'], unique=True)
     op.create_table('otp_verifications',
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('otp_code', sa.String(length=6), nullable=False),
@@ -144,11 +125,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_otp_verifications_user_id'), 'otp_verifications', ['user_id'], unique=False)
     op.create_table('parent_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-    sa.Column('student_reference_id', sa.String(length=255), nullable=True),
-========
     sa.Column('relationship_type', sa.String(length=50), nullable=True),
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -189,12 +166,9 @@ def upgrade() -> None:
     op.create_table('teacher_profiles',
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('school_name', sa.String(length=255), nullable=False),
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
-    sa.Column('years_of_experience', sa.Integer(), nullable=True),
+    sa.Column('years_of_experience', sa.String(length=50), nullable=True),
     sa.Column('qualification', sa.String(length=255), nullable=True),
     sa.Column('bio', sa.Text(), nullable=True),
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -228,21 +202,16 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_user_sessions_refresh_token'), 'user_sessions', ['refresh_token'], unique=True)
     op.create_index(op.f('ix_user_sessions_user_id'), 'user_sessions', ['user_id'], unique=False)
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
     op.create_table('parent_children',
     sa.Column('parent_profile_id', sa.String(length=36), nullable=False),
-    sa.Column('child_name', sa.String(length=255), nullable=False),
-    sa.Column('grade', sa.String(length=50), nullable=True),
-    sa.Column('school_name', sa.String(length=255), nullable=True),
-    sa.Column('student_reference_id', sa.String(length=100), nullable=True),
+    sa.Column('student_id', sa.String(length=36), nullable=False),
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['parent_profile_id'], ['parent_profiles.id'], name=op.f('fk_parent_children_parent_profile_id')),
+    sa.ForeignKeyConstraint(['student_id'], ['users.id'], name=op.f('fk_parent_children_student_id')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_parent_children'))
     )
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     op.create_table('teacher_subjects',
     sa.Column('teacher_profile_id', sa.String(length=36), nullable=False),
     sa.Column('subject_id', sa.String(length=36), nullable=False),
@@ -261,10 +230,7 @@ def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('teacher_subjects')
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-========
     op.drop_table('parent_children')
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     op.drop_index(op.f('ix_user_sessions_user_id'), table_name='user_sessions')
     op.drop_index(op.f('ix_user_sessions_refresh_token'), table_name='user_sessions')
     op.drop_table('user_sessions')
@@ -282,18 +248,15 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_otp_verifications_otp_code'), table_name='otp_verifications')
     op.drop_index(op.f('ix_otp_verifications_expires_at'), table_name='otp_verifications')
     op.drop_table('otp_verifications')
+    op.drop_index(op.f('ix_users_registration_number'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_index(op.f('ix_users_country_id'), table_name='users')
     op.drop_index('ix_user_country_phone', table_name='users')
     op.drop_table('users')
-<<<<<<<< HEAD:backend/alembic/versions/8c9bdb83e4c7_initiazing_database_in_server.py
-    op.drop_table('subjects')
-========
     op.drop_table('role_permissions')
     op.drop_table('subjects')
     op.drop_table('roles')
     op.drop_table('permissions')
->>>>>>>> dev:backend/alembic/versions/e0b540a131ee_initialize_schema_freshly_along_with_.py
     op.drop_index(op.f('ix_countries_name'), table_name='countries')
     op.drop_index(op.f('ix_countries_iso_code'), table_name='countries')
     op.drop_table('countries')
