@@ -1,3 +1,5 @@
+import re
+
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -8,6 +10,9 @@ from pydantic import (
 from app.core.enums import YearsOfExperience
 from app.schemas.user_schema import UUID_REGEX
 
+PHONE_REGEX = re.compile(
+    r"^\+?[0-9]{10,15}$"
+)
 
 class TeacherProfileCreateRequest(BaseModel):
     user_id: str
@@ -58,6 +63,7 @@ class TeacherProfileUpdate(BaseModel):
     bio: str | None = None
     years_of_experience: YearsOfExperience | None = None
     subject_ids: list[str] | None = None
+    phone_number: str | None = None
 
     @field_validator("full_name")
     @classmethod
@@ -83,6 +89,18 @@ class TeacherProfileUpdate(BaseModel):
         if len(value) < 2:
             raise ValueError("Qualification is required")
 
+        return value
+    
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value):
+ 
+        if value is None:
+            return value
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError("Invalid phone number format")
+ 
         return value
 
     @field_validator("bio")
@@ -166,7 +184,7 @@ class TeacherDashboardResponse(BaseModel):
     years_of_experience: YearsOfExperience | None = None
     qualification: str | None = None
     subjects_handling: int
-    assessments_assigned: int
+    assignments_assigned: int
     students_above_80: int
 
     model_config = ConfigDict(from_attributes=True)

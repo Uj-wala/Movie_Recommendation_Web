@@ -1,6 +1,7 @@
 import json
 from typing import Any
 
+from app.core.security import hash_password, verify_password
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,7 @@ from app.repository.student_profile_repository import (
 )
 from app.schemas.student_profile_schema import (
     StudentDashboardResponse,
+    StudentPasswordUpdate,
     StudentProfileResponse,
     StudentProfileUpdate,
 )
@@ -62,6 +64,7 @@ def build_student_profile_response(
         full_name=user.full_name,
         email=user.email,
         grade=profile.grade,
+        phone_number=user.phone_number,
         school_name=profile.school_name,
         learning_interests=parse_learning_interests(
             profile.learning_interests
@@ -130,6 +133,14 @@ def update_student_profile_service(
                 update_data["preferred_learning_style"]
             )
 
+        if "phone_number" in update_data:
+            phone = update_data["phone_number"]
+ 
+            if phone and not phone.startswith("+"):
+                phone = f"+{phone}"
+ 
+            current_user.phone_number = phone
+
         db.add(current_user)
         db.add(profile)
         db.commit()
@@ -146,6 +157,51 @@ def update_student_profile_service(
         profile,
     )
 
+def update_student_password_service(
+    db: Session,
+    current_user: User,
+    password_update: StudentPasswordUpdate,
+) -> dict:
+    if password_update.new_password != password_update.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password and confirm password do not match",
+        )
+
+    if not verify_password(
+        password_update.current_password,
+        current_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    if verify_password(
+        password_update.new_password,
+        current_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be different from current password",
+        )
+
+    try:
+        current_user.password_hash = hash_password(
+            password_update.new_password
+        )
+
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "message": "Password updated successfully",
+    }
 
 def upload_student_profile_image_service(
     db: Session,

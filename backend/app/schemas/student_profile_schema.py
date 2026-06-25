@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 from pydantic import (
@@ -14,7 +15,9 @@ from app.core.enums import (
     LearningInterest,
     LearningStyle,
 )
-
+PHONE_REGEX = re.compile(
+    r"^\+?[0-9]{10,15}$"
+)
 
 class StudentProfileUpdate(BaseModel):
     """Request body for PATCH /student/profile."""
@@ -37,6 +40,20 @@ class StudentProfileUpdate(BaseModel):
         default=None,
         max_length=5,
     )
+
+    phone_number: str | None = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value):
+ 
+        if value is None:
+            return value
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError("Invalid phone number format")
+ 
+        return value
 
     preferred_learning_style: LearningStyle | None = None
 
@@ -80,6 +97,7 @@ class StudentProfileResponse(BaseModel):
     email: EmailStr | None = None
     grade: GradeLevel
     school_name: str | None = None
+    phone_number: str | None = None
 
     learning_interests: list[LearningInterest] = Field(
         default_factory=list
@@ -91,6 +109,30 @@ class StudentProfileResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+
+class StudentPasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+    @field_validator("current_password")
+    @classmethod
+    def validate_current_password(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("Current password is required")
+
+        return value
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("New password is required")
+
+        if len(value) < 8:
+            raise ValueError("New password must be at least 8 characters")
+
+        return value
 
 
 class StudentProfileImageResponse(BaseModel):

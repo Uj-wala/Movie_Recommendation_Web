@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import {getTeacherDashboard,type TeacherDashboard,} from "../../../services/teacherProfileService";
 import {
   Star,
   ChevronDown,
@@ -482,11 +483,34 @@ const TeacherDashboard: React.FC = () => {
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
     "teacher@thestackly.com";
+  const [dashboardData, setDashboardData] =useState<TeacherDashboard | null>(null);
+ const [isDashboardLoading, setIsDashboardLoading] = useState(false);
+ const [dropdownOpen, setDropdownOpen] = useState(false);
  const [activityPeriod, setActivityPeriod] = useState("Today");
  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
  const [profilePeriod, setProfilePeriod] = useState("Today");
  const [ratingPeriod, setRatingPeriod] = useState("This Week");
  const [overviewPeriod, setOverviewPeriod] = useState("This Week");
+
+ useEffect(() => {
+  const fetchDashboard = async () => {
+    try {
+      setIsDashboardLoading(true);
+
+      const response = await getTeacherDashboard();
+
+      console.log("Dashboard Response:", response);
+
+      setDashboardData(response);
+    } catch (error) {
+      console.error("Dashboard Error:", error);
+    } finally {
+      setIsDashboardLoading(false);
+    }
+  };
+
+  fetchDashboard();
+}, []);
   return (
     <div className="w-full min-h-screen bg-[#FAFAFA] p-8">
  
@@ -495,8 +519,8 @@ const TeacherDashboard: React.FC = () => {
       <div className="flex justify-between items-start mb-8">
  
         <div className="w-[384px] h-[64px] flex flex-col gap-1">
-          <h1 className="w-[384px] h-[36px] text-[28px] font-semibold leading-[100%] text-black">
-            Welcome back, Larah! 👋
+          <h1 className="w-[500px] h-[36px] text-[28px] font-semibold leading-[100%] text-black">
+            Welcome back, {dashboardData?.full_name || userName}! 👋
           </h1>
  
           <p className="w-[384px] h-[24px] text-[#8B8B8B] text-[16px] font-normal leading-[100%] flex items-center">
@@ -566,11 +590,11 @@ const TeacherDashboard: React.FC = () => {
  
           <div className="w-[180px] h-[47px] flex flex-col gap-1">
             <h3 className="w-[180px] h-[24px] font-poppins text-[18px] font-semibold leading-[21.47px] text-[#141414]">
-              Vako Shvili
+              {dashboardData?.full_name || userName}
             </h3>
  
             <p className="w-[180px] h-[19px] font-poppins text-[14px] font-normal leading-[18.17px] tracking-[-0.01em] text-[#141414] opacity-50">
-              vako.shivili@gmail.com
+              {userEmail}
             </p>
           </div>
         </div>

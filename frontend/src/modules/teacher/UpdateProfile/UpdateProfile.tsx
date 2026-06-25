@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import type { ClipboardEvent, KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -26,6 +26,14 @@ import {
   isValidPasswordCharacters,
   sanitizePasswordInput,
 } from "../../../utils/validation";
+import {
+  getTeacherProfile,
+  updateTeacherProfile,
+  updateTeacherPassword,
+  uploadTeacherProfileImage,
+  type TeacherProfile,
+} from "../../../services/teacherProfileService";
+import {getSubjectsDropdown,type DropdownItem,} from "../../../services/dropdownService";
 
 interface Profile {
   id: number;
@@ -33,15 +41,18 @@ interface Profile {
   email: string;
   avatar: string;
 }
-interface InitialValues{
-  username: string,
-  yearsOfExperience: string,
-  qualification: string,
-  expertises?: string,
-  subjects: string[],
-  phone:string[],
-  email:string[],
-  image:string,
+interface InitialValues {
+  username: string;
+  currentPassword?: string;
+  password: string;
+  confirmPassword: string;
+  yearsOfExperience: string;
+  qualification: string;
+  subjects: string[];
+  phone: string[];
+  email: string[];
+  image: string;
+  expertises: string;
 }
 
 const InitialValuesProfile: InitialValues = profileData;
@@ -56,21 +67,23 @@ const profiles: Profile[] = [
   },
 ];
 
-const ALL_SUBJECTS = [
+/*const ALL_SUBJECTS = [
   "Mathematics",
   "Science",
   "English",
   "Computer Engineering",
   "Data Science",
   "Business Analyst",
-];
+];*/
 
 const YEARS_OPTIONS = [
-  "1–2 years",
-  "3–5 years",
-  "5–8 years",
-  "8–10 years",
-  "10+ years",
+  "1 Year",
+  "2 Years",
+  "3 Years",
+  "4 Years",
+  "5 Years",
+  "6-10 Years",
+  "10+ Years",
 ];
 
 const passwordRules = [
@@ -87,18 +100,14 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
 
 const validationSchema = Yup.object({
   username: Yup.string()
-    .required("Full Name is required")
-    .max(24, "Full Name cannot exceed 24 characters")
-    .matches(/^[A-Za-z\s'.-]+$/, "Full Name can only contain letters, spaces, apostrophe, hyphen, and period")
-    .min(3, "Full Name must be at least 3 characters"),
-  currentPassword: Yup.string()
-    .required("Current Password is required")
-    .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters),
-  password: Yup.string()
-    .required("New Password is required")
-    .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters)
-    .min(8, "New Password must be at least 8 characters")
-    .max(PASSWORD_MAX_LENGTH, "New Password cannot exceed 12 characters")
+    .required("Username is required")
+    .max(24, "User Name cannot exceed 24 characters")
+    .matches(/^[A-Za-z\s'.-]+$/, "User Name can only contain letters, spaces, apostrophe, hyphen, and period")
+    .min(3, "Username must be at least 3 characters"),
+  /*password: Yup.string()
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters")
+    .max(PASSWORD_MAX_LENGTH, "Password cannot exceed 12 characters")
     .matches(/[A-Z]/, "Must contain at least one uppercase letter")
     .matches(/[0-9]/, "Must contain at least one number")
     .matches(/[!@#$%^&*(),?":{}|<>]/, "Must contain at least one special character"),
@@ -106,12 +115,21 @@ const validationSchema = Yup.object({
     .required("Confirm Password is required")
     .test("no-spaces-or-dots", PASSWORD_RESTRICTED_CHAR_ERROR, isValidPasswordCharacters)
     .max(PASSWORD_MAX_LENGTH, "Confirm Password cannot exceed 12 characters")
-    .oneOf([Yup.ref("password")], "Passwords do not match"),
+    .oneOf([Yup.ref("password")], "Passwords do not match"),*/
+  password: Yup.string()
+  .max(PASSWORD_MAX_LENGTH, "Password cannot exceed 12 characters"),
+
+confirmPassword: Yup.string()
+  .max(PASSWORD_MAX_LENGTH, "Confirm Password cannot exceed 12 characters")
+  .oneOf([Yup.ref("password")], "Passwords do not match"),  
   yearsOfExperience: Yup.string().required("Please select years of experience"),
   qualification: Yup.string().required("Qualification is required"),
   subjects: Yup.array()
     .of(Yup.string().required())
     .min(1, "Please select at least one subject."),
+  expertises: Yup.string()
+    .required("Expertises must contain at least 10 characters")
+    .min(10, "Expertises must contain at least 10 characters"),
 });
 
 export default function UpdateProfile() {
@@ -130,6 +148,7 @@ export default function UpdateProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [photoSrc, setPhotoSrc] = useState<string>(InitialValuesProfile.image);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,7 +157,12 @@ export default function UpdateProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState("");
+  const [subjectsList, setSubjectsList] =useState<DropdownItem[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [teacherProfileData, setTeacherProfileData] =useState<TeacherProfile | null>(null);
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const navigate = useNavigate();
 
   const blockPasswordClipboardAction = (event: ClipboardEvent<HTMLInputElement>) => {
@@ -201,7 +225,7 @@ export default function UpdateProfile() {
       image: InitialValuesProfile.image,
     },
     validationSchema,
-    onSubmit: (values, actions) => {
+    onSubmit: async (values, actions) => {
       const phoneErrors = phones.map((p) =>
         !p.value ? "Phone number is required" : !phoneRegex.test(p.value) ? "Invalid format. Use country code e.g. +911234567890" : ""
       );
@@ -213,17 +237,41 @@ export default function UpdateProfile() {
       setPhones((prev) => prev.map((p, i) => ({ ...p, touched: true, error: phoneErrors[i] })));
       setEmails((prev) => prev.map((em, i) => ({ ...em, touched: true, error: emailErrors[i] })));
       if (hasPhoneError || hasEmailError) return;
-      const previousPassword =
-        localStorage.getItem("userPassword") ||
-        localStorage.getItem("password") ||
-        "";
-      if (values.currentPassword !== previousPassword) {
-        actions.setFieldTouched("currentPassword", true, false);
-        actions.setFieldError("currentPassword", "Current password is not matched with previous password");
-        return;
-      }
-      localStorage.setItem("userPassword", values.password);
-      toast.success("Password updated successfully.", { position: "bottom-right" });
+      const isPasswordUpdate =
+  values.currentPassword ||
+  values.password ||
+  values.confirmPassword;
+
+if (isPasswordUpdate) {
+  const previousPassword =
+    localStorage.getItem("userPassword") ||
+    localStorage.getItem("password") ||
+    "";
+
+  if (values.currentPassword !== previousPassword) {
+    actions.setFieldTouched("currentPassword", true, false);
+    actions.setFieldError(
+      "currentPassword",
+      "Current password is not matched with previous password"
+    );
+    return;
+  }
+}
+
+const selectedSubjectIds = subjectsList
+  .filter(subject =>
+    values.subjects.includes(subject.name)
+  )
+  .map(subject => subject.id);
+
+await updateTeacherProfile({
+  full_name: values.username,
+  qualification: values.qualification,
+  bio: values.expertises,
+  years_of_experience: values.yearsOfExperience,
+  phone_number: phones[0]?.value,
+  subject_ids: selectedSubjectIds,
+});
       actions.resetForm({
         values: {
           ...values,
@@ -237,6 +285,64 @@ export default function UpdateProfile() {
     },
   });
 
+  useEffect(() => {
+  const fetchTeacherProfile = async () => {
+    try {
+      setIsProfileLoading(true);
+
+      const profile = await getTeacherProfile();
+      const subjects = await getSubjectsDropdown();
+
+      setSubjectsList(subjects);
+      setTeacherProfileData(profile);
+
+      formik.setValues({
+  username: profile.full_name || "",
+  currentPassword: "",
+  password: "",
+  confirmPassword: "",
+  yearsOfExperience: profile.years_of_experience || "",
+  qualification: profile.qualification || "",
+  expertises: profile.bio || "",
+  subjects: profile.subjects || [],
+  image: profile.profile_image || "",
+});
+
+      setPhones([
+        {
+          value: profile.phone_number || "",
+          touched: false,
+          error: "",
+        },
+      ]);
+
+      setEmails([
+        {
+          value: profile.email || "",
+          touched: false,
+          error: "",
+        },
+      ]);
+
+      setPhotoSrc(
+        profile.profile_image || InitialValuesProfile.image
+      );
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.detail ||
+          "Failed to load teacher profile",
+        {
+          position: "bottom-right",
+        }
+      );
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
+
+  fetchTeacherProfile();
+}, []);
+
  const handlePhotoChange = useCallback((file: File) => {
   const allowedImageTypes = ["image/jpeg", "image/jpg", "image/png"];
   const allowedExtensions = /\.(jpe?g|png)$/i;
@@ -245,6 +351,7 @@ export default function UpdateProfile() {
     toast.error("Please upload only JPG, JPEG, or PNG image files.", { position: "bottom-right" });
     return;
   }
+  setSelectedImageFile(file);
   setIsUploading(true);
   setUploadProgress(0);
   const reader = new FileReader();
@@ -280,9 +387,11 @@ export default function UpdateProfile() {
     }
   };
 
-  const filteredSubjects = ALL_SUBJECTS.filter((s) =>
-    s.toLowerCase().includes(subjectSearch.toLowerCase())
-  );
+  const filteredSubjects = subjectsList.filter((subject) =>
+  subject.name
+    .toLowerCase()
+    .includes(subjectSearch.toLowerCase())
+);
 
   // ── Phone helpers ─────────────────────────────────────────────────────────
   const validatePhone = (value: string) => {
@@ -360,14 +469,92 @@ export default function UpdateProfile() {
   };
 
   const handleCancel = () => {
-    formik.resetForm();
-    setIsEditing(false);
-  };
+  if (teacherProfileData) {
+    formik.setValues({
+      username: teacherProfileData.full_name || "",
+      currentPassword: "",
+      password: "",
+      confirmPassword: "",
+      yearsOfExperience:
+        teacherProfileData.years_of_experience || "",
+      qualification:
+        teacherProfileData.qualification || "",
+      expertises: teacherProfileData.bio || "",
+      subjects:
+        teacherProfileData.subjects || [],
+      image:
+        teacherProfileData.profile_image || "",
+    });
+  }
+
+  setPendingPhoto(null);
+  setSelectedImageFile(null);
+  setIsEditing(false);
+};
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
     setIsEditing(false);
   };
+
+  const handlePasswordUpdate = async () => {
+  const { currentPassword, password, confirmPassword } = formik.values;
+
+  if (!currentPassword || !password || !confirmPassword) {
+    toast.error("Please fill all password fields", {
+      position: "bottom-right",
+    });
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    toast.error("Passwords do not match", {
+      position: "bottom-right",
+    });
+    return;
+  }
+
+  const passwordValid = passwordRules.every((rule) =>
+  rule.test(password)
+);
+
+if (!passwordValid) {
+  toast.error(
+    "Password must be 8-12 characters and include uppercase, number, and special character",
+    {
+      position: "bottom-right",
+    }
+  );
+  return;
+}
+
+  try {
+    setIsPasswordSaving(true);
+
+    const response = await updateTeacherPassword({
+      current_password: currentPassword,
+      new_password: password,
+      confirm_password: confirmPassword,
+    });
+
+    toast.success(response.message || "Password updated successfully", {
+      position: "bottom-right",
+    });
+
+    formik.setFieldValue("currentPassword", "");
+    formik.setFieldValue("password", "");
+    formik.setFieldValue("confirmPassword", "");
+  } catch (error: any) {
+    toast.error(
+      error?.response?.data?.detail || "Failed to update password",
+      {
+        position: "bottom-right",
+      }
+    );
+  } finally {
+    setIsPasswordSaving(false);
+  }
+};
 
   const pwValue = formik.values.password;
   const allRulesPassed = passwordRules.every((r) => r.test(pwValue));
@@ -384,6 +571,16 @@ export default function UpdateProfile() {
     "w-[147px] h-[16px] font-poppins text-[12px] font-medium leading-[100%] text-[#238B45] underline";
   const updateLinkCls =
     "w-[138px] h-[16px] font-poppins text-[12px] font-medium leading-[100%] text-[#238B45] underline";
+
+  if (isProfileLoading) {
+  return (
+    <div className="flex-1 flex items-center justify-center min-h-screen bg-[#F5F5F5]">
+      <p className="font-poppins text-gray-600">
+        Loading teacher profile...
+      </p>
+    </div>
+  );
+}
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#F5F5F5]">
@@ -467,7 +664,7 @@ export default function UpdateProfile() {
                 )}
 
                 {/* Submit only appears after upload completes and is pending */}
-                {pendingPhoto && !isUploading && (
+                {/*{pendingPhoto && !isUploading && (
                   <button
                     type="button"
                     onClick={() => {
@@ -480,7 +677,57 @@ export default function UpdateProfile() {
                   >
                     Submit
                   </button>
-                )}
+                )}*/}
+
+                {pendingPhoto && selectedImageFile && !isUploading && (
+  <button
+    type="button"
+    onClick={async () => {
+      if (!selectedImageFile) {
+        toast.error("Please select an image first", {
+          position: "bottom-right",
+        });
+        return;
+      }
+
+      try {
+        setIsUploading(true);
+
+        const updatedProfile = await uploadTeacherProfileImage(
+          selectedImageFile
+        );
+
+        const updatedImageSrc =
+          updatedProfile.profile_image || pendingPhoto || photoSrc;
+
+        setPhotoSrc(updatedImageSrc);
+        setTeacherProfileData(updatedProfile);
+
+        formik.setFieldValue("image", updatedImageSrc);
+
+        setPendingPhoto(null);
+        setSelectedImageFile(null);
+
+        toast.success("Profile photo updated successfully!", {
+          position: "bottom-right",
+        });
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.detail ||
+            "Failed to upload profile image",
+          {
+            position: "bottom-right",
+          }
+        );
+      } finally {
+        setIsUploading(false);
+      }
+    }}
+  >
+    Submit
+  </button>
+)}  
+
               </div>
 
               <input
@@ -497,11 +744,12 @@ export default function UpdateProfile() {
               <div className="flex w-[1018px] items-center justify-between">
                 <h2 className="h-[24px] font-poppins text-[22px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Personal Details</h2>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePasswordUpdate}
                   disabled={!isEditing}
                   className="flex h-[40px] min-w-[118px] items-center justify-center rounded-[8px] bg-[#238B45] px-5 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#036724] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#238B45]"
                 >
-                  Update
+                  Update Password
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
@@ -732,7 +980,7 @@ export default function UpdateProfile() {
                     />
                   </div>
                   <div className="mt-4 flex flex-col gap-4">
-                    {filteredSubjects.map((subject) => {
+                    {/*{filteredSubjects.map((subject) => {
                       const checked = formik.values.subjects.includes(subject);
                       return (
                         <label
@@ -746,7 +994,34 @@ export default function UpdateProfile() {
                           <span className="font-poppins text-[16px] font-semibold text-gray-700">{subject}</span>
                         </label>
                       );
-                    })}
+                    })}*/}
+                    {filteredSubjects.map((subject) => {
+  const checked = formik.values.subjects.includes(
+    subject.name
+  );
+
+  return (
+    <label
+      key={subject.id}
+      onClick={() => toggleSubject(subject.name)}
+      className="w-[348px] h-[20px] flex items-center gap-4 cursor-pointer"
+    >
+      <div className="w-[16px] h-[16px] rounded border-2 flex items-center justify-center shrink-0 bg-white border-[#1a7a4a]">
+        {checked && (
+          <img
+            className="w-2 h-2"
+            src={tick}
+            alt="tick"
+          />
+        )}
+      </div>
+
+      <span className="font-poppins text-[16px] font-semibold text-gray-700">
+        {subject.name}
+      </span>
+    </label>
+  );
+})}
                   </div>
                 </div>
                 {formik.touched.subjects && formik.errors.subjects && (
@@ -811,7 +1086,10 @@ export default function UpdateProfile() {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     className="w-[315px] h-[42px] rounded-[8px] px-3 bg-gray-50 font-poppins text-sm text-gray-800 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                  />
+                    />
+                  {formik.touched.expertises && formik.errors.expertises && (
+                    <p className="text-[11px] text-red-500 mt-1">{formik.errors.expertises}</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -827,11 +1105,12 @@ export default function UpdateProfile() {
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="w-[215px] h-[48px] rounded-[8px] bg-[#238B45] p-3 flex items-center justify-center gap-3 cursor-pointer font-poppins text-[20px] font-semibold leading-[100%] capitalize text-[#FFFFFF] hover:bg-[#036724] active:bg-[#42CE70] transition-colors"
-                >
-                  Save Permissions
-                </button>
+  type="submit"
+  disabled={isProfileSaving}
+  className="w-[215px] h-[48px] rounded-[8px] bg-[#238B45] p-3 flex items-center justify-center gap-3 cursor-pointer font-poppins text-[20px] font-semibold leading-[100%] capitalize text-[#FFFFFF] hover:bg-[#036724] active:bg-[#42CE70] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+>
+  {isProfileSaving ? "Saving..." : "Save Changes"}
+</button>
               </div>
             )}
 
