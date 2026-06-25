@@ -10,7 +10,8 @@ from app.schemas.user_schema import (
     RefreshTokenRequest,
     TokenResponse,
     VerifyForgotPasswordOtpRequest,
-    CreateNewPasswordRequest
+    CreateNewPasswordRequest,
+    RefreshTokenResponse
 )
 from app.services.auth_service import (
     CreateNewPasswordRequest
@@ -37,7 +38,7 @@ def login(
     return login_user(db, payload)
  
  
-@router.post("/refresh", response_model=TokenResponse)
+@router.post("/refresh", response_model=RefreshTokenResponse)
 def refresh(
     payload: RefreshTokenRequest,
     db: Session = Depends(get_db)

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Mail, Lock, EyeOff, Eye, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import AccountBlockedModal from "../components/AccountBlockedModal";
@@ -14,8 +15,11 @@ import type { SocialAuthProvider } from "../services/authService";
 import {
   EMAIL_FORMAT_ERROR,
   PASSWORD_LENGTH_ERROR,
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
   isValidEmailFormat,
   isValidPasswordLength,
+  sanitizePasswordInput,
 } from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const TERMS_OF_USE_CONTENT = [
@@ -32,8 +36,34 @@ const PRIVACY_POLICY_CONTENT = [
   "Reasonable technical and organizational measures are used to protect user information. You should also keep your password secure and avoid sharing account access with others.",
   "You may request support for account or privacy-related questions through the appropriate Alcademy support channel.",
 ];
-const ADMIN_EMAIL = "admin@thestackly.com";
-const ADMIN_PASSWORD = "Stackly@123";
+
+const LOGIN_TOAST_ID = "auth-login-success";
+
+const showLoginToast = () => {
+  toast.success("Logged in successfully", {
+    id: LOGIN_TOAST_ID,
+    duration: 3000,
+  });
+};
+
+const getLoginDisplayName = (response: any) => {
+  return (
+    response?.full_name ||
+    response?.name ||
+    response?.user?.full_name ||
+    response?.user?.name ||
+    ""
+  );
+};
+
+const getLoginEmail = (response: any, fallback: string) => {
+  return (
+    response?.email ||
+    response?.user?.email ||
+    fallback
+  );
+};
+
 const getLoginErrorMessage = (detail: any) => {
   if (Array.isArray(detail)) {
     return detail[0]?.msg || "Validation failed";
@@ -135,6 +165,11 @@ const Login = () => {
       return;
     }
 
+    if (hasRestrictedPasswordChars(password)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
     if (!isValidPasswordLength(password)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
@@ -145,27 +180,9 @@ const Login = () => {
       return;
     }
 
-    if (
-      email.trim().toLowerCase() === ADMIN_EMAIL &&
-      password === ADMIN_PASSWORD
-    ) {
-      localStorage.setItem("access_token", "admin-local-session");
-      localStorage.setItem("refresh_token", "admin-local-session");
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("user_role", "admin");
-      localStorage.setItem("userEmail", ADMIN_EMAIL);
-      navigate("/admin/dashboard");
-      return;
-    }
-
     try {
 
       setLoading(true);
-
-      console.log(
-        "Login Identifier:",
-        identifier
-      );
 
       const response =
         await loginUser(
@@ -183,7 +200,31 @@ const Login = () => {
         response.refresh_token
       );
 
-      navigate("/dashboard");
+      // Store role if returned by API so RoleDashboardRedirect can forward correctly
+      if (response.role_name) {
+        localStorage.setItem("user_role", response.role_name);
+      }
+
+      localStorage.setItem("userEmail", getLoginEmail(response, identifier));
+      localStorage.setItem("userPassword", password);
+
+      const loginDisplayName = getLoginDisplayName(response);
+      if (loginDisplayName) {
+        localStorage.setItem("userName", loginDisplayName);
+      } else {
+        localStorage.removeItem("userName");
+      }
+      showLoginToast();
+
+      if (response.role_name === "admin") {
+        navigate("/admin/users");
+      } else if (response.role_name === "teacher") {
+        navigate("/teacher/dashboard");
+      } else if (response.role_name === "parent") {
+        navigate("/parent/dashboard");
+      } else if (response.role_name === "student") {
+        navigate("/dashboard");
+      }
 
     } catch (error: any) {
 
@@ -233,14 +274,27 @@ const Login = () => {
   };
 
   const handlePasswordChange = (value: string) => {
-    setPassword(value);
+    const sanitizedValue = sanitizePasswordInput(value);
+    setPassword(sanitizedValue);
 
-    if (value && !isValidPasswordLength(value)) {
+    if (hasRestrictedPasswordChars(value)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (sanitizedValue && !isValidPasswordLength(sanitizedValue)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
     }
 
     setPasswordError("");
+  };
+
+  const handlePasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === " " || event.key === ".") {
+      event.preventDefault();
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
   };
 
   return (
@@ -287,15 +341,13 @@ const Login = () => {
                   }}
                   onChange={(e) => handleEmailChange(e.target.value)}
                   required={!phoneNumber}
-                  className={`block w-full pl-10 pr-3 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 ${
-                    emailError
-                      ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
-                      : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
-                  } ${
-                    isEmailDisabled
+                  className={`block w-full pl-10 pr-3 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 ${emailError
+                    ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                    : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
+                    } ${isEmailDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70 cursor-not-allowed'
                       : 'bg-white'
-                  }`}
+                    }`}
                   placeholder="Enter Your Email Address"
                   aria-invalid={Boolean(emailError)}
                   aria-describedby={emailError ? "login-email-error" : undefined}
@@ -352,16 +404,14 @@ const Login = () => {
                   }}
                   enableSearch={true}
                   containerClass="!w-full !h-full"
-                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${
-                    isPhoneDisabled
-                      ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
-                      : '!bg-white'
-                  }`}
-                  buttonClass={`!border-gray-200 !rounded-l-md ${
-                    isPhoneDisabled
-                      ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
-                      : '!bg-gray-50'
-                  }`}
+                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${isPhoneDisabled
+                    ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
+                    : '!bg-white'
+                    }`}
+                  buttonClass={`!border-gray-200 !rounded-l-md ${isPhoneDisabled
+                    ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
+                    : '!bg-gray-50'
+                    }`}
                 />
               </div>
             </div>
@@ -379,11 +429,11 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
-                  className={`block w-full pl-10 pr-10 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.2em] ${
-                    passwordError
+                  onKeyDown={handlePasswordKeyDown}
+                  className={`block w-full pl-10 pr-10 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.2em] ${passwordError
                       ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
                       : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
-                  }`}
+                    }`}
                   placeholder="••••••••"
                 />
                 <button

@@ -75,9 +75,7 @@ const VerifyOTP = () => {
 
         setOtpSent(true);
 
-      } catch (error) {
-
-        console.error(error);
+      } catch {
       }
     };
 

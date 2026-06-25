@@ -48,7 +48,7 @@ const ConfirmRole = () => {
 
       await confirmRole({
         user_id: userId,
-        role: selectedRole,
+        role_id: roleId,
       });
 
       localStorage.setItem('selected_role', selectedRole);

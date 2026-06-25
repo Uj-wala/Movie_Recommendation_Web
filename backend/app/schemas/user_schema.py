@@ -1,15 +1,16 @@
+from datetime import datetime
 import re
 from typing import Optional
  
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, ConfigDict
  
-from app.core.enums import UserRole, SecurityQuestion
+from app.core.enums import SecurityQuestion
  
 PASSWORD_REGEX = re.compile(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
  
  
 PHONE_REGEX = re.compile(r"^[0-9]{10,15}$")
-from app.core.enums import UserRole, SecurityQuestion
+
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -46,9 +47,7 @@ class RegisterRequest(BaseModel):
     password: str
  
     confirm_password: str
- 
-    role: Optional[UserRole] = "student"
- 
+  
     security_question: SecurityQuestion
  
     security_answer: str
@@ -77,9 +76,12 @@ class RegisterRequest(BaseModel):
     @field_validator("country_id")
     @classmethod
     def validate_country_id(cls, value):
-        value = value.strip()
-        if not UUID_REGEX.match(value.lower()):
+        if value is None:
+            return value
+
+        if not UUID_REGEX.match(value):
             raise ValueError("Invalid country ID format")
+
         return value    
  
     @field_validator("phone_number")
@@ -135,21 +137,6 @@ class RegisterRequest(BaseModel):
 
         if any(char.isspace() for char in value):
             raise ValueError("Security answer must not contain spaces")
- 
-        return value
- 
- 
-    @field_validator("role")
-    @classmethod
-    def validate_role(cls, value):
-        allowed = [UserRole.STUDENT, UserRole.TEACHER, UserRole.PARENT]
-        if value not in allowed:
-            raise ValueError("Role must be student, teacher or parent")
- 
-        value = value.strip()
- 
-        if len(value) < 2:
-            raise ValueError("Security answer is too short")
  
         return value
  
@@ -247,7 +234,14 @@ class LogoutRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+    user_id: str
+    role_id: str
+    role_name: str
     token_type: str = "bearer"
+class RefreshTokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    
  
  
 class RefreshTokenRequest(BaseModel):
@@ -370,9 +364,7 @@ class UserResponse(BaseModel):
     email: Optional[str]
  
     phone_number: Optional[str]
- 
-    role: UserRole
- 
+  
     is_verified: bool
  
     profile_completed: bool
@@ -424,7 +416,7 @@ class ConfirmRoleRequest(BaseModel):
  
     user_id: str
  
-    role: UserRole
+    role_id: str
  
     @field_validator("user_id")
     @classmethod
@@ -434,12 +426,15 @@ class ConfirmRoleRequest(BaseModel):
             raise ValueError("Invalid user ID format")
         return value
  
-    @field_validator("role")
+    @field_validator("role_id")
     @classmethod
-    def validate_role(cls, value):
-        allowed = [UserRole.STUDENT, UserRole.TEACHER, UserRole.PARENT]
-        if value not in allowed:
-            raise ValueError("Role must be student, teacher or parent")
+    def validate_role_id(cls, value):
+
+        value = value.strip()
+
+        if not UUID_REGEX.match(value.lower()):
+            raise ValueError("Invalid role ID format")
+
         return value
  
  
@@ -449,7 +444,8 @@ class ConfirmRoleResponse(BaseModel):
  
     user_id: str
  
-    role: str
+    role_id: str
+    registration_number: str
  
  
 class StudentDetailsRequest(BaseModel):
@@ -533,16 +529,30 @@ class StudentDetailsResponse(BaseModel):
  
     user_id: str
 
-    student_id: str
- 
+    student_registration_number: str
+    
+REGISTRATION_NUMBER_REGEX = re.compile(
+    r"^STU-\d{4}-\d{6}$"
+)     
  
 class ParentVerificationRequest(BaseModel):
  
     user_id: str
  
-   
- 
-    student_reference_id: str
+    student_registration_number: str
+
+    @field_validator("student_registration_number")
+    @classmethod
+    def validate_student_registration_number(cls, value):
+        value = value.strip().upper()
+
+        if not REGISTRATION_NUMBER_REGEX.match(value):
+            current_year = datetime.now().year
+            raise ValueError(
+                f"Invalid student registration number format. Expected: STU-{current_year}-000001"
+            )
+
+        return value
  
     @field_validator("user_id")
     @classmethod
@@ -552,18 +562,6 @@ class ParentVerificationRequest(BaseModel):
             raise ValueError("Invalid user ID format")
         return value
  
-   
- 
-    @field_validator("student_reference_id")
-    @classmethod
-    def validate_student_reference_id(cls, value):
-        value = value.strip()
-        if not value:
-            raise ValueError("Student ID is required")
-        if not UUID_REGEX.match(value.lower()):
-            raise ValueError("Invalid student reference ID format")
-        return value
- 
  
 class ParentVerificationResponse(BaseModel):
  
@@ -571,8 +569,6 @@ class ParentVerificationResponse(BaseModel):
  
     user_id: str
 
-    parent_id: str
- 
- 
+    parent_registration_number: str
 
  

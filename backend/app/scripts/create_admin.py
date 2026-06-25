@@ -4,7 +4,6 @@ from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.core.security import hash_security_answer
 from app.core.enums import (
-    UserRole,
     SecurityQuestion,
 )
 
@@ -35,7 +34,7 @@ def create_admin():
             phone_number="9999999999",
             country_id=country.id,
             password_hash=hash_password("Admin@123"),
-            role=UserRole.ADMIN,
+            role_id="4c2ce4bc-09d3-4630-9bb8-df3604784dbf",
             security_question=(SecurityQuestion.FAVORITE_COUNTRY),
             security_answer_hash=hash_security_answer("India"),
             is_verified=True,

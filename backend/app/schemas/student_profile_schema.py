@@ -1,50 +1,122 @@
+from uuid import UUID
+
 from pydantic import (
     BaseModel,
-    field_validator
+    ConfigDict,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
+
+from app.core.enums import (
+    GradeLevel,
+    LearningInterest,
+    LearningStyle,
 )
 
 
-class StudentProfileCreateRequest(BaseModel):
+class StudentProfileUpdate(BaseModel):
+    """Request body for PATCH /student/profile."""
 
-    grade: str
+    full_name: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=100,
+    )
 
-    school_name: str
+    grade: GradeLevel | None = None
 
-    workplace: str | None = None
+    school_name: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=255,
+    )
 
-    @field_validator("grade")
+    learning_interests: list[LearningInterest] | None = Field(
+        default=None,
+        max_length=5,
+    )
+
+    preferred_learning_style: LearningStyle | None = None
+
+    @field_validator("full_name", "school_name")
     @classmethod
-    def validate_grade(cls, value):
+    def normalize_text(
+        cls,
+        value: str | None,
+    ) -> str | None:
+        if value is None:
+            return None
 
-        value = value.strip()
+        return " ".join(value.split())
 
-        if not value:
+    @field_validator("learning_interests")
+    @classmethod
+    def remove_duplicate_interests(
+        cls,
+        values: list[LearningInterest] | None,
+    ) -> list[LearningInterest] | None:
+        if values is None:
+            return None
+
+        return list(dict.fromkeys(values))
+
+    @model_validator(mode="after")
+    def validate_at_least_one_field(self):
+        if not self.model_fields_set:
             raise ValueError(
-                "Grade is required"
+                "At least one profile field must be provided"
             )
 
-        return value
-
-    @field_validator("school_name")
-    @classmethod
-    def validate_school_name(cls, value):
-
-        value = value.strip()
-
-        if len(value) < 2:
-            raise ValueError(
-                "Invalid school name"
-            )
-
-        return value
+        return self
 
 
 class StudentProfileResponse(BaseModel):
+    """Response for profile view, update, and image upload."""
 
-    id: str
+    id: UUID
+    full_name: str
+    email: EmailStr | None = None
+    grade: GradeLevel
+    school_name: str | None = None
 
-    grade: str
+    learning_interests: list[LearningInterest] = Field(
+        default_factory=list
+    )
 
-    school_name: str
+    preferred_learning_style: LearningStyle | None = None
+    profile_image: str | None = None
 
-    workplace: str | None
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class StudentProfileImageResponse(BaseModel):
+    message: str
+    profile_image: str
+
+
+class StudentDashboardResponse(BaseModel):
+    full_name: str
+    grade: GradeLevel
+
+    learning_interests: list[LearningInterest] = Field(
+        default_factory=list
+    )
+
+    pending_tasks: int = Field(
+        default=0,
+        ge=0,
+    )
+
+    ongoing_tasks: int = Field(
+        default=0,
+        ge=0,
+    )
+
+    completed_tasks: int = Field(
+        default=0,
+        ge=0,
+    )

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 import random
  
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Query, status
 from sqlalchemy.orm import Session
 
  
@@ -135,7 +135,7 @@ from app.core.enums import OTPType, OTPChannel
 from app.services.password_days_validate import check_password_reset_policy
 import asyncio
 from app.models.user_model import User
-
+from app.models.role_model import Role
 # client = Client(
    # settings.TWILIO_ACCOUNT_SID,
    # settings.TWILIO_AUTH_TOKEN
@@ -211,7 +211,9 @@ def login_user(
         db,
         payload.email_or_phone
     )
-
+    if user and user.role_id:
+        role = db.query(Role).filter(Role.id == user.role_id).first()
+        
     if not user:
         raise HTTPException(
             status_code=
@@ -321,9 +323,11 @@ def login_user(
         "access_token":
         create_access_token(
             user.id,
-            user.role
+            user.role_id
         ),
-
+        "user_id":user.id,
+        "role_id":user.role_id or None,
+        "role_name":role.name if user.role_id else None,
         "refresh_token":
         refresh_token,
 
@@ -391,7 +395,7 @@ def refresh_tokens(db: Session, payload: RefreshTokenRequest):
     db.commit()
  
     return {
-        "access_token": create_access_token(user.id, user.role),
+        "access_token": create_access_token(user.id, user.role_id),
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
     }

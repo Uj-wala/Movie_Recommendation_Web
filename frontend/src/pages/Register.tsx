@@ -6,7 +6,7 @@ import Logo from "../components/Logo";
 import LegalModal from "../components/LegalModal";
 import _PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
- 
+
 import {
   emailRegistration,
   phoneRegistration,
@@ -17,11 +17,14 @@ import {
   EMAIL_FORMAT_ERROR,
   PASSWORD_COMPLEXITY_ERROR,
   PASSWORD_LENGTH_ERROR,
+  PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasRestrictedPasswordChars,
   isValidEmailFormat,
   isValidPasswordComplexity,
   isValidPasswordLength,
+  sanitizePasswordInput,
 } from "../utils/validation";
- 
+
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const FULL_NAME_MAX_LENGTH = 24;
 const PASSWORD_MAX_LENGTH = 12;
@@ -49,14 +52,13 @@ const INITIAL_REGISTRATION_FORM_DRAFT: RegistrationFormDraft = {
   agreeToTerms: false,
 };
 const REGISTRATION_FORM_DRAFT_KEY = "registration_form_draft";
-const ROLE_SELECTION_STORAGE_KEYS = ["selected_role", "selected_role_id"];
 const isRegistrationType = (value: string | null): value is "email" | "phone" =>
   value === "email" || value === "phone";
 const getSavedRegistrationDraft = (): RegistrationFormDraft => {
   try {
     const savedDraft = sessionStorage.getItem(REGISTRATION_FORM_DRAFT_KEY);
     const storedRegistrationType = localStorage.getItem("registration_type");
- 
+
     if (!savedDraft) {
       return {
         ...INITIAL_REGISTRATION_FORM_DRAFT,
@@ -65,7 +67,7 @@ const getSavedRegistrationDraft = (): RegistrationFormDraft => {
           : INITIAL_REGISTRATION_FORM_DRAFT.registrationType,
       };
     }
- 
+
     return {
       ...INITIAL_REGISTRATION_FORM_DRAFT,
       ...JSON.parse(savedDraft),
@@ -85,23 +87,17 @@ const clearRegistrationDraft = () => {
   registrationFormDraft = { ...INITIAL_REGISTRATION_FORM_DRAFT };
   sessionStorage.removeItem(REGISTRATION_FORM_DRAFT_KEY);
 };
-const clearRoleSelection = () => {
-  ROLE_SELECTION_STORAGE_KEYS.forEach((key) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
-  });
-};
 let registrationFormDraft: RegistrationFormDraft = getSavedRegistrationDraft();
 const hasRegistrationDraftValues = () =>
   Boolean(
     registrationFormDraft.phoneNumber ||
-      registrationFormDraft.fullName ||
-      registrationFormDraft.email ||
-      registrationFormDraft.password ||
-      registrationFormDraft.confirmPassword ||
-      registrationFormDraft.securityQuestion ||
-      registrationFormDraft.securityAnswer ||
-      registrationFormDraft.agreeToTerms
+    registrationFormDraft.fullName ||
+    registrationFormDraft.email ||
+    registrationFormDraft.password ||
+    registrationFormDraft.confirmPassword ||
+    registrationFormDraft.securityQuestion ||
+    registrationFormDraft.securityAnswer ||
+    registrationFormDraft.agreeToTerms
   );
 const TERMS_OF_USE_CONTENT = [
   "By creating an AIcademy account, you agree to use the platform responsibly and only for lawful educational purposes. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.",
@@ -117,7 +113,7 @@ const PRIVACY_POLICY_CONTENT = [
   "Reasonable technical and organizational measures are used to protect user information. You should also keep your password secure and avoid sharing account access with others.",
   "You may request support for account or privacy-related questions through the appropriate AIcademy support channel.",
 ];
- 
+
 const Register = () => {
   const location = useLocation();
   const shouldRestoreRegistrationDraft =
@@ -135,7 +131,7 @@ const Register = () => {
   const [registrationType, setRegistrationType] = useState<"email" | "phone">(
     defaultRegistrationType
   );
- 
+
   const [phoneNumber, setPhoneNumber] = useState(initialRegistrationDraft.phoneNumber);
   const [fullName, setFullName] = useState(initialRegistrationDraft.fullName);
   const [fullNameError, setFullNameError] = useState("");
@@ -162,26 +158,37 @@ const Register = () => {
   >(null);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
- 
+
   const navigate = useNavigate();
- 
+
   const blockClipboardAction = (e: React.SyntheticEvent<HTMLInputElement>) => {
     e.preventDefault();
   };
- 
+
   const blockClipboardShortcut = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if ((e.ctrlKey || e.metaKey) && ["c", "x", "v"].includes(e.key.toLowerCase())) {
       e.preventDefault();
     }
   };
- 
+
+  const blockRestrictedPasswordKey = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    setError: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    blockClipboardShortcut(e);
+
+    if (e.key === " " || e.key === ".") {
+      e.preventDefault();
+      setError(PASSWORD_RESTRICTED_CHAR_ERROR);
+    }
+  };
+
   useEffect(() => {
     if (!shouldRestoreRegistrationDraft) {
       clearRegistrationDraft();
-      clearRoleSelection();
     }
   }, [shouldRestoreRegistrationDraft]);
- 
+
   useEffect(() => {
     saveRegistrationDraft({
       registrationType,
@@ -205,11 +212,11 @@ const Register = () => {
     securityAnswer,
     agreeToTerms,
   ]);
- 
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError("");
- 
+
     if (
       !fullName ||
       (registrationType === "phone" ? !phoneNumber : !email) ||
@@ -221,53 +228,63 @@ const Register = () => {
       setFormError("Please fill all required fields");
       return;
     }
- 
+
     if (!agreeToTerms) {
       setFormError("Please agree to terms and privacy policy");
       return;
     }
- 
+
     if (fullName.length > FULL_NAME_MAX_LENGTH) {
       setFullNameError(`Full Name cannot exceed ${FULL_NAME_MAX_LENGTH} characters`);
       return;
     }
- 
+
     if (registrationType === "email" && email.trim() && !isValidEmailFormat(email)) {
       setEmailError(EMAIL_FORMAT_ERROR);
       return;
     }
- 
+
+    if (hasRestrictedPasswordChars(password)) {
+      setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (hasRestrictedPasswordChars(confirmPassword)) {
+      setConfirmPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
     if (!isValidPasswordLength(password)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
     }
- 
+
     if (!isValidPasswordComplexity(password)) {
       setPasswordError(PASSWORD_COMPLEXITY_ERROR);
       return;
     }
- 
+
     if (!isValidPasswordLength(confirmPassword)) {
       setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
       return;
     }
- 
+
     if (password !== confirmPassword) {
       setFormError("Passwords do not match");
       return;
     }
- 
+
     if (securityAnswer.length > SECURITY_ANSWER_MAX_LENGTH) {
       setSecurityAnswerError(
         `Security answer cannot exceed ${SECURITY_ANSWER_MAX_LENGTH} characters`
       );
       return;
     }
- 
+
     const formattedPhone = phoneNumber.startsWith("+")
       ? phoneNumber
       : `+${phoneNumber}`;
- 
+
     const payload: PhoneRegistrationData = {
       full_name: fullName,
       ...(registrationType === "phone"
@@ -280,7 +297,7 @@ const Register = () => {
       // role_id: "student",
       agree_to_terms: agreeToTerms,
     };
- 
+
     try {
       saveRegistrationDraft({
         registrationType,
@@ -293,34 +310,33 @@ const Register = () => {
         securityAnswer,
         agreeToTerms,
       });
- 
+
       setLoading(true);
- 
+
       const response =
         registrationType === "phone"
           ? await phoneRegistration(payload)
           : await emailRegistration(payload);
-      console.log("Registration response:", response);
- 
+
       const registeredUser = response?.data || response;
       const userId = registeredUser?.user_id || registeredUser?.id;
       const registeredPhone = registeredUser?.phone_number || formattedPhone;
       const registeredEmail = registeredUser?.email || email;
- 
+
       if (userId) {
         localStorage.setItem("user_id", String(userId));
       }
- 
+
       if (registrationType === "phone") {
         localStorage.setItem("phone_number", registeredPhone);
       } else {
         localStorage.setItem("email", registeredEmail);
       }
- 
+
+      localStorage.setItem("userPassword", password);
       localStorage.setItem("registration_type", registrationType);
       clearRegistrationDraft();
-      clearRoleSelection();
- 
+
       navigate("/select-role", {
         state: {
           successMessage: "Registration successful. Please select your role.",
@@ -331,13 +347,14 @@ const Register = () => {
         },
       });
     } catch (error: any) {
-      console.error(error);
       setFormError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
   };
- 
+
+  const inlineErrorClass = "mt-1 text-[11px] text-red-500";
+
   return (
     <>
       <SplitScreenLayout>
@@ -348,362 +365,368 @@ const Register = () => {
         >
           <X className="w-5 h-5 text-gray-700" />
         </button>
- 
-      <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-10 justify-between w-full">
-          <button
-            type="button"
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "email"
-              ? "border-brand-green text-brand-green"
-              : "border-transparent text-gray-900"
-              }`}
-            onClick={() => setRegistrationType("email")}
-          >
-            Email Registration
-          </button>
- 
-          <button
-            type="button"
-            className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "phone"
-              ? "border-brand-green text-brand-green"
-              : "border-transparent text-gray-900"
-              }`}
-            onClick={() => setRegistrationType("phone")}
-          >
-            Phone Registration
-          </button>
-        </div>
- 
-        <div className="flex flex-col items-center mb-8">
-          <Logo />
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 mt-6 text-center">
-            Create your Account
-          </h1>
-          <p className="text-gray-500 text-xs sm:text-sm text-center">
-            Create your AIcademy account to start learning
-          </p>
-        </div>
- 
-        <form className="w-full" onSubmit={handleSubmit} noValidate>
-          {formError && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm font-medium text-red-600">{formError}</p>
-            </div>
-          )}
 
-          <div className="mb-4">
-            <label className="block text-xs font-bold text-gray-700 mb-2">
-              Full Name
-            </label>
- 
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-4 w-4 text-gray-400" />
+        <div className="w-full max-w-md pt-4 sm:pt-8 pb-12">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-10 justify-between w-full">
+            <button
+              type="button"
+              className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "email"
+                ? "border-brand-green text-brand-green"
+                : "border-transparent text-gray-900"
+                }`}
+              onClick={() => setRegistrationType("email")}
+            >
+              Email Registration
+            </button>
+
+            <button
+              type="button"
+              className={`pb-4 text-sm font-bold border-b-2 transition-colors ${registrationType === "phone"
+                ? "border-brand-green text-brand-green"
+                : "border-transparent text-gray-900"
+                }`}
+              onClick={() => setRegistrationType("phone")}
+            >
+              Phone Registration
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center mb-8">
+            <Logo />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 mt-6 text-center">
+              Create your Account
+            </h1>
+            <p className="text-gray-500 text-xs sm:text-sm text-center">
+              Create your AIcademy account to start learning
+            </p>
+          </div>
+
+          <form className="w-full" onSubmit={handleSubmit} noValidate>
+            {formError && (
+              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-[11px] text-red-500">{formError}</p>
               </div>
- 
+            )}
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                Full Name
+              </label>
+
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-gray-400" />
+                </div>
+
+                <input
+                  type="text"
+                  required
+                  value={fullName}
+                  onCopy={blockClipboardAction}
+                  onCut={blockClipboardAction}
+                  onPaste={blockClipboardAction}
+                  onContextMenu={blockClipboardAction}
+                  onKeyDown={blockClipboardShortcut}
+                  onChange={(e) => {
+                    const sanitizedName = e.target.value.replace(/[^a-zA-Z\s\'.-]/g, "");
+
+                    if (sanitizedName.length > FULL_NAME_MAX_LENGTH) {
+                      setFullNameError(`Full Name cannot exceed ${FULL_NAME_MAX_LENGTH} characters`);
+                    } else {
+                      setFullNameError("");
+                    }
+
+                    setFullName(sanitizedName.slice(0, FULL_NAME_MAX_LENGTH));
+                  }}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+                  placeholder="Enter the full name "
+                />
+              </div>
+              {fullNameError && (
+                <p className={inlineErrorClass}>
+                  {fullNameError}
+                </p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                {registrationType === "email" ? "Email Address" : "Phone Number"}
+              </label>
+
+              <div className="relative">
+                {registrationType === "email" ? (
+                  <>
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                    </div>
+
+                    <input
+                      type="email"
+                      required={registrationType === 'email'}
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (!e.target.value.trim() || isValidEmailFormat(e.target.value)) {
+                          setEmailError("");
+                        }
+                      }}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+                      placeholder="Enter Your Email Address"
+                    />
+                    {emailError && (
+                      <p className={inlineErrorClass}>
+                        {emailError}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-[46px]">
+                    <PhoneInput
+                      country="in"
+                      value={phoneNumber}
+                      onChange={(phone: string) => setPhoneNumber(phone)}
+                      enableSearch={true}
+                      countryCodeEditable={false}
+                      disableCountryCode={false}
+                      disableDropdown={false}
+                      inputProps={{
+                        name: "phone",
+                        required: true,
+                      }}
+                      containerClass="!w-full !h-full"
+                      inputClass="!w-full !h-full !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
+                      buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
+
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2">
+                  Password
+                </label>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onCopy={blockClipboardAction}
+                    onCut={blockClipboardAction}
+                    onPaste={blockClipboardAction}
+                    onContextMenu={blockClipboardAction}
+                    onKeyDown={(e) => blockRestrictedPasswordKey(e, setPasswordError)}
+                    onChange={(e) => {
+                      const rawPassword = e.target.value;
+                      const nextPassword = sanitizePasswordInput(rawPassword);
+
+                      if (hasRestrictedPasswordChars(rawPassword)) {
+                        setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+                      } else if (nextPassword.length > PASSWORD_MAX_LENGTH) {
+                        setPasswordError(PASSWORD_LENGTH_ERROR);
+                      } else {
+                        setPasswordError("");
+                      }
+
+                      setPassword(nextPassword.slice(0, PASSWORD_MAX_LENGTH));
+                    }}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
+                    placeholder="••••••••"
+                  />
+
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowPassword((current) => !current)}
+                  >
+                    {showPassword ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className={inlineErrorClass}>
+                    {passwordError}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-gray-400" />
+                  </div>
+
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onCopy={blockClipboardAction}
+                    onCut={blockClipboardAction}
+                    onPaste={blockClipboardAction}
+                    onContextMenu={blockClipboardAction}
+                    onKeyDown={(e) => blockRestrictedPasswordKey(e, setConfirmPasswordError)}
+                    onChange={(e) => {
+                      const rawConfirmPassword = e.target.value;
+                      const nextConfirmPassword = sanitizePasswordInput(rawConfirmPassword);
+
+                      if (hasRestrictedPasswordChars(rawConfirmPassword)) {
+                        setConfirmPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+                      } else if (nextConfirmPassword.length > PASSWORD_MAX_LENGTH) {
+                        setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
+                      } else {
+                        setConfirmPasswordError("");
+                      }
+
+                      setConfirmPassword(
+                        nextConfirmPassword.slice(0, PASSWORD_MAX_LENGTH)
+                      );
+                    }}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
+                    placeholder="••••••••"
+                  />
+
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    onClick={() => setShowConfirmPassword((current) => !current)}
+                  >
+                    {showConfirmPassword ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {confirmPasswordError && (
+                  <p className={inlineErrorClass}>
+                    {confirmPasswordError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                Security Question
+              </label>
+
+              <div className="relative">
+                <select required value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
+                  <option value="">Select a Security Question</option>
+                  <option value="favorite_food">What is your Favorite Food?</option>
+                  <option value="favorite_country">What is your Favorite Country?</option>
+                  <option value="favorite_sport">What is your Favorite Sport?</option>
+                </select>
+
+                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6">
               <input
                 type="text"
                 required
-                value={fullName}
-                onCopy={blockClipboardAction}
-                onCut={blockClipboardAction}
-                onPaste={blockClipboardAction}
-                onContextMenu={blockClipboardAction}
-                onKeyDown={blockClipboardShortcut}
+                value={securityAnswer}
                 onChange={(e) => {
-                  const sanitizedName = e.target.value.replace(/[^a-zA-Z\s\'.-]/g, "");
- 
-                  if (sanitizedName.length > FULL_NAME_MAX_LENGTH) {
-                    setFullNameError(`Full Name cannot exceed ${FULL_NAME_MAX_LENGTH} characters`);
-                  } else {
-                    setFullNameError("");
+                  if (/\s/.test(e.target.value)) {
+                    setSecurityAnswerError("Security answer cannot contain spaces");
                   }
- 
-                  setFullName(sanitizedName.slice(0, FULL_NAME_MAX_LENGTH));
-                }}
-                className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="Enter your Full Name as per Certificate"
-              />
-            </div>
-            {fullNameError && (
-              <p className="mt-1 text-xs font-medium text-red-600">
-                {fullNameError}
-              </p>
-            )}
-          </div>
- 
-          <div className="mb-4">
-            <label className="block text-xs font-bold text-gray-700 mb-2">
-              {registrationType === "email" ? "Email Address" : "Phone Number"}
-            </label>
- 
-            <div className="relative">
-              {registrationType === "email" ? (
-                <>
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                  </div>
- 
-                  <input
-                    type="email"
-                    required={registrationType === 'email'}
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (!e.target.value.trim() || isValidEmailFormat(e.target.value)) {
-                        setEmailError("");
-                      }
-                    }}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                    placeholder="Enter Your Email Address"
-                  />
-                  {emailError && (
-                    <p className="mt-1 text-xs font-medium text-red-600">
-                      {emailError}
-                    </p>
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-[46px]">
-                  <PhoneInput
-                    country="in"
-                    value={phoneNumber}
-                    onChange={(phone: string) => setPhoneNumber(phone)}
-                    enableSearch={true}
-                    countryCodeEditable={false}
-                    disableCountryCode={false}
-                    disableDropdown={false}
-                    inputProps={{
-                      name: "phone",
-                      required: true,
-                    }}
-                    containerClass="!w-full !h-full"
-                    inputClass="!w-full !h-full !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green"
-                    buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
- 
-                  />
-                </div>
-              )}
-            </div>
-          </div>
- 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2">
-                Password
-              </label>
- 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-gray-400" />
-                </div>
- 
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onCopy={blockClipboardAction}
-                  onCut={blockClipboardAction}
-                  onPaste={blockClipboardAction}
-                  onContextMenu={blockClipboardAction}
-                  onKeyDown={blockClipboardShortcut}
-                  onChange={(e) => {
-                    const nextPassword = e.target.value;
- 
-                    if (nextPassword.length > PASSWORD_MAX_LENGTH) {
-                      setPasswordError(PASSWORD_LENGTH_ERROR);
-                    } else {
-                      setPasswordError("");
-                    }
- 
-                    setPassword(nextPassword.slice(0, PASSWORD_MAX_LENGTH));
-                  }}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
-                  placeholder="••••••••"
-                />
- 
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowPassword((current) => !current)}
-                >
-                  {showPassword ? (
-                    <Eye className="w-4 h-4" />
-                  ) : (
-                    <EyeOff className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              {passwordError && (
-                <p className="mt-1 text-xs font-medium text-red-600">
-                  {passwordError}
-                </p>
-              )}
-            </div>
- 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2">
-                Confirm Password
-              </label>
- 
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-4 w-4 text-gray-400" />
-                </div>
- 
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  required
-                  value={confirmPassword}
-                  onCopy={blockClipboardAction}
-                  onCut={blockClipboardAction}
-                  onPaste={blockClipboardAction}
-                  onContextMenu={blockClipboardAction}
-                  onKeyDown={blockClipboardShortcut}
-                  onChange={(e) => {
-                    const nextConfirmPassword = e.target.value;
- 
-                    if (nextConfirmPassword.length > PASSWORD_MAX_LENGTH) {
-                      setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
-                    } else {
-                      setConfirmPasswordError("");
-                    }
- 
-                    setConfirmPassword(
-                      nextConfirmPassword.slice(0, PASSWORD_MAX_LENGTH)
+
+                  const sanitizedAnswer = e.target.value.replace(/\s/g, "");
+
+                  if (sanitizedAnswer.length > SECURITY_ANSWER_MAX_LENGTH) {
+                    setSecurityAnswerError(
+                      `Security answer cannot exceed ${SECURITY_ANSWER_MAX_LENGTH} characters`
                     );
-                  }}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green tracking-[0.2em]"
-                  placeholder="••••••••"
-                />
- 
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowConfirmPassword((current) => !current)}
-                >
-                  {showConfirmPassword ? (
-                    <Eye className="w-4 h-4" />
-                  ) : (
-                    <EyeOff className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              {confirmPasswordError && (
-                <p className="mt-1 text-xs font-medium text-red-600">
-                  {confirmPasswordError}
+                  } else if (!/\s/.test(e.target.value)) {
+                    setSecurityAnswerError("");
+                  }
+
+                  setSecurityAnswer(
+                    sanitizedAnswer.slice(0, SECURITY_ANSWER_MAX_LENGTH)
+                  );
+                }}
+                className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+                placeholder="Enter your answer"
+              />
+              {securityAnswerError && (
+                <p className={inlineErrorClass}>
+                  {securityAnswerError}
                 </p>
               )}
             </div>
-          </div>
- 
-          <div className="mb-4">
-            <label className="block text-xs font-bold text-gray-700 mb-2">
-              Security Question
-            </label>
- 
-            <div className="relative">
-              <select required value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
-                <option value="">Select a Security Question</option>
-                <option value="favorite_food">What is your Favorite Food?</option>
-                <option value="favorite_country">What is your Favorite Country?</option>
-                <option value="favorite_sport">What is your Favorite Sport?</option>
-              </select>
- 
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
-                <ChevronDown className="w-4 h-4" />
-              </div>
+
+            <div className="flex items-center mb-6">
+              <input
+                id="terms"
+                type="checkbox"
+                required
+                checked={agreeToTerms}
+                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"
+              />
+
+              <label htmlFor="terms" className="ml-2 block text-xs text-gray-700">
+                I agree to the{" "}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveLegalModal("terms");
+                  }}
+                  className="text-brand-green underline decoration-brand-green underline-offset-2"
+                >
+                  Terms of use
+                </a>{" "}
+                and our{" "}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveLegalModal("privacy");
+                  }}
+                  className="text-brand-green underline decoration-brand-green underline-offset-2"
+                >
+                  privacy policy.
+                </a>
+              </label>
             </div>
-          </div>
- 
-          <div className="mb-6">
-            <input
-              type="text"
-              required
-              value={securityAnswer}
-              onChange={(e) => {
-                if (/\s/.test(e.target.value)) {
-                  setSecurityAnswerError("Security answer cannot contain spaces");
-                }
- 
-                const sanitizedAnswer = e.target.value.replace(/\s/g, "");
- 
-                if (sanitizedAnswer.length > SECURITY_ANSWER_MAX_LENGTH) {
-                  setSecurityAnswerError(
-                    `Security answer cannot exceed ${SECURITY_ANSWER_MAX_LENGTH} characters`
-                  );
-                } else if (!/\s/.test(e.target.value)) {
-                  setSecurityAnswerError("");
-                }
- 
-                setSecurityAnswer(
-                  sanitizedAnswer.slice(0, SECURITY_ANSWER_MAX_LENGTH)
-                );
-              }}
-              className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-              placeholder="Enter your answer"
-            />
-            {securityAnswerError && (
-              <p className="mt-1 text-xs font-medium text-red-600">
-                {securityAnswerError}
-              </p>
-            )}
-          </div>
- 
-          <div className="flex items-center mb-6">
-            <input
-              id="terms"
-              type="checkbox"
-              required
-              checked={agreeToTerms}
-              onChange={(e) => setAgreeToTerms(e.target.checked)}
-              className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"
-            />
- 
-            <label htmlFor="terms" className="ml-2 block text-xs text-gray-700">
-              I agree to the{" "}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveLegalModal("terms");
-                }}
-                className="text-brand-green underline decoration-brand-green underline-offset-2"
-              >
-                Terms of use
-              </a>{" "}
-              and our{" "}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveLegalModal("privacy");
-                }}
-                className="text-brand-green underline decoration-brand-green underline-offset-2"
-              >
-                privacy policy.
-              </a>
-            </label>
-          </div>
- 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors mb-4 disabled:opacity-50"
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
- 
-          <div className="text-center text-sm font-medium mb-6">
-            <span className="text-gray-900">Already have an account? </span>
-            <Link to="/login" className="text-[#FF6B6B] hover:text-[#ff5252]">
-              Login
-            </Link>
-          </div>
-        </form>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-brand-green hover:bg-brand-green-hover text-white font-bold py-3 px-4 rounded-md transition-colors mb-4 disabled:opacity-50"
+            >
+              {loading ? "Creating Account..." : "Create Account"}
+            </button>
+
+            <div className="text-center text-sm font-medium mb-6">
+              <span className="text-gray-900">Already have an account? </span>
+              <Link to="/login" className="text-[#FF6B6B] hover:text-[#ff5252]">
+                Login
+              </Link>
+            </div>
+          </form>
         </div>
       </SplitScreenLayout>
- 
+
       <LegalModal
         isOpen={activeLegalModal === "terms"}
         title="Terms of Use"
@@ -719,5 +742,5 @@ const Register = () => {
     </>
   );
 };
- 
+
 export default Register;

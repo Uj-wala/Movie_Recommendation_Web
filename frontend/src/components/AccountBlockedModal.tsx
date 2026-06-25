@@ -80,16 +80,10 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
                 setLoading(true);
                 setError("");
 
-                const response =
-                  await verifyBlockedAccount(
-                    identifier,
-                    securityQuestion,
-                    securityAnswer
-                  );
-
-                console.log(
-                  "Verification Success:",
-                  response
+                await verifyBlockedAccount(
+                  identifier,
+                  securityQuestion,
+                  securityAnswer
                 );
 
                 navigate(
