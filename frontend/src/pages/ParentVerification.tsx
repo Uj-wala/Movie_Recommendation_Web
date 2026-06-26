@@ -104,9 +104,13 @@ const ParentVerification = () => {
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
         message={`Your parent verification has been submitted successfully.${parentId ? `\nParent ID: ${parentId}` : ''}`}
+        role={localStorage.getItem("selected_role") || ""}
+        registrationNumber={localStorage.getItem("registration_number") || ""}
         buttonText="Go to Login"
         redirectUrl="/login"
       />
+
+      
     </>
   );
 };

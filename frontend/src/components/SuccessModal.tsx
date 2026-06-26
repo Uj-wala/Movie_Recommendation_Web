@@ -22,6 +22,7 @@ interface SuccessModalProps {
   variant?: "default" | "memberAdded";
   member?: SuccessMember | null;
   onAddAnother?: () => void;
+  role?: string; registrationNumber?: string; 
 }
 
 const SuccessModal: React.FC<SuccessModalProps> = ({
@@ -35,6 +36,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   variant = "default",
   member,
   onAddAnother,
+  role,
+  registrationNumber,
 }) => {
   if (!isOpen) return null;
 
@@ -151,33 +154,56 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-[460px] p-10 relative animate-in fade-in zoom-in duration-200">
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close success message"
-          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-2xl leading-none text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#299555]/40"
-        >
-          &times;
-        </button>
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-[34px] font-bold text-[#333333] mb-2 font-sans tracking-tight">{title}</h2>
-          <p className="text-[#666666] text-[15px] mb-10 whitespace-pre-line break-words">
-            {message}
+  <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-[460px] p-10 relative animate-in fade-in zoom-in duration-200">
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close success message"
+      className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-2xl leading-none text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#299555]/40"
+    >
+      &times;
+    </button>
+
+    <div className="flex flex-col items-center text-center">
+      {/* Title */}
+      <h2 className="text-[34px] font-bold text-[#333333] mb-2 font-sans tracking-tight">
+        {title}
+      </h2>
+
+      {/* Message */}
+      <p className="text-[#666666] text-[15px] whitespace-pre-line break-words">
+        {message}
+      </p>
+
+      {/* Registration Number */}
+      {registrationNumber && (
+        <div className="mt-6 mb-8 text-center">
+          <p className="text-gray-500 text-sm font-medium">
+            {role
+              ? `${role.charAt(0).toUpperCase() + role.slice(1)} Registration Number`
+              : "Registration Number"}
           </p>
 
-          <div className="relative w-[180px] h-[180px] mb-10 flex items-center justify-center">
-            <img
-              src="/Group%201000002268.png"
-              alt="Success Thumbs Up"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          {actionButton}
+          <h3 className="text-2xl font-bold text-[#299555] mt-2">
+            {registrationNumber}
+          </h3>
         </div>
+      )}
+
+      {/* Success Image */}
+      <div className="relative w-[180px] h-[180px] mb-10 flex items-center justify-center">
+        <img
+          src="/Group%201000002268.png"
+          alt="Success Thumbs Up"
+          className="w-full h-full object-contain"
+        />
       </div>
+
+      {/* Button */}
+      {actionButton}
     </div>
+  </div>
+</div>
   );
 };
 

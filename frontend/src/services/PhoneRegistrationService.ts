@@ -106,8 +106,14 @@ export const emailRegistration = async (data: PhoneRegistrationData) => {
   return response.data;
 };
 
-export const confirmRole = async (data: ConfirmRoleData) => {
-  const response = await api.post("/auth/confirm-role", data);
+export const confirmRole = async (
+  data: ConfirmRoleData
+): Promise<ConfirmRoleResponse> => {
+  const response = await api.post<ConfirmRoleResponse>(
+    "/auth/confirm-role",
+    data
+  );
+
   return response.data;
 };
 
@@ -119,6 +125,13 @@ export const resendPhoneOtp = async (phone_number: string) => {
 
   return response.data;
 };
+
+export interface ConfirmRoleResponse {
+  message: string;
+  user_id: string;
+  role_id: string;
+  registration_number: string;
+}
 
 export const resendPhoneOtpWithFallback = async (phone_number: string) => {
   const candidates = getPhoneOtpCandidates(phone_number);

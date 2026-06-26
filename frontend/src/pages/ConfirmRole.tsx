@@ -46,14 +46,29 @@ const ConfirmRole = () => {
         return;
       }
 
-      await confirmRole({
-        user_id: userId,
-        role_id: roleId,
-      });
+      const response = await confirmRole({
+  user_id: userId,
+  role_id: roleId,
+});
+console.log("Confirm Role Response:", response);
+console.log("Registration Number:", response.registration_number);
 
-      localStorage.setItem('selected_role', selectedRole);
-      localStorage.setItem('selected_role_id', roleId);
-      navigate(getNextRoute());
+localStorage.setItem(
+  "registration_number",
+  response.registration_number
+);
+
+localStorage.setItem(
+  "selected_role",
+  selectedRole
+);
+
+localStorage.setItem(
+  "selected_role_id",
+  roleId
+);
+
+navigate(getNextRoute());
     } catch (error: any) {
       setError(getApiErrorMessage(error));
     } finally {

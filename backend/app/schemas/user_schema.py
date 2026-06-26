@@ -344,9 +344,9 @@ class BlockedAccountResetRequest(BaseModel):
                 f"Security answer must be at least {SECURITY_ANSWER_MIN_LENGTH} characters"
             )
 
-        if len(value) > SECURITY_ANSWER_MAX_LENGTH:
+        if len(value) > 10:
             raise ValueError(
-                f"Security answer must not exceed {SECURITY_ANSWER_MAX_LENGTH} characters"
+                f"Security answer must not exceed 10 characters"
             )
 
         if any(char.isspace() for char in value):

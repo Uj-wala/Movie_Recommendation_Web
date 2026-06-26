@@ -3,7 +3,7 @@ import random
  
 from fastapi import HTTPException, Query, status
 from sqlalchemy.orm import Session
-
+ 
  
 from app.core.config import settings
 from app.core.enums import OTPChannel, OTPType
@@ -44,8 +44,8 @@ from app.utils.token_utils import hash_token
  
  
 OTP_EXPIRY_MINUTES = 5
-
-
+ 
+ 
 ACCOUNT_BLOCKED_DETAIL = {
     "title": "Account Blocked",
     "message": "Your account has been temporarily Locked due to multiple failed login attempts. To reset your password, Please answer your security Question",
@@ -101,16 +101,16 @@ class AuthService:
                     status_code=400,
                     detail="Phone number already exists"
                 )
-            
+           
 from datetime import datetime, timezone, timedelta
 import random
 #from twilio.rest import Client
-    
+   
 from datetime import datetime, timezone,timedelta
 import random
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from app.models.otp_verification_model import OTPVerification   
+from app.models.otp_verification_model import OTPVerification  
 from app.core.config import settings
 from app.core.jwt_handler import create_access_token, create_refresh_token, decode_token
 from app.core.security import hash_password, verify_password
@@ -140,7 +140,7 @@ from app.models.role_model import Role
    # settings.TWILIO_ACCOUNT_SID,
    # settings.TWILIO_AUTH_TOKEN
 #)
-
+ 
 #def verify_email_otp(email: str, otp: str):
  #   verification_check = client.verify.v2.services(
   #      settings.TWILIO_VERIFY_SERVICE_SID
@@ -148,7 +148,7 @@ from app.models.role_model import Role
     #    to=email,
      #   code=otp
     #)
-
+ 
     #return verification_check.status == "approved"
  
 """user = User(
@@ -213,7 +213,7 @@ def login_user(
     )
     if user and user.role_id:
         role = db.query(Role).filter(Role.id == user.role_id).first()
-        
+       
     if not user:
         raise HTTPException(
             status_code=
@@ -221,13 +221,13 @@ def login_user(
             detail=
             "Invalid credentials"
         )
-
+ 
     blocked_until = getattr(
         user,
         "blocked_until",
         None
     )
-
+ 
     # Blocked user check
     if (
         user.is_blocked
@@ -240,7 +240,7 @@ def login_user(
         )
     ):
         raise_account_blocked_error()
-
+ 
     # Active check
     if not user.is_active:
         raise HTTPException(
@@ -249,7 +249,7 @@ def login_user(
             detail=
             "User is inactive"
         )
-
+ 
     # Verification check
     if not user.is_verified:
         raise HTTPException(
@@ -258,7 +258,7 @@ def login_user(
             detail=
             "User is not verified"
         )
-    
+   
     check_password_reset_policy(
         user=user,
         db=db
@@ -269,44 +269,44 @@ def login_user(
         user.password_hash
     ):
         user.failed_login_attempts += 1
-
+ 
         if (
             user.failed_login_attempts
             >= settings
             .MAX_LOGIN_ATTEMPTS
         ):
             user.is_blocked = True
-
+ 
             db.commit()
-
+ 
             raise_account_blocked_error()
-
+ 
         db.commit()
-
+ 
         raise HTTPException(
             status_code=
             status.HTTP_401_UNAUTHORIZED,
             detail=
             "Invalid credentials"
         )
-
+ 
     # Reset failed attempts
     user.failed_login_attempts = 0
-
+ 
     # Update login timestamp
     user.last_login_at = (
         datetime.now(
             timezone.utc
         )
     )
-
+ 
     # Generate refresh token
     refresh_token, expires_at = (
         create_refresh_token(
             user.id
         )
     )
-
+ 
     create_refresh_token_record(
         db=db,
         user_id=user.id,
@@ -316,9 +316,9 @@ def login_user(
         expires_at=
         expires_at
     )
-
+ 
     db.commit()
-
+ 
     return {
         "access_token":
         create_access_token(
@@ -330,7 +330,7 @@ def login_user(
         "role_name":role.name if user.role_id else None,
         "refresh_token":
         refresh_token,
-
+ 
         "token_type":
         "bearer",
     }
@@ -422,12 +422,12 @@ def forgot_password(db: Session, payload):
  
     if payload.phone_number:
         phone = payload.phone_number
-
+ 
     if not phone.startswith("+"):
         phone = f"+{phone}"
-
+ 
     send_sms_otp(phone)
-
+ 
     return {
         "message": "OTP sent via SMS"
     }
@@ -444,7 +444,7 @@ def verify_forgot_password_otp(db: Session, payload):
     if payload.email:
  
         now = datetime.now(timezone.utc)
-
+ 
         expired_otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.channel == OTPChannel.EMAIL,
@@ -452,12 +452,12 @@ def verify_forgot_password_otp(db: Session, payload):
             OTPVerification.is_used == False,
             OTPVerification.expires_at <= now
         ).order_by(OTPVerification.created_at.desc()).first()
-
+ 
         if expired_otp_record and expired_otp_record.otp_code == payload.otp:
             expired_otp_record.is_used = True
             db.commit()
             raise HTTPException(status_code=400, detail="OTP Expired")
-
+ 
         otp_record = db.query(OTPVerification).filter(
             OTPVerification.user_id == user.id,
             OTPVerification.channel == OTPChannel.EMAIL,
@@ -479,35 +479,35 @@ def verify_forgot_password_otp(db: Session, payload):
             "message": "Email OTP verified successfully",
             "verified": True
         }
-
+ 
     if payload.phone_number:
         phone = payload.phone_number
-
+ 
         if not phone.startswith("+"):
             phone = f"+{phone}"
-
+ 
         if is_sms_otp_expired(phone, payload.otp):
             raise HTTPException(
                 status_code=400,
                 detail="OTP Expired"
             )
-
+ 
         verified = verify_sms_otp(
             phone,
             payload.otp
         )
-
+ 
         if not verified:
             raise HTTPException(
                 status_code=400,
                 detail="Invalid OTP"
             )
-
+ 
         return {
             "message": "SMS OTP verified successfully",
             "verified": True
         }
-
+ 
  
 def create_new_password(db: Session, payload):
  
@@ -522,13 +522,19 @@ def create_new_password(db: Session, payload):
             detail="User not found"
         )
  
+    if verify_password(payload.new_password, user.password_hash):
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot use your current password. Please choose a different password."
+        )
+ 
     user.password_hash = hash_password(
         payload.new_password
     )
-
+ 
     user.failed_login_attempts = 0
     user.is_blocked = False
-
+ 
     if hasattr(user, "blocked_until"):
         user.blocked_until = None
  
@@ -590,4 +596,6 @@ def logout_user(db: Session, payload: LogoutRequest):
     return {
         "message": "Logged out successfully"
     }
+ 
+ 
  

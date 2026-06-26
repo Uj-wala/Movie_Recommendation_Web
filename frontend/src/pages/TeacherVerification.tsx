@@ -226,13 +226,15 @@ const TeacherVerification = () => {
       </SplitScreenLayout>
 
       <SuccessModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Registration Successful!!!"
-        message={`You can now access the platform${teacherId ? `\nTeacher ID: ${teacherId}` : ''}`}
-        buttonText="Go to Login"
-        redirectUrl="/login"
-      />
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  title="Registration Successful!!!"
+  message="You can now access the platform"
+  role={localStorage.getItem("selected_role") || ""}
+  registrationNumber={localStorage.getItem("registration_number") || ""}
+  buttonText="Go to Login"
+  redirectUrl="/login"
+/>
     </>
   );
 };

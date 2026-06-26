@@ -3,16 +3,27 @@ import SplitScreenLayout from '../components/SplitScreenLayout';
 
 const SuccessPage = () => {
   const location = useLocation();
-  const state = location.state as {
-    title?: string;
-    message?: string;
-    buttonText?: string;
-    redirectUrl?: string;
-  } | null;
-  const title = state?.title || 'Registration Successful!!!';
-  const message = state?.message || 'Your Student ID will be generated shortly.';
-  const buttonText = state?.buttonText || 'Go to Login';
-  const redirectUrl = state?.redirectUrl || '/login';
+const state = location.state as {
+  title?: string;
+  message?: string;
+  buttonText?: string;
+  redirectUrl?: string;
+  role?: string;
+  registrationNumber?: string;
+} | null;
+
+const title = state?.title || "Registration Successful!!!";
+const message =
+  state?.message || "Your profile has been submitted successfully.";
+const buttonText = state?.buttonText || "Go to Login";
+const redirectUrl = state?.redirectUrl || "/login";
+
+const role =
+  state?.role ||
+  localStorage.getItem("selected_role");
+const registrationNumber =
+  state?.registrationNumber ||
+  localStorage.getItem("registration_number");
 
   return (
     <>
@@ -28,6 +39,18 @@ const SuccessPage = () => {
             <p className="text-[#666666] text-[15px] mb-10 whitespace-pre-line break-words">
               {message}
             </p>
+
+            {registrationNumber && (
+  <div className="mb-6 text-center">
+    <p className="text-gray-500 text-sm">
+      {role ? `${role} Registration Number` : "Registration Number"}
+    </p>
+
+    <h3 className="text-2xl font-bold text-[#299555] mt-2">
+      {registrationNumber}
+    </h3>
+  </div>
+)}
 
             <div className="relative w-[180px] h-[180px] mb-10 flex items-center justify-center">
               <img

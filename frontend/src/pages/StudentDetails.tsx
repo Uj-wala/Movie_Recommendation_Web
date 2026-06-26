@@ -135,7 +135,6 @@ const StudentDetails = () => {
         work_place: workPlace.trim() || null,
         school_name: schoolName.trim() || null,
       });
-
       setStudentId(response.student_id);
       setIsModalOpen(true);
 
@@ -309,6 +308,8 @@ const StudentDetails = () => {
         onClose={() => setIsModalOpen(false)}
         title="Registration Successful!!!"
         message={`Your student profile has been submitted successfully.${studentId ? `\nStudent ID: ${studentId}` : ''}`}
+        role={localStorage.getItem("selected_role") || ""}
+        registrationNumber={localStorage.getItem("registration_number") || ""}
         buttonText="Go to Login"
         redirectUrl="/login"
       />
