@@ -178,6 +178,12 @@ const VerifyOTP = () => {
           Enter your received OTP to reset your Password
         </p>
 
+        <div className="w-full mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-sm font-medium text-red-700">
+            Important: Once your account is verified, you cannot go back to the previous page.
+          </p>
+        </div>
+
         <form className="w-full text-left" onSubmit={handleVerifyOtp}>
           <label className="block text-base font-bold text-[#1a123f] mb-4">
             Enter OTP Received
