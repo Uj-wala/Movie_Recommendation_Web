@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const SocialAuthCallback = () => {
   const navigate = useNavigate();
@@ -30,6 +31,16 @@ const SocialAuthCallback = () => {
       localStorage.setItem("refresh_token", refreshToken);
     }
 
+    // Store role if backend passes it in callback query params
+    const role = searchParams.get("role");
+    if (role) {
+      localStorage.setItem("user_role", role.toLowerCase());
+    }
+
+    toast.success("Logged in successfully", {
+      id: "auth-login-success",
+      duration: 3000,
+    });
     navigate("/dashboard", { replace: true });
   }, [navigate, searchParams]);
 

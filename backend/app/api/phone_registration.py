@@ -11,13 +11,13 @@ from app.schemas.user_schema import (
     StudentDetailsResponse,
     ParentVerificationRequest,
     ParentVerificationResponse
-    
 )
 
 from app.schemas.teacher_profile_schema import (
     TeacherProfileCreateRequest,
     TeacherVerificationResponse
-)   
+)
+
 from app.services.phoneregistration_service import (
     register_by_phone,
     confirm_role,

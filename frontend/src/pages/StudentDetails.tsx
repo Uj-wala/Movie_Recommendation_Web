@@ -1,26 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
+import SuccessModal from '../components/SuccessModal';
 import { saveStudentDetails } from "../services/PhoneRegistrationService";
 
 const sanitizeInstitutionName = (value: string) =>
   value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
 
 const StudentDetails = () => {
-  const navigate = useNavigate();
   const [isGradeOpen, setIsGradeOpen] = useState(false);
   const [focusedGradeIndex, setFocusedGradeIndex] = useState(0);
   const gradeDropdownRef = useRef<HTMLDivElement>(null);
   const gradeTriggerRef = useRef<HTMLDivElement>(null);
   const gradeOptionRefs = useRef<Array<HTMLDivElement | null>>([]);
-  
+
   // State elements
   const [grade, setGrade] = useState('');
   const [workPlace, setWorkPlace] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentId, setStudentId] = useState('');
   const isSchoolNameDisabled = Boolean(workPlace.trim());
   const isWorkPlaceDisabled = Boolean(schoolName.trim());
 
@@ -134,34 +135,17 @@ const StudentDetails = () => {
         work_place: workPlace.trim() || null,
         school_name: schoolName.trim() || null,
       });
-
-      navigate('/registration-success', {
-        state: {
-          title: 'Registration Successful!!!',
-          message: `Your student profile has been submitted successfully.${
-            response.student_id ? `\nStudent ID: ${response.student_id}` : ''
-          }`,
-          buttonText: 'Go to Login',
-          redirectUrl: '/login',
-        },
-      });
+      setStudentId(response.student_id);
+      setIsModalOpen(true);
 
     } catch (err: any) {
-      console.error(err);
       const detail = err.response?.data?.detail;
 
       if (
         typeof detail === 'string' &&
         detail.toLowerCase().includes('already exists')
       ) {
-        navigate('/registration-success', {
-          state: {
-            title: 'Registration Successful!!!',
-            message: 'Your student profile has already been submitted successfully.',
-            buttonText: 'Go to Login',
-            redirectUrl: '/login',
-          },
-        });
+        setIsModalOpen(true);
         return;
       }
 
@@ -195,17 +179,13 @@ const StudentDetails = () => {
             )}
 
             <form className="w-full" onSubmit={handleSubmit}>
-              
+
               {/* Select Custom Grade Dropdown */}
               <div className="mb-6">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
                   Select Grade of Student
                 </label>
-                <div
-                  className="relative"
-                  ref={gradeDropdownRef}
-                  onMouseLeave={() => setIsGradeOpen(false)}
-                >
+                <div className="relative" ref={gradeDropdownRef}>
                   <div
                     ref={gradeTriggerRef}
                     className="block w-full pl-4 pr-10 py-3.5 border border-gray-200 rounded-lg text-[14px] text-center text-gray-700 bg-white shadow-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943]"
@@ -227,7 +207,7 @@ const StudentDetails = () => {
                   >
                     {grade ? grades.find(g => g.value === grade)?.label : <span className="font-bold text-black">Select Grade</span>}
                   </div>
-                  
+
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                     <svg className={`h-4 w-4 text-gray-500 transition-transform ${isGradeOpen ? 'transform rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -235,7 +215,12 @@ const StudentDetails = () => {
                   </div>
 
                   {isGradeOpen && (
-                    <div id="grade-options" role="listbox" className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar">
+                    <div
+                      id="grade-options"
+                      role="listbox"
+                      className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto custom-scrollbar"
+                      onMouseLeave={() => setIsGradeOpen(false)}
+                    >
                       {grades.map((g, index) => (
                         <div
                           key={g.value}
@@ -245,11 +230,9 @@ const StudentDetails = () => {
                           id={`grade-option-${index}`}
                           role="option"
                           aria-selected={grade === g.value}
-                          className={`px-4 py-3 text-[14px] text-center cursor-pointer transition-colors ${grade === g.value
-                              ? 'bg-[#248943] text-white'
-                              : focusedGradeIndex === index
-                                ? 'bg-green-50 text-gray-700'
-                                : 'text-gray-700 hover:bg-green-50'
+                          className={`px-4 py-3 text-[14px] text-center cursor-pointer transition-colors ${grade === g.value || focusedGradeIndex === index
+                            ? 'bg-[#248943] text-white'
+                            : 'text-gray-700 hover:bg-green-50'
                             }`}
                           onMouseEnter={() => setFocusedGradeIndex(index)}
                           onClick={() => {
@@ -272,11 +255,10 @@ const StudentDetails = () => {
                 </label>
                 <input
                   type="text"
-                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${
-                    isSchoolNameDisabled
+                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${isSchoolNameDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
-                  }`}
+                    }`}
                   placeholder="Enter your School / University / Institute"
                   value={schoolName}
                   disabled={isSchoolNameDisabled}
@@ -296,11 +278,10 @@ const StudentDetails = () => {
                 </label>
                 <input
                   type="text"
-                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${
-                    isWorkPlaceDisabled
+                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${isWorkPlaceDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
-                  }`}
+                    }`}
                   placeholder="Enter your Work place"
                   value={workPlace}
                   disabled={isWorkPlaceDisabled}
@@ -321,6 +302,17 @@ const StudentDetails = () => {
           </div>
         </div>
       </SplitScreenLayout>
+
+      <SuccessModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Registration Successful!!!"
+        message={`Your student profile has been submitted successfully.${studentId ? `\nStudent ID: ${studentId}` : ''}`}
+        role={localStorage.getItem("selected_role") || ""}
+        registrationNumber={localStorage.getItem("registration_number") || ""}
+        buttonText="Go to Login"
+        redirectUrl="/login"
+      />
     </>
   );
 };

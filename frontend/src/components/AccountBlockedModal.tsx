@@ -80,16 +80,10 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
                 setLoading(true);
                 setError("");
 
-                const response =
-                  await verifyBlockedAccount(
-                    identifier,
-                    securityQuestion,
-                    securityAnswer
-                  );
-
-                console.log(
-                  "Verification Success:",
-                  response
+                await verifyBlockedAccount(
+                  identifier,
+                  securityQuestion,
+                  securityAnswer
                 );
 
                 navigate(
@@ -155,17 +149,25 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
               <label className="block text-xs font-bold text-gray-900 mb-2">
                 Answer
               </label>
-              <input
-                type="text"
-                value={securityAnswer}
-                onChange={(e) =>
-                  setSecurityAnswer(
-                    e.target.value
-                  )
-                }
-                className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                placeholder="Type your answer here"
-              />
+            
+<input
+  type="text"
+  value={securityAnswer}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\s/g, "");
+
+    if (value.length > 10) {
+      setError("Security answer must not exceed 10 characters.");
+      return;
+    }
+
+    setError("");
+    setSecurityAnswer(value);
+  }}
+  className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+  placeholder="Type your answer here"
+/>
+
             </div>
             {error && (
               <div className="mb-4">

@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
- 
+
 from app.core.database import SessionLocal
 from app.models.subject_model import Subject
- 
- 
+
 SUBJECTS = [
     # {
     #     "name": "Mathematics",
@@ -57,17 +56,33 @@ SUBJECTS = [
         "name":"Data Science",
         "description": "Data Science subject"
     }
- 
 ]
- 
- 
+
 def seed_subjects():
     db: Session = SessionLocal()
- 
+
     try:
- 
+        subject_names = {
+            subject["name"]
+            for subject in SUBJECTS
+        }
+
+        # Delete subjects not present in SUBJECTS
+        deleted_count = (
+            db.query(Subject)
+            .filter(
+                ~Subject.name.in_(subject_names)
+            )
+            .delete(synchronize_session=False)
+        )
+
+        if deleted_count:
+            print(
+                f"Deleted {deleted_count} obsolete subjects"
+            )
+
         for subject_data in SUBJECTS:
- 
+
             existing_subject = (
                 db.query(Subject)
                 .filter(
@@ -75,32 +90,45 @@ def seed_subjects():
                 )
                 .first()
             )
- 
+
             if existing_subject:
-                print(
-                    f"Subject already exists: {subject_data['name']}"
+                # Optional: update description if changed
+                existing_subject.description = (
+                    subject_data["description"]
                 )
-                continue
- 
-            subject = Subject(
-                name=subject_data["name"],
-                description=subject_data["description"]
-            )
- 
-            db.add(subject)
- 
+
+                print(
+                    f"Updated subject: {subject_data['name']}"
+                )
+
+            else:
+                subject = Subject(
+                    name=subject_data["name"],
+                    description=subject_data["description"]
+                )
+
+                db.add(subject)
+
+                print(
+                    f"Added subject: {subject_data['name']}"
+                )
+
         db.commit()
- 
-        print("Subjects seeded successfully")
- 
+
+        print(
+            "Subjects synchronized successfully"
+        )
+
     except Exception as e:
         db.rollback()
-        print(f"Subject seeding failed: {e}")
+        print(
+            f"Subject synchronization failed: {e}"
+        )
         raise
- 
+
     finally:
         db.close()
- 
- 
+
+
 if __name__ == "__main__":
     seed_subjects()

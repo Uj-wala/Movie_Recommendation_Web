@@ -1,0 +1,167 @@
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  gap: 36px;
+  width: 246px;
+  height: 100vh;
+  background: #FFFFFF;
+  position: fixed;
+  left: 0;
+  top: 0;
+  border-right: 1px solid #f0f0f0; /* Optional for separation */
+  z-index: 20;
+  transition: transform 0.3s ease-in-out;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  width: 100%;
+  padding: 20px 16px 0;
+}
+
+.logo-brand {
+  background: transparent;
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  font: inherit;
+  padding-left: 0;
+  flex: 1;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logo-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #238B45;
+  border-radius: 4px;
+  color: #FFFFFF;
+  font-family: 'Poppins';
+  font-weight: 700;
+  font-size: 8px; /* Approximated from Figma */
+}
+
+.brand-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-text {
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 30px;
+  color: #238B45;
+}
+
+.admin-badge {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 8px;
+  width: 118px;
+  background: #F5F5F5;
+  border-radius: 4px;
+  font-family: 'Poppins';
+  font-weight: 600;
+  font-size: 10px;
+  color: #292D32;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 246px;
+  padding: 0;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 47px 12px 16px;
+  gap: 12px;
+  width: 246px;
+  height: 48px;
+  border-radius: 12px;
+  color: #292D32;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-item[data-nav-item="roles"],
+.nav-item[data-nav-item="reports"] {
+  padding: 12px 16px;
+}
+
+.nav-item:hover {
+  background: #f9f9f9;
+}
+
+.nav-item.active {
+  background: #F1FFF6;
+  color: #238B45;
+}
+
+.nav-item.active .nav-icon {
+  color: #238B45;
+}
+
+.nav-icon {
+  font-size: 20px;
+  color: #292D32;
+}
+
+.nav-text {
+  font-family: 'Poppins';
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.nav-item.active .nav-text {
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .sidebar-container {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-container.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

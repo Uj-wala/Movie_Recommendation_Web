@@ -1,6 +1,8 @@
 from sqlalchemy import (
+    Integer,
     String,
-    ForeignKey
+    ForeignKey,
+    Text
 )
 # from sqlalchemy import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -23,14 +25,30 @@ class TeacherProfile(Base, BaseModel):
         String(255),
         nullable=False
     )
+    
+    # sprint 2 additions
+    years_of_experience: Mapped[str | None] = mapped_column(
+    String(50),
+    nullable=True,
+    )
+
+    qualification: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True
+    )
+
+    bio: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True
+    )
 
     user = relationship(
         "User",
         back_populates="teacher_profile"
     )
-
+    
     subjects = relationship(
-        "TeacherSubject",
-        back_populates="teacher_profile",
-        cascade="all, delete-orphan"
+    "TeacherSubject",
+    back_populates="teacher_profile",
+    cascade="all, delete-orphan"
     )

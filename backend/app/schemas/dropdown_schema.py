@@ -1,11 +1,11 @@
 from pydantic import BaseModel
- 
- 
+
+
 class DropdownResponse(BaseModel):
     id: str
     name: str
- 
- 
+
+
 class CountryDropdownResponse(BaseModel):
     id: str
     name: str
