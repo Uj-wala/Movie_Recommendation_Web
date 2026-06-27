@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     MAX_LOGIN_ATTEMPTS: int = 3
 
+    ADMIN_EMAIL: str | None = None
+    ADMIN_PASSWORD: str | None = None
+    ADMIN_FULL_NAME: str = "System Administrator"
+    ADMIN_PHONE_NUMBER: str | None = None
+    ADMIN_COUNTRY_ISO_CODE: str = "IN"
+    ADMIN_SECURITY_ANSWER: str | None = None
+
     EMAIL_USERNAME: str | None = None
     EMAIL_PASSWORD: str | None = None
     RESEND_API_KEY: str | None = None
