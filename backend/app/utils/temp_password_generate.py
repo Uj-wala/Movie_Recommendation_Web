@@ -1,24 +1,26 @@
-import uuid
-import re
+import secrets
+import string
+
+
+TEMP_PASSWORD_LENGTH = 10
 
 def generate_temp_password(
     name: str,
     email: str
 ) -> str:
-    # take email part before @
-    email_prefix = email.split("@")[0].capitalize()
+    # Keep these parameters for compatibility with existing callers. Passwords
+    # are intentionally independent of personal details so they are harder to
+    # guess.
+    del name, email
 
-    # keep only alphanumeric chars
-    email_prefix = re.sub(
-        r"[^a-zA-Z0-9]",
-        "",
-        email_prefix
+    characters = [
+        secrets.choice(string.ascii_letters),
+        secrets.choice(string.digits),
+    ]
+    characters.extend(
+        secrets.choice(string.ascii_letters + string.digits)
+        for _ in range(TEMP_PASSWORD_LENGTH - len(characters))
     )
 
-    # optional: if you want to prefer name instead of email prefix
-    base = email_prefix or name.replace(" ", "")
-
-    # take 4 chars from uuid
-    random_code = uuid.uuid4().hex[:4].upper()
-
-    return f"{base}{random_code}"
+    secrets.SystemRandom().shuffle(characters)
+    return "".join(characters)

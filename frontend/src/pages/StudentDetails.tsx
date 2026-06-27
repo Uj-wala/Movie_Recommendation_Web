@@ -7,6 +7,9 @@ import { saveStudentDetails } from "../services/PhoneRegistrationService";
 const sanitizeInstitutionName = (value: string) =>
   value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
 
+const MAX_INSTITUTION_NAME_LENGTH = 100;
+const MAX_WORK_PLACE_LENGTH = 100;
+
 const StudentDetails = () => {
   const [isGradeOpen, setIsGradeOpen] = useState(false);
   const [focusedGradeIndex, setFocusedGradeIndex] = useState(0);
@@ -17,13 +20,43 @@ const StudentDetails = () => {
   // State elements
   const [grade, setGrade] = useState('');
   const [workPlace, setWorkPlace] = useState('');
+  const [workPlaceError, setWorkPlaceError] = useState('');
   const [schoolName, setSchoolName] = useState('');
+  const [schoolNameError, setSchoolNameError] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [studentId, setStudentId] = useState('');
   const isSchoolNameDisabled = Boolean(workPlace.trim());
   const isWorkPlaceDisabled = Boolean(schoolName.trim());
+
+  const handleSchoolNameChange = (value: string) => {
+    const sanitizedValue = sanitizeInstitutionName(value);
+
+    if (sanitizedValue.length > MAX_INSTITUTION_NAME_LENGTH) {
+      setSchoolNameError(
+        `School / University / Institute must not exceed ${MAX_INSTITUTION_NAME_LENGTH} characters.`
+      );
+      setSchoolName(sanitizedValue.slice(0, MAX_INSTITUTION_NAME_LENGTH));
+      return;
+    }
+
+    setSchoolNameError('');
+    setSchoolName(sanitizedValue);
+  };
+
+  const handleWorkPlaceChange = (value: string) => {
+    if (value.length > MAX_WORK_PLACE_LENGTH) {
+      setWorkPlaceError(
+        `Work Place must not exceed ${MAX_WORK_PLACE_LENGTH} characters.`
+      );
+      setWorkPlace(value.slice(0, MAX_WORK_PLACE_LENGTH));
+      return;
+    }
+
+    setWorkPlaceError('');
+    setWorkPlace(value);
+  };
 
   const grades = [
     { value: "Grade 1", label: "Grade 1" },
@@ -255,16 +288,26 @@ const StudentDetails = () => {
                 </label>
                 <input
                   type="text"
-                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${isSchoolNameDisabled
+                  className={`block w-full px-4 py-3.5 border rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 shadow-sm disabled:cursor-not-allowed ${schoolNameError
+                    ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                    : 'border-gray-200 focus:ring-[#248943] focus:border-[#248943]'
+                    } ${isSchoolNameDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
                     }`}
                   placeholder="Enter your School / University / Institute"
                   value={schoolName}
                   disabled={isSchoolNameDisabled}
-                  onChange={(e) => setSchoolName(sanitizeInstitutionName(e.target.value))}
+                  onChange={(e) => handleSchoolNameChange(e.target.value)}
+                  aria-invalid={Boolean(schoolNameError)}
+                  aria-describedby={schoolNameError ? 'institution-name-error' : undefined}
                   required={!workPlace.trim()}
                 />
+                {schoolNameError && (
+                  <p id="institution-name-error" className="mt-2 text-sm text-red-600">
+                    {schoolNameError}
+                  </p>
+                )}
               </div>
 
               <div className="mb-6 text-center text-[14px] font-bold text-[#1F2937]">
@@ -278,16 +321,26 @@ const StudentDetails = () => {
                 </label>
                 <input
                   type="text"
-                  className={`block w-full px-4 py-3.5 border border-gray-200 rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#248943] focus:border-[#248943] shadow-sm disabled:cursor-not-allowed ${isWorkPlaceDisabled
+                  className={`block w-full px-4 py-3.5 border rounded-lg text-[14px] placeholder-gray-500 focus:outline-none focus:ring-1 shadow-sm disabled:cursor-not-allowed ${workPlaceError
+                    ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
+                    : 'border-gray-200 focus:ring-[#248943] focus:border-[#248943]'
+                    } ${isWorkPlaceDisabled
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
                     }`}
                   placeholder="Enter your Work place"
                   value={workPlace}
                   disabled={isWorkPlaceDisabled}
-                  onChange={(e) => setWorkPlace(e.target.value)}
+                  onChange={(e) => handleWorkPlaceChange(e.target.value)}
+                  aria-invalid={Boolean(workPlaceError)}
+                  aria-describedby={workPlaceError ? 'work-place-error' : undefined}
                   required={!schoolName.trim()}
                 />
+                {workPlaceError && (
+                  <p id="work-place-error" className="mt-2 text-sm text-red-600">
+                    {workPlaceError}
+                  </p>
+                )}
               </div>
 
               <button

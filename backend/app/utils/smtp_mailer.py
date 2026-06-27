@@ -1,7 +1,7 @@
 import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr
+from email.message import EmailMessage
+from email.utils import formataddr, formatdate, make_msgid
+from html import escape
 
 from app.core.config import settings
 
@@ -11,11 +11,25 @@ def send_smtp_email(to: str, subject: str, body: str) -> bool:
     username = settings.SMTP_USERNAME or settings.EMAIL_USERNAME
     password = settings.SMTP_PASSWORD or settings.EMAIL_PASSWORD
 
-    msg = MIMEMultipart()
+    if not from_email or not username or not password:
+        print("EMAIL ERROR: SMTP sender credentials are incomplete", flush=True)
+        return False
+
+    sender_domain = from_email.rsplit("@", 1)[-1]
+    msg = EmailMessage()
     msg["From"] = formataddr((settings.SMTP_FROM_NAME, from_email))
     msg["To"] = to
     msg["Subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
+    msg["Date"] = formatdate(localtime=False)
+    msg["Message-ID"] = make_msgid(domain=sender_domain)
+    msg["Reply-To"] = from_email
+    msg.set_content(body)
+    msg.add_alternative(
+        "<html><body>"
+        f"<p>{escape(body).replace(chr(10), '<br>')}</p>"
+        "</body></html>",
+        subtype="html",
+    )
 
     server = None
 
@@ -37,7 +51,11 @@ def send_smtp_email(to: str, subject: str, body: str) -> bool:
                 server.starttls()
 
         server.login(username, password)
-        server.sendmail(from_email, [to], msg.as_string())
+        refused_recipients = server.send_message(msg, from_addr=from_email, to_addrs=[to])
+
+        if refused_recipients:
+            print("EMAIL ERROR: SMTP server refused the recipient", flush=True)
+            return False
 
         return True
 
@@ -47,4 +65,7 @@ def send_smtp_email(to: str, subject: str, body: str) -> bool:
 
     finally:
         if server:
-            server.quit()
+            try:
+                server.quit()
+            except Exception:
+                pass

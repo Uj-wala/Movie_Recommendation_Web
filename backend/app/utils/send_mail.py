@@ -3,7 +3,7 @@ from app.utils.resend_mailer import send_resend_email
 from app.utils.smtp_mailer import send_smtp_email
 
 
-def send_email(to: str, subject: str, body: str):
+def send_email(to: str, subject: str, body: str) -> bool:
 
     try:
         html = body.replace("\n", "<br>")

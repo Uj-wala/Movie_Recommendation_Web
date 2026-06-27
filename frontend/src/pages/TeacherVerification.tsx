@@ -10,7 +10,7 @@ import { fetchDropdownData } from '../services/ListApiService';
 const sanitizeInstitutionName = (value: string) =>
   value.replace(/[^a-zA-Z0-9\s'.&(),\/-]/g, '');
 
-const MAX_SCHOOL_NAME_LENGTH = 30;
+const MAX_SCHOOL_NAME_LENGTH = 100;
 const visibleSubjectNames = [
   'English',
   'Computer Science',

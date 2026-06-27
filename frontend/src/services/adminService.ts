@@ -1,4 +1,5 @@
 import toast from "react-hot-toast";
+import { isAxiosError } from "axios";
 import api from "../api/axios";
 
 type CreateRolePayload = {
@@ -25,7 +26,7 @@ export const toggleUserActiveStatus = async (userId: string, isActive: boolean) 
         console.error('Error toggling user status:', error);
     }
 }
-export const editUser = async (userId: string, data: any) => {
+export const editUser = async (userId: string, data: Record<string, unknown>) => {
     try {
         const response = await api.put(`/admin/users/${userId}/change-role-status`, data);
         return response;
@@ -60,10 +61,15 @@ export const createRole = async (payload:CreateRolePayload) => {
       if (response?.status === 200) {
         return response
       }
-    } catch (error: any) {
-      if (error?.status === 400) {
-        toast.error(error?.response.data?.detail)
-      }
+    } catch (error: unknown) {
+      const detail = isAxiosError<{ detail?: string }>(error)
+        ? error.response?.data?.detail
+        : undefined;
+
+      toast.error(
+        detail ||
+        "Unable to create the user or send the invitation email. Please try again."
+      )
       console.log("Error Creating Role :::", error)
       throw error
     }

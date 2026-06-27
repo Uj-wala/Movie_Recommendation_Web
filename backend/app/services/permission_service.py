@@ -179,7 +179,22 @@ class PermissionService:
 
             if permission_objects:
                 db.add_all(permission_objects)
-            send_generated_password_mail(new_user.email ,new_user.full_name ,temp_password)
+
+            email_sent = send_generated_password_mail(
+                new_user.email,
+                new_user.full_name,
+                temp_password,
+            )
+            if not email_sent:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "The user was not created because the invitation email "
+                        "could not be sent. Please verify the email address and "
+                        "try again."
+                    ),
+                )
+
             db.commit()
             db.refresh(new_user)
 

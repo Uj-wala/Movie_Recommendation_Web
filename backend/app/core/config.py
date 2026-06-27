@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     MAX_LOGIN_ATTEMPTS: int = 3
 
-    EMAIL_USERNAME: str = "gnanukarupothula@gmail.com"
-    EMAIL_PASSWORD: str = "bnfb ojla utuf vppl"
+    EMAIL_USERNAME: str | None = None
+    EMAIL_PASSWORD: str | None = None
     RESEND_API_KEY: str | None = None
     EMAIL_FROM: str = "AI Tutoring App <onboarding@resend.dev>"
     SMTP_HOST: str = "smtp.gmail.com"

@@ -1029,7 +1029,7 @@ export default function UpdateProfile() {
         title="Congratulations!"
         message="Your Profile has been Updated successfully."
         buttonText="Visit My Profile Screen"
-        redirectUrl="/teacher/dashboard"
+        redirectUrl="/teacher/profile"
       />
     </div>
   );
