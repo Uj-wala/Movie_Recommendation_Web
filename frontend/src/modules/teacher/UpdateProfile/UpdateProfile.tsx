@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import downarrow from "../../../assets/UpdateProfileIcons/DownArrow.svg";
 import album from "../../../assets/UpdateProfileIcons/albumimg.svg";
 import camera from "../../../assets/UpdateProfileIcons/camera.svg";
-import edit from "../../../assets/UpdateProfileIcons/edit.svg";
+import edit from "../../../assets/UpdateProfileIcons/Edit.svg";
 import phone from "../../../assets/UpdateProfileIcons/phone.svg";
 import search from "../../../assets/UpdateProfileIcons/search.svg";
 import eyeshow from "../../../assets/UpdateProfileIcons/eyeshow.svg";

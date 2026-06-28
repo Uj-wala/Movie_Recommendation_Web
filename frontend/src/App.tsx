@@ -1,44 +1,45 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { lazy, Suspense } from "react";
 
 // ── Auth / Landing pages (User Module) ──────────────────────────────────────
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import Register from "./pages/Register";
-import VerifyOTP from "./pages/VerifyOTP";
-import ResetPassword from "./pages/ResetPassword";
-import VerifyAccount from "./pages/VerifyAccount";
-import SelectRole from "./pages/SelectRole";
-import ConfirmRole from "./pages/ConfirmRole";
-import StudentDetails from "./pages/StudentDetails";
-import TeacherVerification from "./pages/TeacherVerification";
-import ParentVerification from "./pages/ParentVerification";
-import Home from "./modules/landing/Home";
-import SocialAuthCallback from "./pages/SocialAuthCallback";
+const Login = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Register = lazy(() => import("./pages/Register"));
+const VerifyOTP = lazy(() => import("./pages/VerifyOTP"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyAccount = lazy(() => import("./pages/VerifyAccount"));
+const SelectRole = lazy(() => import("./pages/SelectRole"));
+const ConfirmRole = lazy(() => import("./pages/ConfirmRole"));
+const StudentDetails = lazy(() => import("./pages/StudentDetails"));
+const TeacherVerification = lazy(() => import("./pages/TeacherVerification"));
+const ParentVerification = lazy(() => import("./pages/ParentVerification"));
+const Home = lazy(() => import("./modules/landing/Home"));
+const SocialAuthCallback = lazy(() => import("./pages/SocialAuthCallback"));
 
 // ── Landing section pages ───────────────────────────────────────────────────
-import FirstPage from "./modules/landing/FirstPage";
-import SecondPage from "./modules/landing/SecondPage";
-import BecomeInstructor from "./modules/landing/BecomeInstructor";
-import StudentTestimonials from "./modules/landing/StudentTestimonials";
-import LatestNews from "./modules/landing/LatestNews";
-import Footer from "./modules/landing/Footer";
+const FirstPage = lazy(() => import("./modules/landing/FirstPage"));
+const SecondPage = lazy(() => import("./modules/landing/SecondPage"));
+const BecomeInstructor = lazy(() => import("./modules/landing/BecomeInstructor"));
+const StudentTestimonials = lazy(() => import("./modules/landing/StudentTestimonials"));
+const LatestNews = lazy(() => import("./modules/landing/LatestNews"));
+const Footer = lazy(() => import("./modules/landing/Footer"));
 
 // ── Teacher module ──────────────────────────────────────────────────────────
-import TeacherLayout from "./modules/teacher/Layout/TeacherLayout";
-import TeacherDashboard from "./modules/teacher/Dashboard/Dashboard";
-import MyCourses from "./modules/teacher/courses/MyCourses";
-import Students from "./modules/teacher/students/Students";
-import Assignments from "./modules/teacher/assignments/Assignments";
-import TeacherSettings from "./modules/teacher/settings/Settings";
-import UpdateProfile from "./modules/teacher/UpdateProfile/UpdateProfile";
+const TeacherLayout = lazy(() => import("./modules/teacher/Layout/TeacherLayout"));
+const TeacherDashboard = lazy(() => import("./modules/teacher/Dashboard/Dashboard"));
+const MyCourses = lazy(() => import("./modules/teacher/courses/MyCourses"));
+const Students = lazy(() => import("./modules/teacher/students/Students"));
+const Assignments = lazy(() => import("./modules/teacher/assignments/Assignments"));
+const TeacherSettings = lazy(() => import("./modules/teacher/settings/Settings"));
+const UpdateProfile = lazy(() => import("./modules/teacher/UpdateProfile/UpdateProfile"));
 
 // ── Parent module ───────────────────────────────────────────────────────────
-import ParentDashboard from "./modules/parent/ParentDashboard";
-import ParentProfile from "./modules/parent/ParentProfile";
+const ParentDashboard = lazy(() => import("./modules/parent/ParentDashboard"));
+const ParentProfile = lazy(() => import("./modules/parent/ParentProfile"));
 
 // ── Admin module ────────────────────────────────────────────────────────────
-import AdminLayout from "./modules/admin/AdminLayout";
+const AdminLayout = lazy(() => import("./modules/admin/AdminLayout"));
 
 // ── Route guards ─────────────────────────────────────────────────────────────
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
@@ -67,6 +68,7 @@ function App() {
           },
         }}
       />
+      <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
       <Routes>
 
         {/* ── Home / Landing ────────────────────────────────────────────── */}
@@ -162,6 +164,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
+      </Suspense>
     </Router>
   );
 }
