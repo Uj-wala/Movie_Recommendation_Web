@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, ReactElement } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 import {
   BadgeCheck,

@@ -1,13 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
-import { useNavigate, useLocation } from "react-router-dom";
-import { verifyOTP } from "../services/authService";
-import {
-  forgotPassword
-} from "../services/authService";
+import { forgotPassword, verifyOTP } from "../services/authService";
 
 const OTP_TIMER_SECONDS = 5 * 60;
 const formatTimer = (seconds: number) => {

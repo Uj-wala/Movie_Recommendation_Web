@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useLocation } from "react-router-dom";
 import "./ProfileMenu.css";
+import { getAuthenticatedLoginIdentifier } from "../../utils/authIdentity";
 
 type ProfileMenuProps = {
   userEmail: string;
@@ -49,8 +49,8 @@ export default function ProfileMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
-  const displayEmail = userEmail || "user@thestackly.com";
-  const displayName = userName || formatNameFromEmail(displayEmail, userRole);
+  const displayIdentifier = getAuthenticatedLoginIdentifier() || userEmail;
+  const displayName = userName || formatNameFromEmail(displayIdentifier, userRole);
   const initial = displayName.charAt(0).toUpperCase() || userRole.charAt(0).toUpperCase() || "U";
 
   const actions: MenuAction[] = [
@@ -159,7 +159,7 @@ export default function ProfileMenu({
         </span>
         <span className="profile-menu__identity">
           <span className="profile-menu__name">{displayName}</span>
-          <span className="profile-menu__email">{displayEmail}</span>
+          <span className="profile-menu__email">{displayIdentifier}</span>
         </span>
         <span className={`profile-menu__chevron ${isOpen ? "profile-menu__chevron--open" : ""}`} aria-hidden="true">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -179,7 +179,7 @@ export default function ProfileMenu({
             onMouseEnter={() => setActiveIndex(0)}
           >
             <span>Signed in as</span>
-            <strong>{displayEmail}</strong>
+            <strong>{displayIdentifier}</strong>
           </div>
 
           <div className="profile-menu__actions">

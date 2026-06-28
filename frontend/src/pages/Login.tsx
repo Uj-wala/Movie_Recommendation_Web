@@ -5,13 +5,11 @@ import toast from "react-hot-toast";
 import SplitScreenLayout from "../components/SplitScreenLayout";
 import Logo from "../components/Logo";
 import AccountBlockedModal from "../components/AccountBlockedModal";
-import Captcha from "../components/Captcha";
-import type { CaptchaHandle } from "../components/Captcha";
+import Captcha, { type CaptchaHandle } from "../components/Captcha";
 import LegalModal from "../components/LegalModal";
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { getSocialAuthUrl, loginUser } from "../services/authService";
-import type { SocialAuthProvider } from "../services/authService";
+import { getSocialAuthUrl, loginUser, type SocialAuthProvider } from "../services/authService";
 import {
   EMAIL_FORMAT_ERROR,
   PASSWORD_LENGTH_ERROR,
@@ -21,6 +19,10 @@ import {
   isValidPasswordLength,
   sanitizePasswordInput,
 } from "../utils/validation";
+import {
+  getAuthenticatedLoginIdentifier,
+  persistLoginIdentity,
+} from "../utils/authIdentity";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const TERMS_OF_USE_CONTENT = [
   "By using Alcademy, you agree to use the platform responsibly and only for lawful educational purposes. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.",
@@ -50,17 +52,11 @@ const getLoginDisplayName = (response: any) => {
   return (
     response?.full_name ||
     response?.name ||
+    response?.username ||
     response?.user?.full_name ||
     response?.user?.name ||
+    response?.user?.username ||
     ""
-  );
-};
-
-const getLoginEmail = (response: any, fallback: string) => {
-  return (
-    response?.email ||
-    response?.user?.email ||
-    fallback
   );
 };
 
@@ -200,20 +196,25 @@ const Login = () => {
         response.refresh_token
       );
 
+      if (response.user_id) {
+        localStorage.setItem("user_id", String(response.user_id));
+      }
+
       // Store role if returned by API so RoleDashboardRedirect can forward correctly
       if (response.role_name) {
         localStorage.setItem("user_role", response.role_name);
       }
 
-      localStorage.setItem("userEmail", getLoginEmail(response, identifier));
+      persistLoginIdentity(
+        response,
+        identifier,
+        email.trim() ? "email" : "phone"
+      );
       localStorage.setItem("userPassword", password);
 
-      const loginDisplayName = getLoginDisplayName(response);
-      if (loginDisplayName) {
-        localStorage.setItem("userName", loginDisplayName);
-      } else {
-        localStorage.removeItem("userName");
-      }
+      const loginDisplayName =
+        getLoginDisplayName(response) || getAuthenticatedLoginIdentifier();
+      localStorage.setItem("userName", loginDisplayName);
       showLoginToast();
 
       if (response.role_name === "admin") {

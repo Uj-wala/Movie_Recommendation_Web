@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Header.css';
 import { Menu } from 'lucide-react';
 import adminProfile from '../../../../assets/admin_profile.jpeg';
 import { ProfileMenu } from '../../../profile';
 import Logout from '../../../../components/Logout';
+import api from '../../../../api/axios';
 
 interface HeaderProps {
   setActiveTab?: (tab: string) => void;
@@ -27,12 +28,37 @@ const formatNameFromEmail = (email: string) => {
 };
 
 const Header: React.FC<HeaderProps> = ({ setActiveTab, userEmail, toggleSidebar }) => {
-  const displayEmail = userEmail || localStorage.getItem("userEmail") || "kumar@icruise.com";
+  const displayEmail = userEmail || localStorage.getItem("userEmail") || "";
+  const [authenticatedName, setAuthenticatedName] = useState("");
   const displayName =
+    authenticatedName ||
     localStorage.getItem("userName") ||
     localStorage.getItem("full_name") ||
     localStorage.getItem("name") ||
     formatNameFromEmail(displayEmail);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("user_id");
+    if (!userId) return;
+
+    let isMounted = true;
+
+    api.get<{ name?: string }>(`/admin/users/${userId}`)
+      .then(({ data }) => {
+        const name = data.name?.trim();
+        if (!name || !isMounted) return;
+
+        localStorage.setItem("userName", name);
+        setAuthenticatedName(name);
+      })
+      .catch((error) => {
+        console.error("Unable to load authenticated admin details", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleProfileClick = () => {
     if (setActiveTab) setActiveTab('dashboard');

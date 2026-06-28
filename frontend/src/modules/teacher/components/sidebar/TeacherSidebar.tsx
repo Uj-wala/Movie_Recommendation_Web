@@ -5,6 +5,7 @@ import courses from "../../../../assets/sidebar_icons/courses.svg";
 import students from "../../../../assets/sidebar_icons/students.svg";
 import assignments from "../../../../assets/sidebar_icons/assignments.svg";
 import settings from "../../../../assets/sidebar_icons/settings.svg";
+import { useNavigate } from "react-router-dom";
 
 
   const navItems = [
@@ -42,6 +43,12 @@ import settings from "../../../../assets/sidebar_icons/settings.svg";
 
   export default function Sidebar({ activeTab = "dashboard", setActiveTab }: SidebarProps) {
     const handleLogoClick = useLogoNavigation();
+    const navigate = useNavigate();
+
+    const handleNavigation = (tab: string) => {
+      setActiveTab?.(tab);
+      navigate(`/teacher/${tab}`);
+    };
 
     return (
       <aside className="font-poppins w-[278px] min-h-screen bg-[#FFFFFF] flex flex-col shrink-0">
@@ -68,7 +75,7 @@ import settings from "../../../../assets/sidebar_icons/settings.svg";
             <button
               key={item.id}
               type="button"
-              onClick={() => setActiveTab?.(item.id)}
+              onClick={() => handleNavigation(item.id)}
               className={`group flex w-[246px] h-[48px] items-center gap-3 rounded-[12px] px-4 py-3 text-left text-[16px] leading-[100%] transition-colors ${
                 isActive
                   ? "bg-[#F1FFF6] text-[#238B45] font-semibold"

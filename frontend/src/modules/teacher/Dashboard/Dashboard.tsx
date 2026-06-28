@@ -21,6 +21,7 @@ import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
 import Logout from "../../../components/Logout";
+import { getAuthenticatedLoginIdentifier } from "../../../utils/authIdentity";
  
 interface StatCard {
   id: number;
@@ -476,13 +477,13 @@ const TeacherDashboard: React.FC = () => {
     localStorage.getItem("userName") ||
     localStorage.getItem("full_name") ||
     localStorage.getItem("name") ||
-    "Teacher";
+    getAuthenticatedLoginIdentifier();
  const navigate = useNavigate();
   const userEmail =
     localStorage.getItem("userEmail") ||
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
-    "teacher@thestackly.com";
+    "";
   const [dashboardData, setDashboardData] = useState<TeacherDashboardData | null>(null);
  const [activityPeriod, setActivityPeriod] = useState("Today");
  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
@@ -527,7 +528,7 @@ const TeacherDashboard: React.FC = () => {
           {({ logout }) => (
             <ProfileMenu
               userEmail={userEmail}
-              userName={userName}
+              userName={dashboardData?.full_name || userName}
               userRole="Teacher"
               avatarSrc={teacherProfile}
               onProfileClick={() => navigate("/teacher/profile")}

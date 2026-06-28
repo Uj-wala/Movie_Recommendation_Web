@@ -86,6 +86,15 @@
   border-bottom: 1px solid #D9D9D9;
 }
 
+.user-table th:nth-child(3),
+.user-table td:nth-child(3) {
+  padding-left: 99px;
+}
+
+.user-table td:nth-child(3) {
+  text-transform: capitalize;
+}
+
 .user-table tr:last-child td {
   border-bottom: 1px solid #D9D9D9;
 }

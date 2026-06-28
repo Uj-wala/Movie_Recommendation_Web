@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
-import { useNavigate } from "react-router-dom";
 import { forgotPassword } from "../services/authService";
 import { EMAIL_FORMAT_ERROR, isValidEmailFormat } from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;

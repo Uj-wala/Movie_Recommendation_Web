@@ -82,6 +82,15 @@ export default function ParentProfile() {
 
   const activeTab = localActiveTab || (isDashboardRoot ? "dashboard" : currentPath);
 
+  const handleSidebarNavigation = (tab: string) => {
+    if (tab === "dashboard") {
+      navigate("/parent/dashboard");
+      return;
+    }
+
+    setLocalActiveTab(tab);
+  };
+
   // State Management
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(
@@ -104,7 +113,7 @@ export default function ParentProfile() {
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState(
-    () => localStorage.getItem("userEmail") || "parent@thestackly.com"
+    () => localStorage.getItem("userEmail") || ""
   );
   const [currentPassword, setCurrentPassword] = useState("");
 
@@ -845,7 +854,7 @@ emailAddress: emailAddress
                 <li key={item.id}>
                   <button
                     type="button"
-                    onClick={() => setLocalActiveTab(item.id)}
+                    onClick={() => handleSidebarNavigation(item.id)}
                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-[16px] font-normal font-['Poppins',sans-serif] transition-all duration-200 ${activeTab === item.id
                       ? "bg-[#E8F5E9] text-[#15803D]"
                       : "text-[#64748B] hover:bg-gray-50 hover:text-gray-900"

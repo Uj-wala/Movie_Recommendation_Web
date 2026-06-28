@@ -42,17 +42,6 @@ const UserTable: React.FC<UserTableProps> = ({ users, fetchUserDetails, showAddR
   };
 
   const handleSaveSuccess = () => {
-    // const activeUser = isModalOpen ? selectedUser : selectedStatusUser;
-
-    // if (activeUser && updatedData) {
-    //   const roleName = updatedData.role_name && updatedData.role_name !== 'Choose Role Type'
-    //     ? updatedData.role_name.charAt(0).toUpperCase() + updatedData.role_name.slice(1)
-    //     : updatedData.role_name || '';
-
-    //   setUsers(users.map(u =>
-    //     u.id === activeUser.id ? { ...u, ...updatedData, role: roleName } as User : u
-    //   ));
-    // }
     fetchUserDetails();
     setIsModalOpen(false);
     setIsStatusModalOpen(false);

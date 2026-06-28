@@ -65,6 +65,11 @@ const ParentDashboard = () => {
     setActiveTab("Settings");
   };
 
+  const handleMenuItemClick = (itemName: string) => {
+    // Parent dashboard modules are highlight-only until their pages are available.
+    setActiveTab(itemName);
+  };
+
   // Sidebar Menu 
   const menuItems = [
     {
@@ -132,10 +137,10 @@ const ParentDashboard = () => {
   }, []);
 
   return (
-    <div className="h-screen w-screen bg-[#FDFFFE] font-['Poppins',sans-serif] antialiased text-gray-900 flex overflow-hidden">
+    <div className="fixed inset-0 flex overflow-hidden bg-[#FDFFFE] font-['Poppins',sans-serif] antialiased text-gray-900">
 
       {/* SIDEBAR NAVIGATION */}
-      <aside className="flex h-screen w-[278px] min-w-[278px] flex-col border-r border-gray-100 px-[16px] pt-[32px]">
+      <aside className="flex h-full w-[278px] min-w-[278px] flex-col border-r border-gray-100 px-[16px] pt-[32px]">
 
         {/* Brand Header & Logo */}
         <button
@@ -169,7 +174,7 @@ const ParentDashboard = () => {
               <button
                 key={item.name}
                 type="button"
-                onClick={() => setActiveTab(item.name)}
+                onClick={() => handleMenuItemClick(item.name)}
                 className={`flex h-[48px] w-[246px] cursor-pointer items-center gap-[12px] rounded-[12px] border-none py-[12px] pl-[16px] pr-[16px] text-left outline-none transition-all ${isActive ? "bg-[#EEF8F1] opacity-100" : "bg-transparent opacity-70"
                   }`}
               >
@@ -192,10 +197,10 @@ const ParentDashboard = () => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen pl-9 pr-12">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pl-9 pr-12">
 
         {/* TOP INTERACTIVE NAVBAR */}
-        <div className="w-full pt-9 flex items-start justify-between">
+        <div className="w-full pt-[21px] flex items-start justify-between">
 
           {/* Main Welcome Message Banner */}
           <div className="mt-[84px] flex h-[64px] w-[384px] flex-col gap-[4px]">

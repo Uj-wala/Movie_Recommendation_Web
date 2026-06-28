@@ -1,5 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import type { ClipboardEvent, KeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
+import { useState, useRef, useCallback, useEffect, type ClipboardEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -20,6 +19,7 @@ import SuccessModal from "../../../components/SuccessModal";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
 import Logout from "../../../components/Logout";
+import { getAuthenticatedLoginIdentifier } from "../../../utils/authIdentity";
 import {
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
@@ -35,12 +35,6 @@ import {
 } from "../../../services/teacherProfileService";
 import {getSubjectsDropdown,type DropdownItem,} from "../../../services/dropdownService";
 
-interface Profile {
-  id: number;
-  name: string;
-  email: string;
-  avatar: string;
-}
 interface InitialValues {
   username: string;
   currentPassword?: string;
@@ -57,15 +51,6 @@ interface InitialValues {
 
 const InitialValuesProfile: InitialValues = profileData;
 const PASSWORD_MAX_LENGTH = 12;
-
-const profiles: Profile[] = [
-  {
-    id: 1,
-    name: InitialValuesProfile.username,
-    email: InitialValuesProfile.email[0],
-    avatar: InitialValuesProfile.image,
-  },
-];
 
 const YEARS_OPTIONS = [
   "1 Year",
@@ -116,17 +101,16 @@ confirmPassword: Yup.string()
 
 export default function UpdateProfile() {
   const { setActiveTab } = useOutletContext<TeacherLayoutContext>();
-  const [activeProfile] = useState<Profile>(profiles[0]);
   const displayName =
     localStorage.getItem("userName") ||
     localStorage.getItem("full_name") ||
     localStorage.getItem("name") ||
-    activeProfile.name;
+    getAuthenticatedLoginIdentifier();
   const displayEmail =
     localStorage.getItem("userEmail") ||
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
-    activeProfile.email;
+    "";
   const [isEditing, setIsEditing] = useState(false);
   const [photoSrc, setPhotoSrc] = useState<string>(InitialValuesProfile.image);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -568,10 +552,10 @@ export default function UpdateProfile() {
           {({ logout }) => (
             <ProfileMenu
               userEmail={displayEmail}
-              userName={displayName}
+              userName={teacherProfileData?.full_name || displayName}
               userRole="Teacher"
               avatarSrc={formik.values.image || teacherProfile || profilePictureDefault}
-              onProfileClick={() => navigate("/teacher/dashboard")}
+              onProfileClick={() => navigate("/teacher/profile")}
               onSettingsClick={() => setActiveTab("settings")}
               onLogoutClick={logout}
             />

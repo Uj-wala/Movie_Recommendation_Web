@@ -26,7 +26,7 @@ export default function TeacherLayout() {
         <Sidebar activeTab={highlightedTab} setActiveTab={handleSetActiveTab} />
       </aside>
 
-      <main className="ml-[278px] w-full">
+      <main className="ml-[278px] min-w-0 w-[calc(100%-278px)] overflow-x-hidden">
         <Outlet context={{ setActiveTab: handleSetActiveTab } satisfies TeacherLayoutContext} />
       </main>
     </div>
