@@ -99,7 +99,7 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
           isOpen={isModalOpen} 
           onClose={handleCloseModal} 
           onSave={handleSaveSuccess}
-          user={selectedRole ? { id: selectedRole.id, role: selectedRole.name, name: '', email: '', status: selectedRole.status } : null}
+          user={selectedRole ? { id: selectedRole.id, name: selectedRole.name, status: selectedRole.status } : null}
         />
       )}
 
@@ -108,6 +108,7 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
           isOpen={isStatusModalOpen} 
           onClose={handleCloseStatusModal} 
           onSave={handleSaveSuccess}
+          fetchUserDetails={async () => {}}
           user={selectedStatusRole as UserOrRole}
         />
       )}

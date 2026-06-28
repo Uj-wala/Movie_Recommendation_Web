@@ -3,18 +3,17 @@ import './UserTable.css';
 import EditRoleModal from '../EditRoleModal/EditRoleModal';
 import EditStatusModal from '../EditStatusModal/EditStatusModal';
 import SuccessModal from '../../../../components/SuccessModal';
-import type { User, UserOrRole } from '../../types';
+import type { User } from '../../types';
 import { toggleUserActiveStatus } from '../../../../services/adminService';
 interface UserTableProps {
   users: User[];
-  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   fetchUserDetails: () => Promise<void>;
   showAddRoleAction?: boolean;
   customEditLabel?: string;
   isRolesSection?: boolean;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ users, setUsers, fetchUserDetails, showAddRoleAction, customEditLabel, isRolesSection }) => {
+const UserTable: React.FC<UserTableProps> = ({ users, fetchUserDetails, showAddRoleAction, customEditLabel, isRolesSection }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);

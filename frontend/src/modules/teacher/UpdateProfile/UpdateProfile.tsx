@@ -248,24 +248,29 @@ export default function UpdateProfile() {
         )
         .map(subject => subject.id);
 
-      await updateTeacherProfile({
-        full_name: values.username,
-        qualification: values.qualification,
-        bio: values.expertises,
-        years_of_experience: values.yearsOfExperience,
-        phone_number: phones[0]?.value,
-        subject_ids: selectedSubjectIds,
-      });
-      actions.resetForm({
-        values: {
-          ...values,
-          currentPassword: "",
-          password: "",
-          confirmPassword: "",
-        },
-      });
-      setIsEditing(false);
-      setShowSuccess(true);
+      setIsProfileSaving(true);
+      try {
+        await updateTeacherProfile({
+          full_name: values.username,
+          qualification: values.qualification,
+          bio: values.expertises,
+          years_of_experience: values.yearsOfExperience,
+          phone_number: phones[0]?.value,
+          subject_ids: selectedSubjectIds,
+        });
+        actions.resetForm({
+          values: {
+            ...values,
+            currentPassword: "",
+            password: "",
+            confirmPassword: "",
+          },
+        });
+        setIsEditing(false);
+        setShowSuccess(true);
+      } finally {
+        setIsProfileSaving(false);
+      }
     },
   });
 
@@ -684,10 +689,10 @@ export default function UpdateProfile() {
                 <button
                   type="button"
                   onClick={handlePasswordUpdate}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isPasswordSaving}
                   className="flex h-[40px] min-w-[118px] items-center justify-center rounded-[8px] bg-[#238B45] px-5 font-poppins text-[14px] font-semibold text-white transition-colors hover:bg-[#036724] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#238B45]"
                 >
-                  Update Password
+                  {isPasswordSaving ? "Updating..." : "Update Password"}
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">

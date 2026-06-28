@@ -248,7 +248,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
 
         <UserTable
           users={users}
-          setUsers={setUsers}
           fetchUserDetails={fetchUserDetails}
         />
       </div>

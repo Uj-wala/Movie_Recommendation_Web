@@ -22,40 +22,41 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
   const [userNameError, setUserNameError] = useState("");
   const [role, setRole] = useState<{ id: string, name: string }[]>([]);
 
-  if (!isOpen) return null;
-
   const handleSave = async() => {
     if (!userName.trim()) {
       setUserNameError("Please enter a user name");
       return;
     }
-    const res =await editUser((user?.id ? user?.id : ''), {
+    await editUser((user?.id ? user?.id : ''), {
       role_id: selectedRole,
       is_active: status === 'Active' ? true : false
     });
-    fetchUserDetails();
-    onClose();
-    // if (onSave) {
-    //   onSave({
-    //     name: userName,
-    //     role_id: selectedRole,
-    //     status: status === 'Active' ? 'Active' : 'Blocked'
-    //   });
-    // } else {
-    //   onClose();
-    // }
-  };
-  const fetchRoles = async () => {
-    try {
-      const response = await fetchDropdownData('/dropdowns/roles');
-      setRole(response);
-    } catch (error) {
-      console.error('Error fetching roles:', error);
-    }
+    await fetchUserDetails();
+    const updatedUser = {
+      ...user,
+      name: userName,
+      role_id: selectedRole,
+      is_active: status === 'Active' ? 1 : 0,
+    };
+    if (onSave) onSave(updatedUser);
+    else onClose();
   };
   useEffect(() => {
-    fetchRoles();
-  }, []);
+    if (!isOpen) return;
+
+    let cancelled = false;
+    fetchDropdownData('/dropdowns/roles')
+      .then((response) => {
+        if (!cancelled) setRole(response);
+      })
+      .catch((error) => console.error('Error fetching roles:', error));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   return (
     <div className="status-modal-overlay">

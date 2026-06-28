@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import {getTeacherDashboard,type TeacherDashboard,} from "../../../services/teacherProfileService";
+import { getTeacherDashboard, type TeacherDashboard as TeacherDashboardData } from "../../../services/teacherProfileService";
 import {
   Star,
   ChevronDown,
@@ -483,9 +483,7 @@ const TeacherDashboard: React.FC = () => {
     localStorage.getItem("email") ||
     localStorage.getItem("phone_number") ||
     "teacher@thestackly.com";
-  const [dashboardData, setDashboardData] =useState<TeacherDashboard | null>(null);
- const [isDashboardLoading, setIsDashboardLoading] = useState(false);
- const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState<TeacherDashboardData | null>(null);
  const [activityPeriod, setActivityPeriod] = useState("Today");
  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
  const [profilePeriod, setProfilePeriod] = useState("Today");
@@ -495,8 +493,6 @@ const TeacherDashboard: React.FC = () => {
  useEffect(() => {
   const fetchDashboard = async () => {
     try {
-      setIsDashboardLoading(true);
-
       const response = await getTeacherDashboard();
 
       console.log("Dashboard Response:", response);
@@ -504,8 +500,6 @@ const TeacherDashboard: React.FC = () => {
       setDashboardData(response);
     } catch (error) {
       console.error("Dashboard Error:", error);
-    } finally {
-      setIsDashboardLoading(false);
     }
   };
 

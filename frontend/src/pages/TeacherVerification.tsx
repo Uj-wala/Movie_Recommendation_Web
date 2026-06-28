@@ -42,7 +42,6 @@ const TeacherVerification = () => {
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [teacherId, setTeacherId] = useState('');
 
   useEffect(() => {
     const loadSubjects = async () => {
@@ -97,13 +96,12 @@ const TeacherVerification = () => {
         return;
       }
 
-      const response = await saveTeacherVerification({
+      await saveTeacherVerification({
         user_id: userId,
         school_name: schoolName,
         subject_ids: subjectIds,
       });
 
-      setTeacherId(response.teacher_id);
       setIsModalOpen(true);
 
     } catch (err: any) {
