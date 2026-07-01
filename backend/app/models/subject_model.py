@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.core.base_model import BaseModel
+if TYPE_CHECKING:
+    from app.models.course_model import Course
 
 
 class Subject(Base, BaseModel):
@@ -22,4 +26,9 @@ class Subject(Base, BaseModel):
     "TeacherSubject",
     back_populates="subject",
     cascade="all, delete-orphan"
+    )
+    
+    courses: Mapped[list["Course"]] = relationship(
+    "Course",
+    back_populates="subject",
     )

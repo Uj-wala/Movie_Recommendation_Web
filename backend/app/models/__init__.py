@@ -15,3 +15,11 @@ from app.models.user_permission_model import UserPermission
 from app.models.role_model import Role
 from app.models.permission_model import Permission
 from app.models.role_permission_model import RolePermission
+from app.models.course_model import Course
+from app.models.course_visibility_model import CourseVisibility
+from app.models.student_course_assignment_model import StudentCourseAssignment
+from app.models.course_progress_model import CourseProgress
+from app.models.lesson_progress_model import LessonProgress
+from app.models.lesson_model import Lesson
+from app.models.lesson_content_model import LessonContent
+from app.models.coursemodule_model import CourseModule

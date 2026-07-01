@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     Integer,
     String,
@@ -9,6 +11,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.base_model import BaseModel
+if TYPE_CHECKING:
+    from app.models.course_model import Course
 
 
 class TeacherProfile(Base, BaseModel):
@@ -51,4 +55,10 @@ class TeacherProfile(Base, BaseModel):
     "TeacherSubject",
     back_populates="teacher_profile",
     cascade="all, delete-orphan"
+    )
+    
+    courses: Mapped[list["Course"]] = relationship(
+    "Course",
+    foreign_keys="Course.instructor_teacher_profile_id",
+    back_populates="instructor",
     )

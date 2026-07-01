@@ -11,8 +11,12 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.base_model import BaseModel
 from app.core.database import Base
 
+
 if TYPE_CHECKING:
     from app.models.user_model import User
+    from app.models.lesson_progress_model import LessonProgress
+    from app.models.course_progress_model import CourseProgress
+    from app.models.student_course_assignment_model import StudentCourseAssignment
 
 
 class StudentProfile(Base, BaseModel):
@@ -56,4 +60,22 @@ class StudentProfile(Base, BaseModel):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="student_profile",
+    )
+    
+    course_assignments: Mapped[list["StudentCourseAssignment"]] = relationship(
+    "StudentCourseAssignment",
+    back_populates="student",
+    cascade="all, delete-orphan",
+    )
+
+    lesson_progress: Mapped[list["LessonProgress"]] = relationship(
+        "LessonProgress",
+        back_populates="student",
+        cascade="all, delete-orphan",
+    )
+
+    course_progress: Mapped[list["CourseProgress"]] = relationship(
+        "CourseProgress",
+        back_populates="student",
+        cascade="all, delete-orphan",
     )

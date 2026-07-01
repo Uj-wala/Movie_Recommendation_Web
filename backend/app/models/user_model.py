@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from sqlalchemy import (
     String,
     Boolean,
@@ -14,6 +15,8 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.database import Base
 from app.core.base_model import BaseModel
 from app.core.enums import SecurityQuestion
+if TYPE_CHECKING:
+    from app.models.course_model import Course
  
  
 class User(Base, BaseModel):
@@ -29,8 +32,14 @@ class User(Base, BaseModel):
     email: Mapped[str | None] = mapped_column(
         String(255), unique=True, index=True, nullable=True
     )
+    
+    reference_email: Mapped[str | None] = mapped_column(
+        String(255), unique=True, index=True, nullable=True
+    ) 
  
     phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    
+    reference_phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
  
     country_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("countries.id"), nullable=True, index=True
@@ -144,6 +153,19 @@ class User(Base, BaseModel):
     user_permissions = relationship(
     "UserPermission",
     back_populates="user",
+    cascade="all, delete-orphan"
+    )
+    
+    created_courses: Mapped[list["Course"]] = relationship(
+    "Course",
+    foreign_keys="Course.created_by",
+    back_populates="creator",
+    )
+    
+    course_assignments = relationship(
+    "StudentCourseAssignment",
+    foreign_keys="StudentCourseAssignment.assigned_by",
+    back_populates="assigned_user",
     cascade="all, delete-orphan"
     )
 
