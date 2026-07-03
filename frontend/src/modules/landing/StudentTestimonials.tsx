@@ -75,7 +75,7 @@ const StudentTestimonials: React.FC = () => {
 
   return (
     <>
-      <section className="w-full bg-white">
+      <section className="w-full overflow-x-hidden bg-white">
         <div className="mx-auto max-w-[1440px] px-6 py-4">
           <div className="text-center">
             <p className="text-sm font-semibold text-green-500">
@@ -95,7 +95,7 @@ const StudentTestimonials: React.FC = () => {
             </h2>
           </div>
 
-          <div className="mx-auto mt-10 h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
+          <div className="mx-auto mt-10 h-[510px] w-full max-w-[1270px] overflow-hidden">
             <div
               className={`flex w-max gap-6 ${
                 isTestimonialTransitionEnabled
@@ -107,7 +107,7 @@ const StudentTestimonials: React.FC = () => {
               {testimonialSlides.map((student, index) => (
                 <div
                   key={`${student.name}-${index}`}
-                  className="h-[510px] w-[623px] shrink-0 rounded-[25px] border border-green-400 px-[54px] py-[54px] text-center shadow-sm transition-all duration-300 hover:shadow-md"
+                  className="h-[510px] w-[623px] shrink-0 rounded-[25px] border border-green-400 bg-white px-[54px] py-[54px] text-center shadow-sm transition-all duration-300 hover:shadow-md"
                 >
                   <div className="relative mx-auto h-[116px] w-[103px]">
                     <img

@@ -14,18 +14,28 @@ interface CaptchaProps {
 
 const CAPTCHA_LENGTH = 8;
 const CAPTCHA_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const REQUIRED_CAPTCHA_CHAR = 'l';
 
 const generateCaptcha = (currentCaptcha?: string) => {
   let nextCaptcha = '';
 
   do {
-    nextCaptcha = Array.from({ length: CAPTCHA_LENGTH }, () =>
+    const captchaChars = Array.from({ length: CAPTCHA_LENGTH }, () =>
       CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)]
-    ).join('');
+    );
+    const requiredCharIndex = Math.floor(Math.random() * CAPTCHA_LENGTH);
+    captchaChars[requiredCharIndex] = REQUIRED_CAPTCHA_CHAR;
+    nextCaptcha = captchaChars.join('');
   } while (nextCaptcha === currentCaptcha);
 
   return nextCaptcha;
 };
+
+const normalizeCaptchaValue = (text: string) =>
+  text
+    .split('')
+    .map((char) => (['1', 'I', 'i', 'L'].includes(char) ? REQUIRED_CAPTCHA_CHAR : char.toUpperCase()))
+    .join('');
 
 const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTermsClick }, ref) => {
   const [value, setValue] = useState('');
@@ -34,11 +44,12 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTer
   const [captchaText, setCaptchaText] = useState(() => generateCaptcha());
   const [showHelp, setShowHelp] = useState(false);
 
-  const isCaptchaValid = (input: string) => input === captchaText;
+  const isCaptchaValid = (input: string) =>
+    normalizeCaptchaValue(input) === normalizeCaptchaValue(captchaText);
 
   useImperativeHandle(ref, () => ({
     validate: () => {
-      const isValid = value === captchaText;
+      const isValid = isCaptchaValid(value);
       setStatus(isValid ? 'success' : 'error');
       setErrorMessage(isValid ? '' : value ? 'Incorrect CAPTCHA.' : 'CAPTCHA is required.');
       return isValid;

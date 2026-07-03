@@ -23,9 +23,11 @@ const FirstPage: React.FC = () => {
     "Cyber Security",
   ];
 
+  const CARD_STEP = 203 + 48; // card width + gap, keeps arrow clicks aligned to whole cards
+
   const scrollCategories = (direction: "left" | "right") => {
     categoryScrollerRef.current?.scrollBy({
-      left: direction === "left" ? -260 : 260,
+      left: direction === "left" ? -CARD_STEP : CARD_STEP,
       behavior: "smooth",
     });
   };
@@ -98,7 +100,7 @@ const FirstPage: React.FC = () => {
           <div
             ref={categoryScrollerRef}
             onScroll={updateScrollButtons}
-            className="flex flex-1 items-center gap-[48px] overflow-x-auto no-scrollbar scroll-smooth py-2"
+            className="flex flex-1 items-center gap-[48px] overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-2"
           >
             {categories.map((item) => (
               <button
@@ -107,7 +109,7 @@ const FirstPage: React.FC = () => {
                 onClick={() => {
                   setActiveCategory(item);
                 }}
-                className={`h-[56px] w-[203px] shrink-0 rounded-[16px] border-[1.63px] px-[16px] py-[12px] text-[14px] font-bold transition-all duration-200 whitespace-nowrap cursor-pointer ${
+                className={`h-[56px] w-[203px] shrink-0 snap-start rounded-[16px] border-[1.63px] px-[16px] py-[12px] text-[14px] font-bold transition-all duration-200 whitespace-nowrap cursor-pointer ${
                   activeCategory === item
                     ? "border-[#55B779] bg-white text-[#55B779] shadow-sm hover:shadow-md"
                     : "border-[#9f9f9f] bg-white text-[#969696] hover:border-[#55B779] hover:text-[#55B779] hover:shadow-sm"

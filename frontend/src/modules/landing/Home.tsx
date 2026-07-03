@@ -421,7 +421,7 @@ const StudentTestimonials = () => {
 
   return (
     <>
-      <section className="w-full bg-white">
+      <section className="w-full overflow-x-hidden bg-white">
         <div className="mx-auto max-w-[1440px] px-6 py-4">
           <div className="mx-auto h-[132px] w-[529px] text-center">
             <p className="ml-[150px] h-[29px] w-[224px] whitespace-nowrap font-roboto-flex text-[25px] font-semibold capitalize leading-none tracking-[0] text-[#51A06F]">
@@ -456,7 +456,7 @@ const StudentTestimonials = () => {
             </h2>
           </div>
 
-          <div className="mx-auto mt-[40px] h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
+          <div className="mx-auto mt-[40px] h-[510px] w-full max-w-[1372px] overflow-hidden">
             <div
               className={`flex w-max gap-[16px] ${
                 isTestimonialTransitionEnabled
@@ -464,19 +464,13 @@ const StudentTestimonials = () => {
                   : "transition-none"
               }`}
               style={{
-                transform: `translateX(-${
-                  activeTestimonialDot === 0
-                    ? 0
-                    : 694 + (activeTestimonialDot - 1) * 639
-                }px)`,
+                transform: `translateX(-${activeTestimonialDot * 694}px)`,
               }}
             >
             {testimonialSlides.map((student, index) => (
               <div
                 key={`${student.name}-${index}`}
-                className={`rounded-[25px] border border-green-400 text-center shadow-sm transition-all duration-300 hover:shadow-md ${
-                  index % testimonials.length === 0 ? "h-[510px] w-[678px] shrink-0 px-[81px] py-[54px]" : "h-[510px] w-[623px] shrink-0 px-[54px] py-[54px]"
-                }`}
+                className="h-[510px] w-[678px] shrink-0 rounded-[25px] border border-green-400 bg-white px-[81px] py-[54px] text-center shadow-sm transition-all duration-300 hover:shadow-md"
               >
                 <div className="mx-auto h-[403px] w-[515px]">
                   <div className="relative mx-auto h-[116.48px] w-[103px]">

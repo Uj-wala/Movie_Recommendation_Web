@@ -14,7 +14,7 @@ const HeroSection: React.FC = () => {
       <div className="grid min-h-[400px] items-center gap-[40px] lg:grid-cols-[48%_52%]">
         <div className="relative z-10 -translate-y-[20px]">
           <p className="mb-[8px] font-roboto-flex text-[20px] font-bold capitalize leading-none tracking-[0] text-[#63c58c]">
-            Start Your Favourite Course
+            Start Your Favorite Course
           </p>
 
           <div className="relative inline-block">
@@ -33,40 +33,18 @@ const HeroSection: React.FC = () => {
                   fill="none"
                   preserveAspectRatio="none"
                 >
-                  <defs>
-                    <linearGradient
-                      id="bright-career-underline-fade"
-                      x1="0"
-                      x2="1"
-                      y1="0"
-                      y2="0"
-                    >
-                      <stop offset="0" stopColor="white" stopOpacity="0.35" />
-                      <stop offset="0.16" stopColor="white" stopOpacity="1" />
-                      <stop offset="1" stopColor="white" stopOpacity="1" />
-                    </linearGradient>
-                    <mask id="bright-career-underline-mask">
-                      <rect
-                        width="252"
-                        height="38"
-                        fill="url(#bright-career-underline-fade)"
-                      />
-                    </mask>
-                  </defs>
-                  <g mask="url(#bright-career-underline-mask)">
-                    <path
-                      d="M1 16 C72 8 151 4 251 15"
-                      stroke="#55B779"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M1 30 C73 18 152 8 251 15"
-                      stroke="#55B779"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    />
-                  </g>
+                  <path
+                    d="M1 16 C72 8 151 4 251 15"
+                    stroke="#55B779"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M1 30 C73 18 152 8 251 15"
+                    stroke="#55B779"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </span>
             </h1>
