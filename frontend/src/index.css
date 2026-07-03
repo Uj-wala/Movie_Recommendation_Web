@@ -21,6 +21,12 @@ body,
   overflow-x: auto;
 }
 
+/* Password fields use an application-provided visibility toggle. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 @utility no-scrollbar {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */

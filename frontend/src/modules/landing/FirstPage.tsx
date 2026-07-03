@@ -1,9 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import HeroSection from "./HeroSection";
 
 const FirstPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState("UI UX Design");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const categoryScrollerRef = useRef<HTMLDivElement>(null);
 
   const categories = [
@@ -27,6 +29,22 @@ const FirstPage: React.FC = () => {
       behavior: "smooth",
     });
   };
+
+  const updateScrollButtons = useCallback(() => {
+    const scroller = categoryScrollerRef.current;
+    if (!scroller) return;
+
+    const maximumScrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    setCanScrollLeft(scroller.scrollLeft > 1);
+    setCanScrollRight(scroller.scrollLeft < maximumScrollLeft - 1);
+  }, []);
+
+  useEffect(() => {
+    updateScrollButtons();
+    window.addEventListener("resize", updateScrollButtons);
+
+    return () => window.removeEventListener("resize", updateScrollButtons);
+  }, [updateScrollButtons]);
 
   return (
     <div className="overflow-x-hidden bg-[#e3f4e8] font-sans">
@@ -69,8 +87,9 @@ const FirstPage: React.FC = () => {
           <button
             type="button"
             onClick={() => scrollCategories("left")}
+            disabled={!canScrollLeft}
             aria-label="Scroll categories left"
-            className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-white bg-white text-[#202124] transition-all hover:bg-[#55B779] hover:border-[#55B779] hover:text-white hover:shadow-md cursor-pointer"
+            className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-white bg-white text-[#202124] transition-all hover:bg-[#55B779] hover:border-[#55B779] hover:text-white hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white disabled:hover:bg-white disabled:hover:text-[#202124] disabled:hover:shadow-none"
           >
             <ChevronLeft className="h-[20px] w-[20px] stroke-[2.6]" />
           </button>
@@ -78,19 +97,15 @@ const FirstPage: React.FC = () => {
           {/* Categories Pill Slider */}
           <div
             ref={categoryScrollerRef}
+            onScroll={updateScrollButtons}
             className="flex flex-1 items-center gap-[48px] overflow-x-auto no-scrollbar scroll-smooth py-2"
           >
             {categories.map((item) => (
               <button
                 key={item}
                 type="button"
-                onClick={(event) => {
+                onClick={() => {
                   setActiveCategory(item);
-                  event.currentTarget.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                    inline: "center",
-                  });
                 }}
                 className={`h-[56px] w-[203px] shrink-0 rounded-[16px] border-[1.63px] px-[16px] py-[12px] text-[14px] font-bold transition-all duration-200 whitespace-nowrap cursor-pointer ${
                   activeCategory === item
@@ -107,8 +122,9 @@ const FirstPage: React.FC = () => {
           <button
             type="button"
             onClick={() => scrollCategories("right")}
+            disabled={!canScrollRight}
             aria-label="Scroll categories right"
-            className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-white bg-white text-[#202124] transition-all hover:bg-[#55B779] hover:border-[#55B779] hover:text-white hover:shadow-md cursor-pointer"
+            className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border border-white bg-white text-[#202124] transition-all hover:bg-[#55B779] hover:border-[#55B779] hover:text-white hover:shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white disabled:hover:bg-white disabled:hover:text-[#202124] disabled:hover:shadow-none"
           >
             <ChevronRight className="h-[20px] w-[20px] stroke-[2.6]" />
           </button>

@@ -42,11 +42,11 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   if (!isOpen) return null;
 
   if (variant === "memberAdded") {
-    const displayName = member?.name?.trim() || "John";
-    const firstName = displayName.split(" ")[0] || displayName;
-    const displayEmail = member?.email?.trim() || "highn";
-    const displayRole = member?.role_name?.trim() || "Teacher";
-    const displayRegistrationNumber = member?.registration_number?.trim() || "Teacher";
+    const displayName = member?.name?.trim() || "";
+    const firstName = displayName.split(" ")[0] || "";
+    const displayEmail = member?.email?.trim() || "";
+    const displayRole = member?.role_name?.trim() || "";
+    const displayRegistrationNumber = member?.registration_number?.trim() || "";
 
     return (
       <div className="success-modal-overlay member-success-overlay">
@@ -62,46 +62,32 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
           <h2 className="member-success-title" id="member-success-title">
             Member Added Successfully!
           </h2>
-          <p className="member-success-subtitle">Invitation has been sent to {firstName}</p>
+          <p className="member-success-subtitle">
+            {firstName ? `Invitation has been sent to ${firstName}` : "Invitation has been sent"}
+          </p>
 
           <div className="member-details-card">
             <div className="member-avatar" aria-hidden="true">
               <User size={31} strokeWidth={2.1} />
             </div>
             <div className="member-details-content">
-              <h3 className="member-name">{displayName}</h3>
+              {displayName && <h3 className="member-name">{displayName}</h3>}
               <div className="member-meta-grid">
-                <div className="member-meta-item">
+                {displayEmail && <div className="member-meta-item">
                   <span>Email</span>
                   <strong>{displayEmail}</strong>
-                </div>
-                <div className="member-meta-item">
+                </div>}
+                {displayRole && <div className="member-meta-item">
                   <span>Role</span>
                   <strong className="member-role-pill">
                     <User size={11} strokeWidth={2} />
                     {displayRole}
                   </strong>
-                </div>
-                <div className="member-meta-item">
-                  <span>Department</span>
-                  <strong>Finance</strong>
-                </div>
-                <div className="member-meta-item">
-                  <span>Location</span>
-                  <strong>New York Office</strong>
-                </div>
-                <div className="member-meta-item">
+                </div>}
+                {displayRegistrationNumber && <div className="member-meta-item">
                   <span>Employee ID</span>
                   <strong>{displayRegistrationNumber}</strong>
-                </div>
-                <div className="member-meta-item">
-                  <span>Reports To</span>
-                  <strong>Mike Johnson</strong>
-                </div>
-                <div className="member-meta-item member-meta-wide">
-                  <span>Assigned Projects</span>
-                  <strong className="member-project-pill">Customer Portal</strong>
-                </div>
+                </div>}
               </div>
             </div>
           </div>
@@ -111,7 +97,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
             <div>
               <h3>What happens next?</h3>
               <ul>
-                <li>An email invitation has been sent to {displayEmail}</li>
+                {displayEmail && <li>An email invitation has been sent to {displayEmail}</li>}
                 <li>They will receive login credentials and onboarding instructions</li>
                 <li>Account status will change from "Pending" to "Active" once they accept</li>
                 <li>You can track their status in the members list below</li>

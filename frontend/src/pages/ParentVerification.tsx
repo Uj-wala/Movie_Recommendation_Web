@@ -14,6 +14,12 @@ const ParentVerification = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!studentRegistrationNumber.trim()) {
+      setError('Please fill all required fields.');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -69,7 +75,7 @@ const ParentVerification = () => {
               </div>
             )}
 
-            <form className="w-full" onSubmit={handleSubmit}>
+            <form className="w-full" onSubmit={handleSubmit} noValidate>
 
               {/* Student ID */}
               <div className="mb-8">

@@ -35,15 +35,17 @@ const sortRolesByDisplayOrder = (roles: RoleOption[]) =>
 const SelectRole = () => {
   const location = useLocation();
   const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [roleError, setRoleError] = useState('');
+
+  const returnedRole = location.state?.selectedRole as RoleOption | undefined;
 
   const successMessage =
     typeof location.state?.successMessage === 'string'
       ? location.state.successMessage
       : '';
-  const [selectedRole, setSelectedRole] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleOption | null>(() =>
+    returnedRole?.id && returnedRole?.name ? returnedRole : null,
+  );
 
   const fetchRoles = async () => {
     try {
@@ -92,6 +94,7 @@ const SelectRole = () => {
                   onChange={(e) => {
                     const nextRole = roles.find(r => r.id === e.target.value) || null;
                     setSelectedRole(nextRole);
+                    if (nextRole) setRoleError('');
 
                     if (nextRole) {
                       localStorage.setItem('selected_role_id', nextRole.id);
@@ -107,7 +110,13 @@ const SelectRole = () => {
 
           <Link
             to={selectedRole ? `/confirm-role?role=${selectedRole.name.toLowerCase()}&role_id=${selectedRole.id}` : "#"}
-            onClick={() => {
+            state={selectedRole ? { selectedRole } : undefined}
+            onClick={(event) => {
+              if (!selectedRole) {
+                event.preventDefault();
+                setRoleError('Please fill all required fields.');
+                return;
+              }
               if (selectedRole) {
                 localStorage.setItem('selected_role_id', selectedRole.id);
                 localStorage.setItem('selected_role', selectedRole.name.toLowerCase());
@@ -117,6 +126,9 @@ const SelectRole = () => {
           >
             Create Account
           </Link>
+          {roleError && (
+            <p className="mt-2 text-sm text-red-600">{roleError}</p>
+          )}
         </form>
       </div>
     </SplitScreenLayout>

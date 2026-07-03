@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './EditStatusModal.css';
 import { X } from 'lucide-react';
 import type { UserOrRole } from '../../types';
@@ -17,32 +17,64 @@ interface EditStatusModalProps {
 
 const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSave, fetchUserDetails, user }) => {
   const [status, setStatus] = useState(user?.is_active ? 'Active' : 'Deactivate');
-  const [selectedRole, setSelectedRole] = useState(user?.role_id || 'student');
-  const [userName, setUserName] = useState(user?.name || "Kumar Gandham");
+  const [selectedRole, setSelectedRole] = useState(user?.role_id || '');
+  const [userName, setUserName] = useState(user?.name || "");
   const [userNameError, setUserNameError] = useState("");
+  const [roleError, setRoleError] = useState("");
   const [role, setRole] = useState<{ id: string, name: string }[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const initialStatus = user?.is_active ? 'Active' : 'Deactivate';
+  const hasChanges = useMemo(
+    () =>
+      userName.trim() !== (user?.name || "").trim() ||
+      selectedRole !== (user?.role_id || "") ||
+      status !== initialStatus,
+    [initialStatus, selectedRole, status, user?.name, user?.role_id, userName]
+  );
 
   const handleSave = async() => {
-    if (!userName.trim()) {
-      setUserNameError("Please enter a user name");
+    if (isSaving) return;
+    if (!hasChanges) return;
+    if (!userName.trim() && !selectedRole && !status) {
+      setUserNameError("Please fill all required fields.");
+      setRoleError("");
       return;
     }
-    await editUser((user?.id ? user?.id : ''), {
-      role_id: selectedRole,
-      is_active: status === 'Active' ? true : false
-    });
-    await fetchUserDetails();
-    const updatedUser = {
-      ...user,
-      name: userName,
-      role_id: selectedRole,
-      is_active: status === 'Active' ? 1 : 0,
-    };
-    if (onSave) onSave(updatedUser);
-    else onClose();
+    if (!userName.trim() || !selectedRole || !status) {
+      setUserNameError(userName.trim() ? "" : "User Name is required.");
+      setRoleError(selectedRole ? "" : "Please select a role.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await editUser((user?.id ? user?.id : ''), {
+        role_id: selectedRole,
+        is_active: status === 'Active'
+      });
+      const updatedUser = {
+        ...user,
+        name: userName,
+        role_id: selectedRole,
+        is_active: status === 'Active' ? 1 : 0,
+      };
+      if (onSave) {
+        await onSave(updatedUser);
+      } else {
+        await fetchUserDetails();
+        onClose();
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
   useEffect(() => {
     if (!isOpen) return;
+
+    setUserName(user?.name || "");
+    setSelectedRole(user?.role_id || "");
+    setStatus(user?.is_active ? "Active" : "Deactivate");
+    setUserNameError("");
+    setRoleError("");
 
     let cancelled = false;
     fetchDropdownData('/dropdowns/roles')
@@ -54,7 +86,7 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -83,7 +115,9 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
               }
 
               setUserName(nextUserName);
-              if (userNameError) setUserNameError("");
+              if (userNameError) {
+                setUserNameError(nextUserName.trim() ? "" : "User Name is required.");
+              }
             }}
           />
           {userNameError && (
@@ -96,7 +130,10 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
           <select
             className="status-dropdown"
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
+            onChange={(e) => {
+              setSelectedRole(e.target.value);
+              if (e.target.value) setRoleError("");
+            }}
           >
             {/* <option value="student">Student</option>
             <option value="teacher">Teacher</option>
@@ -106,6 +143,9 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
               <option key={r.id} value={r.id}>{r.name}</option>
             ))}
           </select>
+          {roleError && (
+            <span className="status-error-text">{roleError}</span>
+          )}
         </div>
 
         <div className="status-input-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '24px' }}>
@@ -138,7 +178,9 @@ const EditStatusModal: React.FC<EditStatusModalProps> = ({ isOpen, onClose, onSa
 
         <div className="status-modal-actions">
           <button className="status-btn-cancel" onClick={onClose}>Cancel</button>
-          <button className="status-btn-save" onClick={handleSave}>Save Changes</button>
+          <button className="status-btn-save" onClick={handleSave} disabled={isSaving || !hasChanges}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </button>
         </div>
       </div>
     </div>

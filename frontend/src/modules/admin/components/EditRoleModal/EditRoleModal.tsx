@@ -1,16 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './EditRoleModal.css';
 import { X } from 'lucide-react';
 import type { UserOrRole } from '../../types';
 import { fetchDropdownData } from '../../../../services/ListApiService';
 import { createRole, fetchPermissions, fetchPermissionsByRoleId } from '../../../../services/adminService';
+import {
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
+  hasReachedEmailMaxLength,
+  limitEmailInput,
+} from '../../../../utils/validation';
 
 const NAME_MAX_LENGTH = 24;
+const ROLE_DISPLAY_ORDER = ["student", "parent", "teacher"];
+const TEACHER_PERMISSION_ERROR =
+  "Please select at least one permission for the Teacher role.";
 
 interface EditRoleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave?: (userData: UserOrRole) => void;
+  onSave?: (userData: UserOrRole) => void | Promise<void>;
   user: UserOrRole | null;
   existingEmails?: string[];
 }
@@ -34,10 +43,31 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
     name: user?.role_name ?? "",
   });
   const [nameVal, setNameVal] = useState(user?.name || "");
-  const [emailVal, setEmailVal] = useState(user?.email || "");
+  const [emailVal, setEmailVal] = useState(limitEmailInput(user?.email || ""));
   const [emailError, setEmailError] = useState("");
   const [nameError, setNameError] = useState("");
+  const [roleError, setRoleError] = useState("");
+  const [permissionError, setPermissionError] = useState("");
+  const [formError, setFormError] = useState("");
   const [role, setRole] = useState<RoleOption[]>([]);
+
+  const sortedRoles = useMemo(() => {
+    return [...role].sort((firstRole, secondRole) => {
+      const firstIndex = ROLE_DISPLAY_ORDER.indexOf(firstRole.name.toLowerCase());
+      const secondIndex = ROLE_DISPLAY_ORDER.indexOf(secondRole.name.toLowerCase());
+
+      if (firstIndex !== -1 || secondIndex !== -1) {
+        return (
+          (firstIndex === -1 ? ROLE_DISPLAY_ORDER.length : firstIndex) -
+          (secondIndex === -1 ? ROLE_DISPLAY_ORDER.length : secondIndex)
+        );
+      }
+
+      return firstRole.name.localeCompare(secondRole.name, undefined, {
+        sensitivity: "base",
+      });
+    });
+  }, [role]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -55,9 +85,12 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
       setSelectedPermissionIds([]);
     }
     setNameVal(user?.name || "");
-    setEmailVal(user?.email || "");
+    setEmailVal(limitEmailInput(user?.email || ""));
     setEmailError("");
     setNameError("");
+    setRoleError("");
+    setPermissionError("");
+    setFormError("");
     fetchData();
     fetchPremmissions();
   }, [isOpen, user]);
@@ -100,6 +133,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
         ? prev.filter((id) => id !== permissionId)
         : [...prev, permissionId]
     );
+    setPermissionError("");
   };
   const validateEmail = (email: string) => {
     return String(email)
@@ -138,6 +172,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
       role?.find((r) => r.id === roleId) || { id: "", name: "" };
 
     setSelectedRole(nextRole);
+    if (nextRole.id) setRoleError("");
+    setPermissionError("");
 
     if (nextRole.id) {
       await fetchRolePermissions(nextRole.id);
@@ -147,10 +183,21 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
   };
   const handleSave = async () => {
     let hasError = false;
-    const hasSelectedRole = selectedRole && selectedRole.id !== 'Choose Role Type';
+    const hasSelectedRole = Boolean(selectedRole?.id && selectedRole.id !== 'Choose Role Type');
+
+    setFormError("");
+
+    if (!hasSelectedRole && !nameVal.trim() && !emailVal.trim()) {
+      setFormError("Please fill all required fields.");
+      setRoleError("");
+      setNameError("");
+      setEmailError("");
+      return;
+    }
 
     if (!hasSelectedRole) {
-      return;
+      setRoleError("Please select a role.");
+      hasError = true;
     }
 
     const nextNameError = validateName(nameVal);
@@ -161,7 +208,13 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
       setNameError("");
     }
 
-    if (!validateEmail(emailVal)) {
+    if (!emailVal.trim()) {
+      setEmailError("Email Address is required.");
+      hasError = true;
+    } else if (hasReachedEmailMaxLength(emailVal)) {
+      setEmailError(EMAIL_MAX_LENGTH_ERROR);
+      hasError = true;
+    } else if (!validateEmail(emailVal)) {
       setEmailError("Please enter a valid email address");
       hasError = true;
     } else if (isDuplicateEmail(emailVal)) {
@@ -169,6 +222,14 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
       hasError = true;
     } else {
       setEmailError("");
+    }
+
+    const isTeacherRole = selectedRole.name.toLowerCase() === "teacher";
+    if (isTeacherRole && selectedPermissionIds.length === 0) {
+      setPermissionError(TEACHER_PERMISSION_ERROR);
+      hasError = true;
+    } else {
+      setPermissionError("");
     }
 
     if (hasError) return;
@@ -192,9 +253,13 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
         permissions: selectedPermissionIds,
       };
 
-      onSave?.(userData);
+      await onSave?.(userData);
 
     } catch (error: any) {
+      const detail = error?.response?.data?.detail;
+      if (detail === TEACHER_PERMISSION_ERROR) {
+        setPermissionError(TEACHER_PERMISSION_ERROR);
+      }
       console.log("Error Creating Role :::", error)
     }finally{
       setLoading(false)
@@ -215,6 +280,10 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
           <X className="modal-close" size={24} onClick={onClose} />
         </div>
 
+        {formError && (
+          <p className="error-text" style={{ color: '#ef4444', fontSize: '12px', marginBottom: '12px' }}>{formError}</p>
+        )}
+
         <div className="role-section">
           <label className="section-label">Select Role:</label>
           <select
@@ -226,8 +295,9 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
             {/* <option value="Student">Student</option>
             <option value="Teacher">Teacher</option>
             <option value="Parent">Parent</option> */}
-            {role.map((role) => <option key={role.id} value={role.id}>{role.name.charAt(0).toUpperCase() + role.name.slice(1)}</option>)}
+            {sortedRoles.map((role) => <option key={role.id} value={role.id}>{role.name.charAt(0).toUpperCase() + role.name.slice(1)}</option>)}
           </select>
+          {roleError && <span className="error-text" style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{roleError}</span>}
         </div>
 
         {hasSelectedRole && (
@@ -258,14 +328,17 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
               <label className="input-label">{roleLabelPrefix} Email ID:</label>
               <input
                 type="email"
+                maxLength={EMAIL_MAX_LENGTH}
                 className={`text-input ${emailError ? 'input-error' : ''}`}
                 placeholder={`Enter ${roleLabelPrefix.toLowerCase()} email id`}
                 value={emailVal}
                 onChange={(e) => {
-                  const nextEmail = e.target.value.trim();
+                  const nextEmail = limitEmailInput(e.target.value.trim());
                   setEmailVal(nextEmail);
                   setEmailError(
-                    nextEmail && !validateEmail(nextEmail)
+                    hasReachedEmailMaxLength(e.target.value.trim())
+                      ? EMAIL_MAX_LENGTH_ERROR
+                      : nextEmail && !validateEmail(nextEmail)
                       ? "Please enter a valid email address"
                       : nextEmail && isDuplicateEmail(nextEmail)
                         ? "This email is already added"
@@ -278,7 +351,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
           </div>
         )}
 
-        <div className="permissions-section">
+        <div className={`permissions-section ${permissionError ? "permissions-section-error" : ""}`}>
           <h3 className="permissions-title">Permissions</h3>
           {/* <div className="permissions-list">
             <label className="checkbox-item">
@@ -355,6 +428,9 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
               </label>
             ))}
           </div>
+          {permissionError && (
+            <p className="permission-error-text">{permissionError}</p>
+          )}
         </div>
 
         <div className="modal-actions">

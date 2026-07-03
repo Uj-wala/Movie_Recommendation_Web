@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, type ClipboardEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, type ClipboardEvent, type KeyboardEvent, type MouseEvent as ReactMouseEvent } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import toast from "react-hot-toast";
@@ -11,20 +11,20 @@ import search from "../../../assets/UpdateProfileIcons/search.svg";
 import eyeshow from "../../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyehide from "../../../assets/UpdateProfileIcons/eyehide.svg";
 import tick from "../../../assets/UpdateProfileIcons/tick.svg";
-import profilePictureDefault from "../../../assets/UpdateProfileIcons/profilepicturedefault.svg";
-import teacherProfile from "../../../assets/teacher_profile.jpeg";
-import profileData from "../../../data/profile.json";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import SuccessModal from "../../../components/SuccessModal";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
 import Logout from "../../../components/Logout";
-import { getAuthenticatedLoginIdentifier } from "../../../utils/authIdentity";
 import {
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
   PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasReachedEmailMaxLength,
   hasRestrictedPasswordChars,
   isValidPasswordCharacters,
   sanitizePasswordInput,
+  limitEmailInput,
 } from "../../../utils/validation";
 import {
   getTeacherProfile,
@@ -49,7 +49,19 @@ interface InitialValues {
   expertises: string;
 }
 
-const InitialValuesProfile: InitialValues = profileData;
+const InitialValuesProfile: InitialValues = {
+  username: "",
+  currentPassword: "",
+  password: "",
+  confirmPassword: "",
+  yearsOfExperience: "",
+  qualification: "",
+  subjects: [],
+  phone: [],
+  email: [],
+  image: "",
+  expertises: "",
+};
 const PASSWORD_MAX_LENGTH = 12;
 
 const YEARS_OPTIONS = [
@@ -73,6 +85,22 @@ const passwordRules = [
 
 const phoneRegex = /^\+91[0-9]{10}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+const serializeTeacherProfileValues = (values: {
+  username: string;
+  yearsOfExperience: string;
+  qualification: string;
+  expertises: string;
+  subjects: string[];
+  phoneNumber: string;
+}) =>
+  JSON.stringify({
+    username: values.username.trim(),
+    yearsOfExperience: values.yearsOfExperience,
+    qualification: values.qualification.trim(),
+    expertises: values.expertises.trim(),
+    subjects: [...values.subjects].sort(),
+    phoneNumber: values.phoneNumber.trim(),
+  });
 
 const validationSchema = Yup.object({
   username: Yup.string()
@@ -94,23 +122,13 @@ confirmPassword: Yup.string()
   expertises: Yup.string()
     // .required("Expertises must contain at least 10 characters")
     // .min(10, "Expertises must contain at least 10 characters"),
-  .required("Expertises is required")
-  .min(4, "Expertises must contain at least 4 characters")
-  .max(12, "Expertises must not exceed 12 characters"),
+  .required("Expertise is required")
+  .min(4, "Expertise must contain at least 4 characters")
+  .max(12, "Expertise must not exceed 12 characters"),
 });
 
 export default function UpdateProfile() {
   const { setActiveTab } = useOutletContext<TeacherLayoutContext>();
-  const displayName =
-    localStorage.getItem("userName") ||
-    localStorage.getItem("full_name") ||
-    localStorage.getItem("name") ||
-    getAuthenticatedLoginIdentifier();
-  const displayEmail =
-    localStorage.getItem("userEmail") ||
-    localStorage.getItem("email") ||
-    localStorage.getItem("phone_number") ||
-    "";
   const [isEditing, setIsEditing] = useState(false);
   const [photoSrc, setPhotoSrc] = useState<string>(InitialValuesProfile.image);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -129,6 +147,7 @@ export default function UpdateProfile() {
   const [teacherProfileData, setTeacherProfileData] = useState<TeacherProfile | null>(null);
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [originalProfileSnapshot, setOriginalProfileSnapshot] = useState("");
   const navigate = useNavigate();
 
   const blockPasswordClipboardAction = (event: ClipboardEvent<HTMLInputElement>) => {
@@ -173,14 +192,30 @@ export default function UpdateProfile() {
     }
 
     formik.setFieldValue(field, sanitizedValue);
+
+    if (field === "password") {
+      formik.setFieldError(
+        "password",
+        sanitizedValue && sanitizedValue === formik.values.currentPassword
+          ? "New Password cannot be the same as your current password."
+          : "",
+      );
+    } else if (field === "currentPassword" && formik.values.password) {
+      formik.setFieldError(
+        "password",
+        sanitizedValue === formik.values.password
+          ? "New Password cannot be the same as your current password."
+          : "",
+      );
+    }
   };
 
   const [phones, setPhones] = useState(InitialValuesProfile.phone.map((p) => ({ value: p, touched: false, error: "" })));
-  const [emails, setEmails] = useState([{ value: displayEmail, touched: false, error: "" }]);
+  const [emails, setEmails] = useState([{ value: "", touched: false, error: "" }]);
 
   const formik = useFormik({
     initialValues: {
-      username: displayName,
+      username: "",
       currentPassword: "",
       password: "",
       confirmPassword: "",
@@ -192,40 +227,30 @@ export default function UpdateProfile() {
     },
     validationSchema,
     onSubmit: async (values, actions) => {
+      if (
+        serializeTeacherProfileValues({
+          username: values.username,
+          yearsOfExperience: values.yearsOfExperience,
+          qualification: values.qualification,
+          expertises: values.expertises,
+          subjects: values.subjects,
+          phoneNumber: phones[0]?.value || "",
+        }) === originalProfileSnapshot
+      ) return;
+
       // ✅ FIX 1: phone is optional — empty allowed, format checked only if filled
       const phoneErrors = phones.map((p) =>
         !p.value ? "" : !phoneRegex.test(p.value) ? "Invalid format. Use country code e.g. +911234567890" : ""
       );
       // ✅ FIX 2: email is optional — empty allowed, format checked only if filled
       const emailErrors = emails.map((e) =>
-        !e.value ? "" : !emailRegex.test(e.value) ? "Enter a valid email" : ""
+        validateEmail(e.value)
       );
       const hasPhoneError = phoneErrors.some((e) => e);
       const hasEmailError = emailErrors.some((e) => e);
       setPhones((prev) => prev.map((p, i) => ({ ...p, touched: true, error: phoneErrors[i] })));
       setEmails((prev) => prev.map((em, i) => ({ ...em, touched: true, error: emailErrors[i] })));
       if (hasPhoneError || hasEmailError) return;
-      const isPasswordUpdate =
-        values.currentPassword ||
-        values.password ||
-        values.confirmPassword;
-
-      if (isPasswordUpdate) {
-        const previousPassword =
-          localStorage.getItem("userPassword") ||
-          localStorage.getItem("password") ||
-          "";
-
-        if (values.currentPassword !== previousPassword) {
-          actions.setFieldTouched("currentPassword", true, false);
-          actions.setFieldError(
-            "currentPassword",
-            "Current password is not matched with previous password"
-          );
-          return;
-        }
-      }
-
       const selectedSubjectIds = subjectsList
         .filter(subject =>
           values.subjects.includes(subject.name)
@@ -234,7 +259,7 @@ export default function UpdateProfile() {
 
       setIsProfileSaving(true);
       try {
-        await updateTeacherProfile({
+        let updatedProfile = await updateTeacherProfile({
           full_name: values.username,
           qualification: values.qualification,
           bio: values.expertises,
@@ -242,21 +267,70 @@ export default function UpdateProfile() {
           phone_number: phones[0]?.value,
           subject_ids: selectedSubjectIds,
         });
+
+        if (selectedImageFile) {
+          setIsUploading(true);
+          updatedProfile = await uploadTeacherProfileImage(selectedImageFile);
+        }
+
+        const updatedImageSrc = updatedProfile.profile_image || photoSrc;
+
+        setTeacherProfileData(updatedProfile);
+        setPhotoSrc(updatedImageSrc);
+        setPendingPhoto(null);
+        setSelectedImageFile(null);
         actions.resetForm({
           values: {
             ...values,
+            image: updatedImageSrc,
             currentPassword: "",
             password: "",
             confirmPassword: "",
           },
         });
+        setOriginalProfileSnapshot(
+          serializeTeacherProfileValues({
+            username: updatedProfile.full_name || values.username,
+            yearsOfExperience: updatedProfile.years_of_experience || values.yearsOfExperience,
+            qualification: updatedProfile.qualification || values.qualification,
+            expertises: updatedProfile.bio || values.expertises,
+            subjects: updatedProfile.subjects || values.subjects,
+            phoneNumber: updatedProfile.phone_number || phones[0]?.value || "",
+          })
+        );
         setIsEditing(false);
         setShowSuccess(true);
+      } catch (error: any) {
+        toast.error(
+          error?.response?.data?.detail || "Failed to update teacher profile",
+          { position: "bottom-right" },
+        );
       } finally {
+        setIsUploading(false);
         setIsProfileSaving(false);
       }
     },
   });
+  const currentProfileSnapshot = useMemo(
+    () =>
+      serializeTeacherProfileValues({
+        username: formik.values.username,
+        yearsOfExperience: formik.values.yearsOfExperience,
+        qualification: formik.values.qualification,
+        expertises: formik.values.expertises,
+        subjects: formik.values.subjects,
+        phoneNumber: phones[0]?.value || "",
+      }),
+    [
+      formik.values.expertises,
+      formik.values.qualification,
+      formik.values.subjects,
+      formik.values.username,
+      formik.values.yearsOfExperience,
+      phones,
+    ]
+  );
+  const hasProfileChanges = currentProfileSnapshot !== originalProfileSnapshot;
 
   useEffect(() => {
     const fetchTeacherProfile = async () => {
@@ -291,7 +365,7 @@ export default function UpdateProfile() {
 
         setEmails([
           {
-            value: profile.email || "",
+            value: limitEmailInput(profile.email || ""),
             touched: false,
             error: "",
           },
@@ -299,6 +373,16 @@ export default function UpdateProfile() {
 
         setPhotoSrc(
           profile.profile_image || InitialValuesProfile.image
+        );
+        setOriginalProfileSnapshot(
+          serializeTeacherProfileValues({
+            username: profile.full_name || "",
+            yearsOfExperience: profile.years_of_experience || "",
+            qualification: profile.qualification || "",
+            expertises: profile.bio || "",
+            subjects: profile.subjects || [],
+            phoneNumber: profile.phone_number || "",
+          })
         );
       } catch (error: any) {
         toast.error(
@@ -412,13 +496,17 @@ export default function UpdateProfile() {
   const validateEmail = (value: string) => {
     // ✅ FIX 4: empty email is allowed
     if (!value) return "";
+    if (hasReachedEmailMaxLength(value)) return EMAIL_MAX_LENGTH_ERROR;
     if (!emailRegex.test(value)) return "Enter a valid email";
     return "";
   };
 
   const handleEmailChange = (index: number, value: string) => {
-    const error = validateEmail(value);
-    setEmails((prev) => prev.map((e, i) => i === index ? { ...e, value, touched: true, error } : e));
+    const limitedValue = limitEmailInput(value);
+    const error = hasReachedEmailMaxLength(value)
+      ? EMAIL_MAX_LENGTH_ERROR
+      : validateEmail(limitedValue);
+    setEmails((prev) => prev.map((e, i) => i === index ? { ...e, value: limitedValue, touched: true, error } : e));
   };
 
   const blurEmail = (index: number) => {
@@ -455,6 +543,20 @@ export default function UpdateProfile() {
         subjects: teacherProfileData.subjects || [],
         image: teacherProfileData.profile_image || "",
       });
+      setPhones([
+        {
+          value: teacherProfileData.phone_number || "",
+          touched: false,
+          error: "",
+        },
+      ]);
+      setEmails([
+        {
+          value: limitEmailInput(teacherProfileData.email || ""),
+          touched: false,
+          error: "",
+        },
+      ]);
     }
 
     setPendingPhoto(null);
@@ -470,26 +572,51 @@ export default function UpdateProfile() {
   const handlePasswordUpdate = async () => {
     const { currentPassword, password, confirmPassword } = formik.values;
 
-    if (!currentPassword || !password || !confirmPassword) {
-      toast.error("Please fill all password fields", {
+    if (!currentPassword && !password && !confirmPassword) {
+      toast.error("Please fill all required fields.", {
         position: "bottom-right",
       });
       return;
     }
 
+    if (!currentPassword || !password || !confirmPassword) {
+      formik.setFieldTouched("currentPassword", true, false);
+      formik.setFieldTouched("password", true, false);
+      formik.setFieldTouched("confirmPassword", true, false);
+      formik.setFieldError(
+        "currentPassword",
+        currentPassword ? "" : "Current Password is required.",
+      );
+      formik.setFieldError("password", password ? "" : "Password is required.");
+      formik.setFieldError(
+        "confirmPassword",
+        confirmPassword ? "" : "Confirm Password is required.",
+      );
+      return;
+    }
+
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match", {
-        position: "bottom-right",
-      });
+      formik.setFieldTouched("confirmPassword", true, false);
+      formik.setFieldError("confirmPassword", "Passwords do not match");
+      return;
+    }
+
+    if (password === currentPassword) {
+      formik.setFieldTouched("password", true, false);
+      formik.setFieldError(
+        "password",
+        "New Password cannot be the same as your current password.",
+      );
       return;
     }
 
     const passwordValid = passwordRules.every((rule) => rule.test(password));
 
     if (!passwordValid) {
-      toast.error(
+      formik.setFieldTouched("password", true, false);
+      formik.setFieldError(
+        "password",
         "Password must be 8-12 characters and include uppercase, number, and special character",
-        { position: "bottom-right" }
       );
       return;
     }
@@ -511,10 +638,15 @@ export default function UpdateProfile() {
       formik.setFieldValue("password", "");
       formik.setFieldValue("confirmPassword", "");
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.detail || "Failed to update password",
-        { position: "bottom-right" }
-      );
+      const detail = error?.response?.data?.detail;
+      if (detail === "New Password cannot be the same as your current password.") {
+        formik.setFieldTouched("password", true, false);
+        formik.setFieldError("password", detail);
+      } else {
+        toast.error(detail || "Failed to update password", {
+          position: "bottom-right",
+        });
+      }
     } finally {
       setIsPasswordSaving(false);
     }
@@ -551,10 +683,10 @@ export default function UpdateProfile() {
         <Logout redirectTo="/" toastDuration={5000} dismissExistingToasts>
           {({ logout }) => (
             <ProfileMenu
-              userEmail={displayEmail}
-              userName={teacherProfileData?.full_name || displayName}
-              userRole="Teacher"
-              avatarSrc={formik.values.image || teacherProfile || profilePictureDefault}
+              userEmail={teacherProfileData?.email || teacherProfileData?.phone_number || ""}
+              userName={teacherProfileData?.full_name || ""}
+              userRole={teacherProfileData?.role || ""}
+              avatarSrc={formik.values.image || undefined}
               onProfileClick={() => navigate("/teacher/profile")}
               onSettingsClick={() => setActiveTab("settings")}
               onLogoutClick={logout}
@@ -572,7 +704,7 @@ export default function UpdateProfile() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="w-[290px] h-[24px] font-poppins text-[26px] font-semibold leading-[100%] tracking-[-0.01em] text-[#000000]">Manage Profile Details</h1>
-                <p className="w-[203px] h-[12px] font-poppins text-[14px] font-normal leading-[100%] tracking-[-0.01em] text-[#ACACAC] mt-2">Manage your Account Details</p>
+                <p className="w-[203px] h-[12px] font-poppins text-[14px] font-normal leading-[100%] tracking-[-0.01em] text-[#ACACAC] mt-2">Manage your account details</p>
               </div>
               {!isEditing && (
                 <button
@@ -589,8 +721,13 @@ export default function UpdateProfile() {
             {/* Profile Photo */}
             <div className="flex items-center gap-5">
               <div
-                onClick={() => fileInputRef.current?.click()}
-                className="relative group cursor-pointer w-20 h-20 rounded-2xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center"
+                onClick={() => {
+                  if (isEditing) fileInputRef.current?.click();
+                }}
+                aria-disabled={!isEditing}
+                className={`relative group w-20 h-20 rounded-2xl border-2 border-dashed border-gray-300 overflow-hidden bg-gray-50 flex items-center justify-center ${
+                  isEditing ? "cursor-pointer" : "cursor-not-allowed opacity-60"
+                }`}
               >
                 {pendingPhoto ?? photoSrc ? (
                   <img src={pendingPhoto ?? photoSrc!} alt="profile" className="w-full h-full object-cover" />
@@ -600,7 +737,9 @@ export default function UpdateProfile() {
                     <p className="text-[10px] text-gray-400 mt-1 leading-tight">Upload your<br />photo</p>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className={`absolute inset-0 bg-black/20 opacity-0 transition-opacity flex items-center justify-center ${
+                  isEditing ? "group-hover:opacity-100" : ""
+                }`}>
                   <img src={camera} alt="camera" className="w-5 h-5" />
                 </div>
               </div>
@@ -624,45 +763,19 @@ export default function UpdateProfile() {
                   </div>
                 )}
 
-                {pendingPhoto && selectedImageFile && !isUploading && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!selectedImageFile) {
-                        toast.error("Please select an image first", { position: "bottom-right" });
-                        return;
-                      }
-                      try {
-                        setIsUploading(true);
-                        const updatedProfile = await uploadTeacherProfileImage(selectedImageFile);
-                        const updatedImageSrc = updatedProfile.profile_image || pendingPhoto || photoSrc;
-                        setPhotoSrc(updatedImageSrc);
-                        setTeacherProfileData(updatedProfile);
-                        formik.setFieldValue("image", updatedImageSrc);
-                        setPendingPhoto(null);
-                        setSelectedImageFile(null);
-                        toast.success("Profile photo updated successfully!", { position: "bottom-right" });
-                      } catch (error: any) {
-                        toast.error(
-                          error?.response?.data?.detail || "Failed to upload profile image",
-                          { position: "bottom-right" }
-                        );
-                      } finally {
-                        setIsUploading(false);
-                      }
-                    }}
-                  >
-                    {/* Submit */}
-                  </button>
-                )}
               </div>
 
               <input
                 ref={fileInputRef}
                 type="file"
                 accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                disabled={!isEditing}
                 className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoChange(f); }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePhotoChange(file);
+                  e.target.value = "";
+                }}
               />
             </div>
 
@@ -792,8 +905,8 @@ export default function UpdateProfile() {
                       onFocus={() => setPasswordFocused(true)}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => setShowPassword((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600">
-                      <img className="w-5 h-5" src={showPassword ? eyeshow : eyehide} alt="eyeicon" />
+                    <button type="button" disabled={!isEditing} onClick={() => setShowPassword((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600" aria-label={showPassword ? "Hide new password" : "Show new password"} aria-pressed={showPassword}>
+                      <img className="w-5 h-5" src={showPassword ? eyeshow : eyehide} alt="" aria-hidden="true" />
                     </button>
                   </div>
                   {showRules && (
@@ -823,6 +936,7 @@ export default function UpdateProfile() {
                         <div className={`w-[497px] h-[48px] flex items-center rounded-[8px] px-4 py-3 bg-gray-50 gap-2 ${em.touched && em.error ? "border border-red-400" : ""}`}>
                           <input
                             type="text"
+                            maxLength={EMAIL_MAX_LENGTH}
                             disabled={!isEditing}
                             value={em.value}
                             onChange={(e) => handleEmailChange(i, e.target.value)}
@@ -870,8 +984,8 @@ export default function UpdateProfile() {
                       onBlur={formik.handleBlur}
                       className={`${personalFieldTextCls} disabled:cursor-not-allowed`}
                     />
-                    <button type="button" disabled={!isEditing} onClick={() => setShowConfirm((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600">
-                      <img className="w-5 h-5" src={showConfirm ? eyeshow : eyehide} alt="eyeicon" />
+                    <button type="button" disabled={!isEditing} onClick={() => setShowConfirm((current) => !current)} className="text-gray-400 cursor-pointer hover:text-gray-600" aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"} aria-pressed={showConfirm}>
+                      <img className="w-5 h-5" src={showConfirm ? eyeshow : eyehide} alt="" aria-hidden="true" />
                     </button>
                   </div>
                   {formik.touched.confirmPassword && formik.errors.confirmPassword && (
@@ -970,13 +1084,13 @@ export default function UpdateProfile() {
                 </div>
 
                 <div>
-                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Expertises</label>
+                  <label className="block w-[117px] h-[20px] font-poppins text-[16px] font-medium leading-[100%] text-[#030229] mb-2">Expertise</label>
                   <input
                     type="text"
                     id="expertises"
                     name="expertises"
                     disabled={!isEditing}
-                    placeholder="Enter your expertises"
+                    placeholder="Enter your expertise"
                     value={formik.values.expertises ?? ""}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -1001,7 +1115,7 @@ export default function UpdateProfile() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isProfileSaving}
+                  disabled={isProfileSaving || !hasProfileChanges}
                   className="w-[215px] h-[48px] rounded-[8px] bg-[#238B45] p-3 flex items-center justify-center gap-3 cursor-pointer font-poppins text-[20px] font-semibold leading-[100%] capitalize text-[#FFFFFF] hover:bg-[#036724] active:bg-[#42CE70] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isProfileSaving ? "Saving..." : "Save Changes"}
@@ -1016,9 +1130,9 @@ export default function UpdateProfile() {
         isOpen={showSuccess}
         onClose={handleSuccessClose}
         title="Congratulations!"
-        message="Your Profile has been Updated successfully."
-        buttonText="Visit My Profile Screen"
-        redirectUrl="/teacher/profile"
+        message="Your changes have been updated successfully."
+        buttonText="Continue"
+        onPrimaryAction={handleSuccessClose}
       />
     </div>
   );

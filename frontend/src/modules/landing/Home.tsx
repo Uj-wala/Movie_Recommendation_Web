@@ -92,7 +92,8 @@ const secondPageCourses = [
 const SecondPage = () => {
   return (
     <div>
-      <section className="overflow-x-hidden bg-[#F8F8F8] px-5 py-[70px] sm:px-[50px]">
+      <section className="overflow-x-hidden bg-[#F8F8F8] py-[70px]">
+        <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-[49px]">
         <h2 className="mb-10 font-poppins text-[36px] font-semibold leading-none tracking-[0] text-[#000000] align-middle">
           What to learn next
         </h2>
@@ -130,7 +131,7 @@ const SecondPage = () => {
                 </div>
 
               <h3 className="mt-[26px] h-[44px] w-[336.38px] font-instrument-sans text-[18.36px] font-semibold leading-[1.18] tracking-[0] text-[#5F5F5F]">
-                Data Science and Machine Learning With Phthon Hands On
+                Data Science and Machine Learning with Python: Hands-On
               </h3>
 
               <div className="mt-[29.56px] flex h-[23.61px] w-full max-w-[383.59px] items-center justify-between font-instrument-sans text-[18.36px] font-semibold leading-none tracking-[0] text-[#9A9897]">
@@ -185,6 +186,7 @@ const SecondPage = () => {
             </div>
           ))}
         </div>
+        </div>
       </section>
 
       <BecomeInstructor />
@@ -221,20 +223,24 @@ function StepCard({
           <img
             src={icon}
             alt={title}
-            className="absolute left-0 top-0 h-[60px] w-[60px] object-contain"
+            className={`absolute left-0 h-[60px] w-[60px] object-contain ${
+              title === "Find Your Course" ? "top-[2px]" : "top-0"
+            }`}
           />
           </div>
         </div>
 
-        <h3 className="h-[33px] font-roboto text-[30px] font-normal leading-[1.11] tracking-[0] text-[#14345A]">
-          {title}
-        </h3>
+        <div className={title === "Find Your Course" ? "relative -top-[4px]" : ""}>
+          <h3 className="h-[33px] font-roboto text-[30px] font-normal leading-[1.11] tracking-[0] text-[#14345A]">
+            {title}
+          </h3>
 
-        <p className="mt-[21px] h-[46px] w-[306px] text-center font-roboto-flex text-[20px] font-normal capitalize leading-none tracking-[0] text-[#7C8985]">
-          It Has Survived Not Only Centurie
-          <br />
-          Also Leap Into Electronic
-        </p>
+          <p className="mt-[21px] h-[46px] w-[306px] text-center font-roboto-flex text-[20px] font-normal capitalize leading-none tracking-[0] text-[#7C8985]">
+            It Has Survived Not Only Centurie
+            <br />
+            Also Leap Into Electronic
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -248,7 +254,7 @@ function BecomeInstructor() {
           <div className="mx-auto flex h-[185px] w-full max-w-[1314px] items-center justify-between px-[125px]">
             <div>
               <p className="h-[29px] w-[260px] whitespace-nowrap font-roboto-flex text-[25px] font-bold capitalize leading-none tracking-[0] text-[#55B779]">
-                Become A Instructor
+                Become an Instructor
               </p>
 
               <h1 className="mt-[18px] h-[110px] w-[677px] font-roboto text-[50px] font-normal leading-[1.11] tracking-[0] text-[#14345A]">
@@ -256,7 +262,7 @@ function BecomeInstructor() {
                 <br />
                 decks as{" "}
                 <span className="relative inline-block text-[#61C184]">
-                  a instructor?
+                  an instructor?
                   <svg
                     aria-hidden="true"
                     className="pointer-events-none absolute left-[10px] top-[61px] h-[22px] w-[190px]"
@@ -290,13 +296,13 @@ function BecomeInstructor() {
         <div className="mx-auto max-w-[1440px] py-16">
           <div className="mx-auto h-[133px] w-[298px] text-center">
             <p className="ml-[30px] h-[29px] w-[239px] font-roboto-flex text-[25px] font-semibold capitalize leading-none tracking-[0] text-[#55B779]">
-              Over 1,235 +Courese
+              Over 1,235+ Courses
             </p>
 
             <h2 className="mt-[49px] h-[55px] w-[298px] font-roboto text-[50px] font-normal leading-[1.11] tracking-[0] text-[#14345A]">
               How it{" "}
               <span className="relative inline-block text-[#61C184]">
-                Wokr?
+                Work?
                 <svg
                   aria-hidden="true"
                   className="pointer-events-none absolute left-0 top-[58px] h-[16px] w-[114px]"
@@ -386,49 +392,44 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const testimonialAutoScrollStyles = `
-@keyframes testimonial-auto-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-50% - 8px));
-  }
-}
-
-.testimonial-auto-track {
-  animation: testimonial-auto-scroll 34s linear infinite;
-}
-
-.testimonial-auto-track:hover {
-  animation-play-state: paused;
-}
-`;
-
 const StudentTestimonials = () => {
   const testimonialSlides = [...testimonials, ...testimonials];
   const [activeTestimonialDot, setActiveTestimonialDot] = useState(0);
+  const [isTestimonialTransitionEnabled, setIsTestimonialTransitionEnabled] = useState(true);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveTestimonialDot((current) => (current + 1) % 3);
+      setActiveTestimonialDot((current) => current + 1);
     }, 4200);
 
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (activeTestimonialDot < testimonials.length) return;
+
+    const resetTimer = window.setTimeout(() => {
+      setIsTestimonialTransitionEnabled(false);
+      setActiveTestimonialDot((current) => current - testimonials.length);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setIsTestimonialTransitionEnabled(true));
+      });
+    }, 500);
+
+    return () => window.clearTimeout(resetTimer);
+  }, [activeTestimonialDot]);
+
   return (
     <>
-      <style>{testimonialAutoScrollStyles}</style>
       <section className="w-full bg-white">
-        <div className="mx-auto max-w-[1440px] px-6 py-8">
+        <div className="mx-auto max-w-[1440px] px-6 py-4">
           <div className="mx-auto h-[132px] w-[529px] text-center">
             <p className="ml-[150px] h-[29px] w-[224px] whitespace-nowrap font-roboto-flex text-[25px] font-semibold capitalize leading-none tracking-[0] text-[#51A06F]">
               Student Testimonial
             </p>
 
             <h2 className="mt-[25px] h-[55px] w-[529px] font-roboto text-[50px] font-normal leading-[1.11] tracking-[0] text-[#122E51]">
-              Feedback Form{" "}
+              Feedback From{" "}
               <span className="relative inline-block text-[#23BF84]">
                 Student
                 <svg
@@ -455,8 +456,21 @@ const StudentTestimonials = () => {
             </h2>
           </div>
 
-          <div className="mx-auto mt-[68px] h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
-            <div className="testimonial-auto-track flex w-max gap-[16px]">
+          <div className="mx-auto mt-[40px] h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
+            <div
+              className={`flex w-max gap-[16px] ${
+                isTestimonialTransitionEnabled
+                  ? "transition-transform duration-500 ease-in-out"
+                  : "transition-none"
+              }`}
+              style={{
+                transform: `translateX(-${
+                  activeTestimonialDot === 0
+                    ? 0
+                    : 694 + (activeTestimonialDot - 1) * 639
+                }px)`,
+              }}
+            >
             {testimonialSlides.map((student, index) => (
               <div
                 key={`${student.name}-${index}`}
@@ -526,22 +540,27 @@ const StudentTestimonials = () => {
             </div>
           </div>
 
-          <div className="mx-auto mt-12 flex h-[15px] w-[140px] items-center justify-between">
-            {[0, 1, 2].map((dot) => (
+          <div className="mx-auto mt-6 flex h-[15px] w-[220px] items-center justify-between">
+            {testimonials.map((testimonial, dot) => (
               <button
-                key={dot}
+                key={`${testimonial.name}-${dot}`}
                 type="button"
                 aria-label={`Show testimonial slide ${dot + 1}`}
-                onClick={() => setActiveTestimonialDot(dot)}
+                aria-current={activeTestimonialDot % testimonials.length === dot ? "true" : undefined}
+                onClick={() => {
+                  const currentDot = activeTestimonialDot % testimonials.length;
+                  const forwardSteps = (dot - currentDot + testimonials.length) % testimonials.length;
+                  setActiveTestimonialDot((current) => current + forwardSteps);
+                }}
                 className={`h-[15px] w-[15px] rounded-full transition-colors ${
-                  activeTestimonialDot === dot ? "bg-[#0DD37D]" : "bg-[#D1D5DB]"
+                  activeTestimonialDot % testimonials.length === dot ? "bg-[#0DD37D]" : "bg-[#D1D5DB]"
                 }`}
               />
             ))}
           </div>
         </div>
 
-        <div className="relative mt-6 h-[369px] w-full overflow-hidden bg-[#e4f7ec]">
+        <div className="relative mt-16 h-[369px] w-full overflow-hidden bg-[#e4f7ec]">
           <img
             src={arrowFive}
             alt="Arrow Decoration"
@@ -708,7 +727,7 @@ const LatestNews = () => {
               </div>
 
               <h3 className="mt-[16.72px] h-[44px] w-[336.38px] font-instrument-sans text-[18.36px] font-semibold leading-none tracking-[0] text-[#686868]">
-                Data Science and Machine Learning With Phthon Hands On
+                Data Science and Machine Learning with Python: Hands-On
               </h3>
 
               <div className="mt-[23.86px] flex h-[23.61px] w-full max-w-[383.59px] items-center justify-between font-instrument-sans text-[18.36px] font-semibold leading-none tracking-[0] text-[#9A9897]">
@@ -913,9 +932,9 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#fafaf9] font-sans relative">
       {/* Header */}
-      <header className="relative z-50 flex min-h-[61px] w-full flex-wrap items-center gap-x-7 gap-y-3 border-l-[3px] border-l-[#4a99ff] bg-[#aaf5bf] px-4 py-2 text-[#031b12] shadow-[inset_0_-1px_0_rgba(35,139,69,0.12)] sm:px-[38px] lg:flex-nowrap">
+      <header className="relative z-50 flex min-h-[61px] w-full flex-wrap items-center gap-x-7 gap-y-3 border-l-[3px] border-l-[#4a99ff] bg-[#aaf5bf] px-4 py-2 text-[#031b12] shadow-[inset_0_-1px_0_rgba(35,139,69,0.12)] sm:px-[38px] xl:flex-nowrap">
         <div className="flex shrink-0 items-center gap-[13px]">
-          <Logo className="flex items-center" imgClassName="h-[45px] w-[45px] object-contain" />
+          <Logo destination="/" className="flex items-center" imgClassName="h-[45px] w-[45px] object-contain" />
           <Link to="/" className="leading-none no-underline" aria-label="Go to Home Page">
             <h1 className="text-[21px] font-bold leading-[1.05] text-[#238b45]">
               E-Learning
@@ -930,7 +949,7 @@ const Home = () => {
           <div
             ref={coursesDropdownRef}
             onKeyDown={handleCoursesKeyDown}
-            className="relative ml-[30px]"
+            className="relative lg:ml-[30px]"
           >
             <button
               ref={coursesButtonRef}
@@ -976,12 +995,12 @@ const Home = () => {
               </div>
             )}
           </div>
-          <a href="#footer" className="ml-[20px] font-semibold hover:text-[#238b45]">
+          <a href="#footer" className="font-semibold hover:text-[#238b45] lg:ml-[20px]">
             Contact Us
           </a>
         </nav>
 
-        <div className="absolute left-1/2 top-1/2 min-w-[230px] -translate-x-1/2 -translate-y-1/2 lg:w-[302px] xl:w-[302px]">
+        <div className="relative order-3 mx-auto w-full min-w-[260px] max-w-[610px] grow basis-[470px] lg:order-none lg:flex-1 xl:grow-0">
           <Search className="pointer-events-none absolute left-[17px] top-1/2 h-[21px] w-[21px] -translate-y-1/2 text-[#238b45]" />
           <input
             type="search"

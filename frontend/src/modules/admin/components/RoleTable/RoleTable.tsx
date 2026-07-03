@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import './RoleTable.css';
 import EditRoleModal from '../EditRoleModal/EditRoleModal';
 import EditStatusModal from '../EditStatusModal/EditStatusModal';
@@ -18,6 +18,7 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
   const [selectedStatusRole, setSelectedStatusRole] = useState<Role | null>(null);
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const isCompletingSuccessAction = useRef(false);
 
   const handleEditClick = (role: Role) => {
     setSelectedRole(role);
@@ -43,14 +44,23 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
     const activeRole = isModalOpen ? selectedRole : selectedStatusRole;
 
     if (activeRole && updatedData) {
-      setRoles(roles.map(r => 
+      setRoles(currentRoles => currentRoles.map(r => 
         r.id === activeRole.id ? { ...r, ...updatedData } : r
       ));
     }
     
     setIsModalOpen(false);
     setIsStatusModalOpen(false);
+    isCompletingSuccessAction.current = false;
     setIsSuccessModalOpen(true);
+  };
+
+  const handleContinue = () => {
+    if (isCompletingSuccessAction.current) return;
+    isCompletingSuccessAction.current = true;
+    setIsSuccessModalOpen(false);
+    setSelectedRole(null);
+    setSelectedStatusRole(null);
   };
 
   return (
@@ -116,9 +126,10 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, setRoles }) => {
       {isSuccessModalOpen && (
         <SuccessModal
           isOpen={isSuccessModalOpen}
-          onClose={() => setIsSuccessModalOpen(false)}
+          onClose={handleContinue}
+          onPrimaryAction={handleContinue}
           title="Congratulations!"
-          message="Your role changes has updated successfully."
+          message="Your changes have been updated successfully."
         />
       )}
     </div>

@@ -40,6 +40,7 @@ const ResetPassword = () => {
     useState("");
   const [confirmPasswordError, setConfirmPasswordError] =
     useState("");
+  const [showRequiredFieldErrors, setShowRequiredFieldErrors] = useState(false);
 
   const handlePasswordChange = (value: string) => {
     const nextPassword = value.slice(0, PASSWORD_MAX_LENGTH);
@@ -51,7 +52,9 @@ const ResetPassword = () => {
     } else if (nextPassword && !isValidPasswordComplexity(nextPassword)) {
       setPasswordError(PASSWORD_COMPLEXITY_ERROR);
     } else {
-      setPasswordError("");
+      setPasswordError(
+        showRequiredFieldErrors && !nextPassword ? "Password is required." : "",
+      );
     }
 
     setPassword(nextPassword);
@@ -65,7 +68,11 @@ const ResetPassword = () => {
     } else if (nextConfirmPassword && !isValidPasswordLength(nextConfirmPassword)) {
       setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
     } else {
-      setConfirmPasswordError("");
+      setConfirmPasswordError(
+        showRequiredFieldErrors && !nextConfirmPassword
+          ? "Confirm Password is required."
+          : "",
+      );
     }
 
     setConfirmPassword(nextConfirmPassword);
@@ -80,6 +87,35 @@ const ResetPassword = () => {
     setError("");
     setPasswordError("");
     setConfirmPasswordError("");
+
+    if (!password && !confirmPassword) {
+      setShowRequiredFieldErrors(false);
+      setError("Please fill all required fields.");
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      setShowRequiredFieldErrors(true);
+      setPasswordError(
+        !password
+          ? "Password is required."
+          : !isValidPasswordLength(password)
+            ? PASSWORD_LENGTH_ERROR
+            : !isValidPasswordComplexity(password)
+              ? PASSWORD_COMPLEXITY_ERROR
+              : "",
+      );
+      setConfirmPasswordError(
+        !confirmPassword
+          ? "Confirm Password is required."
+          : !isValidPasswordLength(confirmPassword)
+            ? "Confirm Password must be 8 to 12 characters"
+            : password !== confirmPassword
+              ? "Passwords do not match"
+              : "",
+      );
+      return;
+    }
 
     if (!isValidPasswordLength(password)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
@@ -97,10 +133,7 @@ const ResetPassword = () => {
     }
 
     if (password !== confirmPassword) {
-
-      setError(
-        "Passwords do not match"
-      );
+      setConfirmPasswordError("Passwords do not match");
 
       return;
     }
@@ -121,11 +154,12 @@ const ResetPassword = () => {
       setIsModalOpen(true);
 
     } catch (error: any) {
-
-      setError(
-        error?.response?.data?.detail ||
-        "Failed to reset password"
-      );
+      const detail = error?.response?.data?.detail;
+      if (detail === "Your new password must be different from your current password.") {
+        setPasswordError(detail);
+      } else {
+        setError(detail || "Failed to reset password");
+      }
 
     } finally {
 
@@ -173,6 +207,8 @@ const ResetPassword = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide new password" : "Show new password"}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? (
                     <Eye className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -219,6 +255,8 @@ const ResetPassword = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  aria-pressed={showConfirmPassword}
                 >
                   {showConfirmPassword ? (
                     <Eye className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -234,7 +272,7 @@ const ResetPassword = () => {
               </p>
             ) : (
               <p className="text-[11px] text-gray-500 mb-8">
-                Both Passwords must Match.
+                Both passwords must match.
               </p>
             )}
             {error && (

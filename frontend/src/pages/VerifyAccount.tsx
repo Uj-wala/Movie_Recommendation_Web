@@ -92,6 +92,7 @@ const VerifyAccount = () => {
     const newOtp = [...otp];
     newOtp[index] = digit.slice(0, 1);
     setOtp(newOtp);
+    if (newOtp.join("").length === 6) setError("");
 
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -146,8 +147,13 @@ const VerifyAccount = () => {
 
       const otpCode = otp.join("");
 
+      if (!otpCode.length) {
+        setError("Please fill all required fields.");
+        return;
+      }
+
       if (otpCode.length !== 6) {
-        setError("Please enter valid 6 digit OTP");
+        setError("Please enter a valid 6-digit OTP.");
         return;
       }
 

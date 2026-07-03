@@ -48,7 +48,8 @@ const SecondPage: React.FC = () => {
   return (
     <div>
       {/* Courses Grid */}
-      <section className="px-[70px] py-[70px] bg-[#F8F8F8]">
+      <section className="bg-[#F8F8F8] py-[70px]">
+        <div className="mx-auto w-full max-w-[1440px] px-5 sm:px-[49px]">
         <h2 className="text-[36px] font-bold text-[#000000] text-Poppins mb-10">
           What to learn next
         </h2>
@@ -135,6 +136,7 @@ const SecondPage: React.FC = () => {
             </div>
           ))}
         </div>  
+        </div>
       </section>
 
     </div>

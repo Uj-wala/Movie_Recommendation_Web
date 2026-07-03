@@ -94,7 +94,7 @@ const LatestNews = () => {
               </div>
 
               <h3 className="mt-5 mb-4 text-[13px] font-bold leading-tight text-[#696969]">
-                Data Science and Machine Learning With Python Hands On
+                Data Science and Machine Learning with Python: Hands-On
               </h3>
 
               <div className="flex items-center justify-between text-[13px] font-semibold text-[#828282]">

@@ -139,6 +139,12 @@
   gap: 16px;
 }
 
+.permissions-section-error {
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 12px;
+}
+
 .permissions-title {
   font-family: 'Poppins';
   font-weight: 600;
@@ -203,6 +209,13 @@
 
 .checkbox-item:nth-child(n + 4) .checkbox-label {
   width: 320px;
+}
+
+.permission-error-text {
+  color: #ef4444;
+  font-family: 'Poppins';
+  font-size: 12px;
+  margin-top: -6px;
 }
 
 .modal-actions {

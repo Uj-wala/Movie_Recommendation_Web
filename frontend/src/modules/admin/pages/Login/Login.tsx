@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 import { useLogoNavigation } from '../../../../hooks/useLogoNavigation';
+import {
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
+  hasReachedEmailMaxLength,
+  limitEmailInput,
+} from '../../../../utils/validation';
 
 interface LoginProps {
   onLogin: (email: string) => void;
@@ -10,6 +16,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleLogoClick = useLogoNavigation();
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -45,11 +52,24 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <label>Email Address</label>
             <input 
               type="email" 
+              maxLength={EMAIL_MAX_LENGTH}
               placeholder="Enter your email" 
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(limitEmailInput(e.target.value));
+                setEmailError(
+                  hasReachedEmailMaxLength(e.target.value)
+                    ? EMAIL_MAX_LENGTH_ERROR
+                    : '',
+                );
+              }}
               required
             />
+            {emailError && (
+              <span style={{ color: '#ef4444', fontSize: '12px' }}>
+                {emailError}
+              </span>
+            )}
           </div>
           <div className="form-group">
             <label>Password</label>

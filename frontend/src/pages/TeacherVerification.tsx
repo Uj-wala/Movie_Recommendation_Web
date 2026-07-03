@@ -38,6 +38,7 @@ const TeacherVerification = () => {
   const [schoolNameError, setSchoolNameError] = useState('');
   const [availableSubjects, setAvailableSubjects] = useState<SubjectOption[]>([]);
   const [subjectIds, setSubjectIds] = useState<string[]>([]);
+  const [subjectError, setSubjectError] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [error, setError] = useState('');
@@ -77,6 +78,19 @@ const TeacherVerification = () => {
     e.preventDefault();
     setError('');
 
+    if (!schoolName.trim() && !subjectIds.length) {
+      setError('Please fill all required fields.');
+      setSchoolNameError('');
+      setSubjectError('');
+      return;
+    }
+
+    if (!schoolName.trim() || !subjectIds.length) {
+      setSchoolNameError(schoolName.trim() ? '' : 'School Name is required.');
+      setSubjectError(subjectIds.length ? '' : 'Please select a subject.');
+      return;
+    }
+
     if (schoolName.length > MAX_SCHOOL_NAME_LENGTH) {
       setSchoolNameError(`School Name must not exceed ${MAX_SCHOOL_NAME_LENGTH} characters.`);
       return;
@@ -88,11 +102,6 @@ const TeacherVerification = () => {
       const userId = localStorage.getItem('user_id');
       if (!userId) {
         setError('User session not found. Please register again.');
-        return;
-      }
-
-      if (!subjectIds.length) {
-        setError('Please select a subject.');
         return;
       }
 
@@ -131,7 +140,7 @@ const TeacherVerification = () => {
       return;
     }
 
-    setSchoolNameError('');
+    setSchoolNameError(sanitizedValue.trim() ? '' : 'School Name is required.');
     setSchoolName(sanitizedValue);
   };
 
@@ -154,7 +163,7 @@ const TeacherVerification = () => {
               </div>
             )}
 
-            <form className="w-full" onSubmit={handleSubmit}>
+            <form className="w-full" onSubmit={handleSubmit} noValidate>
 
               {/* School Name */}
               <div className="mb-6">
@@ -198,6 +207,7 @@ const TeacherVerification = () => {
                               ? [...currentSubjectIds, subject.id]
                               : currentSubjectIds.filter((id) => id !== subject.id)
                           );
+                          if (e.target.checked) setSubjectError('');
                         }}
                         className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded mr-3"
                       />
@@ -207,6 +217,9 @@ const TeacherVerification = () => {
                 </div>
                 {loadingSubjects && (
                   <p className="mt-2 text-sm text-gray-500">Loading subjects...</p>
+                )}
+                {subjectError && (
+                  <p className="mt-2 text-sm text-red-600">{subjectError}</p>
                 )}
               </div>
 

@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FiEdit } from "react-icons/fi";
 import { LuImagePlus } from "react-icons/lu";
-import parentProfileImage from "../../assets/parent_profile .jpeg";
 import phoneIcon from "../../assets/UpdateProfileIcons/phone.svg";
 import eyeShowIcon from "../../assets/UpdateProfileIcons/eyeshow.svg";
 import eyeHideIcon from "../../assets/UpdateProfileIcons/eyehide.svg";
@@ -11,10 +10,15 @@ import SuccessModal from "../../components/SuccessModal";
 import { ProfileMenu } from "../profile";
 import Logout from "../../components/Logout";
 import { useLogoNavigation } from "../../hooks/useLogoNavigation";
+import { handleSidebarKeyDown } from "../../utils/sidebarKeyboardNavigation";
 import {
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
   PASSWORD_RESTRICTED_CHAR_ERROR,
+  hasReachedEmailMaxLength,
   hasRestrictedPasswordChars,
   sanitizePasswordInput,
+  limitEmailInput,
 } from "../../utils/validation";
 
 import {
@@ -23,8 +27,10 @@ import {
   addChild,
   removeChild,
   updateParentPassword,
+  uploadParentProfileImage,
   fetchStudentDetailsByRegistrationNumber
 } from "../../services/ParentDashboardProfileService";
+
 
 type NavItem = {
   label: string;
@@ -62,6 +68,27 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,12}$/;
 const registrationNumberRegex =
   /^STU-\d{4}-\d{6}$/;
+const generateChildId = () =>
+  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `child-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const serializeParentProfileValues = (values: {
+  fullName: string;
+  phoneNumber: string;
+  emailAddress: string;
+  relationship: string;
+  children: ChildDetail[];
+}) =>
+  JSON.stringify({
+    fullName: values.fullName.trim(),
+    phoneNumber: values.phoneNumber.trim(),
+    emailAddress: values.emailAddress.trim(),
+    relationship: values.relationship,
+    children: values.children.map((child) => ({
+      studentReferenceId: child.studentReferenceId || "",
+      registrationNumber: child.registrationNumber.trim(),
+    })),
+  });
 export default function ParentProfile() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -93,10 +120,9 @@ export default function ParentProfile() {
 
   // State Management
   const [isEditing, setIsEditing] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(
-    () => localStorage.getItem("profileImage") || parentProfileImage
-  );
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [relationship, setRelationship] = useState("");
+  const [profileRole, setProfileRole] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -104,17 +130,9 @@ export default function ParentProfile() {
   // const [profileData, setProfileData] = useState<any>(null);
 
   // Form State Data Mapping
-  const [fullName, setFullName] = useState(
-    () =>
-      localStorage.getItem("userName") ||
-      localStorage.getItem("full_name") ||
-      localStorage.getItem("name") ||
-      "Easin Arafat"
-  );
+  const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [emailAddress, setEmailAddress] = useState(
-    () => localStorage.getItem("userEmail") || ""
-  );
+  const [emailAddress, setEmailAddress] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
 
   const [password, setPassword] = useState("");
@@ -123,10 +141,23 @@ export default function ParentProfile() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [childErrors, setChildErrors] = useState<ChildFieldErrors>({});
   const [studentLookupLoading, setStudentLookupLoading] = useState<Record<string, boolean>>({});
+  const [originalProfileSnapshot, setOriginalProfileSnapshot] = useState("");
 
   const [children, setChildren] = useState<ChildDetail[]>([
-    { id: crypto.randomUUID(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
+    { id: generateChildId(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
   ]);
+  const currentProfileSnapshot = useMemo(
+    () =>
+      serializeParentProfileValues({
+        fullName,
+        phoneNumber,
+        emailAddress,
+        relationship,
+        children,
+      }),
+    [children, emailAddress, fullName, phoneNumber, relationship]
+  );
+  const hasProfileChanges = currentProfileSnapshot !== originalProfileSnapshot;
 
   const displayName = fullName || "";
   const displayEmail = emailAddress || "";
@@ -141,57 +172,72 @@ export default function ParentProfile() {
   const loadProfile = async () => {
     try {
       const response = await getParentProfile();
+      const nextFullName = response.full_name || "";
+      const nextPhoneNumber = response.phone_number
+        ? response.phone_number.replace(/^\+/, "")
+        : "";
+      const nextEmailAddress = limitEmailInput(response.email || "");
+      const nextRelationship = response.relationship_type || "";
+      const nextChildren = response.children.length
+        ? response.children.map(
+          (child: any) => ({
+            id: child.id,
+            studentReferenceId: child.student_reference_id,
+            childName: child.child_name,
+            registrationNumber:
+              child.registration_number,
+            schoolName:
+              child.school_name || "",
+            grade:
+              child.grade || "",
+          })
+        )
+        : [
+          {
+            id: generateChildId(),
+            studentReferenceId: "",
+            childName: "",
+            registrationNumber: "",
+            schoolName: "",
+            grade: "",
+          },
+        ];
 
       // setProfileData(response);
 
       setFullName(
-        response.full_name || ""
+        nextFullName
       );
 
       setPhoneNumber(
-        response.phone_number
-          ? response.phone_number.replace(/^\+/, "")
-          : ""
+        nextPhoneNumber
       );
 
       setEmailAddress(
-        response.email || ""
+        nextEmailAddress
       );
 
       setRelationship(
-        response.relationship_type || ""
+        nextRelationship
       );
+      setProfileRole(response.role || "");
 
       setProfileImage(
-        response.profile_image_url ||
-        parentProfileImage
+        response.profile_image_url || null
       );
 
       setChildren(
-        response.children.length
-          ? response.children.map(
-            (child: any) => ({
-              id: child.id,
-              studentReferenceId: child.student_reference_id,
-              childName: child.child_name,
-              registrationNumber:
-                child.registration_number,
-              schoolName:
-                child.school_name || "",
-              grade:
-                child.grade || "",
-            })
-          )
-          : [
-            {
-              id: crypto.randomUUID(),
-              studentReferenceId: "",
-              childName: "",
-              registrationNumber: "",
-              schoolName: "",
-              grade: "",
-            },
-          ]
+        nextChildren
+      );
+
+      setOriginalProfileSnapshot(
+        serializeParentProfileValues({
+          fullName: nextFullName,
+          phoneNumber: nextPhoneNumber,
+          emailAddress: nextEmailAddress,
+          relationship: nextRelationship,
+          children: nextChildren,
+        })
       );
     } catch (error: any) {
       console.error(error);
@@ -218,7 +264,7 @@ export default function ParentProfile() {
     if (!isEditing) return;
     setChildren([
       ...children,
-      { id: crypto.randomUUID(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
+      { id: generateChildId(), studentReferenceId: "", childName: "", registrationNumber: "", schoolName: "", grade: "" }
     ]);
   };
 
@@ -300,6 +346,14 @@ export default function ParentProfile() {
     }
 
     updateFieldError("currentPassword", sanitizedValue ? "" : "Current Password is required");
+    if (password) {
+      updateFieldError(
+        "password",
+        sanitizedValue === password
+          ? "New Password cannot be the same as your current password."
+          : validatePassword(password),
+      );
+    }
   };
 
   const handleFullNameChange = (value: string) => {
@@ -347,7 +401,12 @@ export default function ParentProfile() {
       return;
     }
     setPassword(sanitizedValue);
-    updateFieldError("password", validatePassword(sanitizedValue));
+    updateFieldError(
+      "password",
+      sanitizedValue && sanitizedValue === currentPassword
+        ? "New Password cannot be the same as your current password."
+        : validatePassword(sanitizedValue),
+    );
     if (confirmPassword && sanitizedValue !== confirmPassword) {
       updateFieldError("confirmPassword", "Passwords do not match");
     } else if (confirmPassword) {
@@ -390,10 +449,15 @@ export default function ParentProfile() {
   };
 
   const handleEmailChange = (value: string) => {
-    setEmailAddress(value);
+    const limitedValue = limitEmailInput(value);
+    setEmailAddress(limitedValue);
     updateFieldError(
       "emailAddress",
-      value && !emailRegex.test(value) ? "Enter a valid email address" : ""
+      hasReachedEmailMaxLength(value)
+        ? EMAIL_MAX_LENGTH_ERROR
+        : limitedValue && !emailRegex.test(limitedValue)
+          ? "Enter a valid email address"
+          : ""
     );
   };
 
@@ -586,7 +650,7 @@ export default function ParentProfile() {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!isEditing) return;
     const file = event.target.files?.[0];
     if (!file) return;
@@ -598,11 +662,19 @@ export default function ParentProfile() {
       return;
     }
 
-    const imageUrl = URL.createObjectURL(file);
-    setProfileImage(imageUrl);
+    try {
+      const updatedProfile = await uploadParentProfileImage(file);
+      setProfileImage(updatedProfile.profile_image_url || null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.detail || "Failed to upload profile image.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const handleSave = async () => {
+    if (!hasProfileChanges) return;
+
     const nextErrors: FieldErrors = {
       fullName: fullName
         ? ""
@@ -615,7 +687,9 @@ export default function ParentProfile() {
   : "",
 
 emailAddress: emailAddress
-  ? emailRegex.test(emailAddress)
+  ? hasReachedEmailMaxLength(emailAddress)
+    ? EMAIL_MAX_LENGTH_ERROR
+    : emailRegex.test(emailAddress)
     ? ""
     : "Enter a valid email address"
   : "",
@@ -684,13 +758,6 @@ emailAddress: emailAddress
         }
       }
 
-      if (profileImage) {
-        localStorage.setItem(
-          "profileImage",
-          profileImage
-        );
-      }
-
       await loadProfile();
       setIsEditing(false);
       setShowSuccessModal(true);
@@ -713,27 +780,33 @@ emailAddress: emailAddress
       return;
     }
 
+    if (
+      !currentPassword.trim() &&
+      !password.trim() &&
+      !confirmPassword.trim()
+    ) {
+      setFieldErrors((current) => ({
+        ...current,
+        currentPassword: "",
+        password: "",
+        confirmPassword: "",
+      }));
+      toast.error("Please fill all required fields.");
+      return;
+    }
+
     const nextErrors: FieldErrors = {
-      password: password.trim()
-        ? validatePassword(password)
-        : "",
-
-      currentPassword:
-        password.trim()
-          ? (
-            currentPassword.trim()
-              ? ""
-              : "Current password is required"
-          )
-          : "",
-
-      confirmPassword: password.trim()
-        ? (
-          confirmPassword === password
-            ? ""
-            : "Passwords do not match"
-        )
-        : "",
+      currentPassword: currentPassword.trim() ? "" : "Current Password is required.",
+      password: !password.trim()
+        ? "Password is required."
+        : password === currentPassword
+          ? "New Password cannot be the same as your current password."
+          : validatePassword(password),
+      confirmPassword: !confirmPassword.trim()
+        ? "Confirm Password is required."
+        : confirmPassword === password
+          ? ""
+          : "Passwords do not match",
     };
 
     setFieldErrors((current) => ({
@@ -744,17 +817,6 @@ emailAddress: emailAddress
     if (
       Object.values(nextErrors).some(Boolean)
     ) {
-      return;
-    }
-
-    if (
-      !currentPassword.trim() &&
-      !password.trim() &&
-      !confirmPassword.trim()
-    ) {
-      toast.error(
-        "Please enter password details"
-      );
       return;
     }
 
@@ -781,7 +843,11 @@ emailAddress: emailAddress
         error?.response?.data?.message ||
         "Failed to update password";
 
-      toast.error(message);
+      if (message === "New Password cannot be the same as your current password.") {
+        updateFieldError("password", message);
+      } else {
+        toast.error(message);
+      }
     }
   };
 
@@ -847,15 +913,21 @@ emailAddress: emailAddress
           </div>
         </button>
 
-        <nav className="flex-1 mt-12">
+        <nav
+          aria-label="Parent dashboard"
+          className="flex-1 mt-12"
+          onKeyDown={handleSidebarKeyDown}
+        >
           <ul className="space-y-1.5">
             {navItems.map((item) => {
               return (
                 <li key={item.id}>
                   <button
                     type="button"
+                    data-sidebar-item
+                    aria-current={activeTab === item.id ? "page" : undefined}
                     onClick={() => handleSidebarNavigation(item.id)}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-[16px] font-normal font-['Poppins',sans-serif] transition-all duration-200 ${activeTab === item.id
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-[16px] font-normal font-['Poppins',sans-serif] transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#238B45] ${activeTab === item.id
                       ? "bg-[#E8F5E9] text-[#15803D]"
                       : "text-[#64748B] hover:bg-gray-50 hover:text-gray-900"
                       }`}
@@ -884,7 +956,7 @@ emailAddress: emailAddress
               {getHeaderTitle()}
             </h1>
             <p className="mt-[8px] min-h-[12px] max-w-[360px] font-['Poppins',sans-serif] text-[14px] font-normal leading-[1.2] tracking-[-0.01em] text-[#ACACAC]">
-              {activeTab === "dashboard" ? "Manage your Account Details" : "View and manage active information screens"}
+              {activeTab === "dashboard" ? "Manage your account details" : "View and manage active information screens"}
             </p>
           </div>
 
@@ -893,8 +965,8 @@ emailAddress: emailAddress
               <ProfileMenu
                 userEmail={displayEmail}
                 userName={displayName}
-                userRole="Parent"
-                avatarSrc={profileImage || parentProfileImage}
+                userRole={profileRole}
+                avatarSrc={profileImage || undefined}
                 onProfileClick={handleProfileClick}
                 onSettingsClick={handleSettingsClick}
                 onLogoutClick={logout}
@@ -917,17 +989,22 @@ emailAddress: emailAddress
                 <div className="relative mb-10 flex h-[124px] w-[482px] flex-col items-center gap-[24px] pb-0 sm:flex-row">
 
                   {/* IMAGING CONTAINER */}
-                  <label className={`flex h-[124px] w-[124px] flex-col items-center justify-center gap-[10px] overflow-hidden rounded-[24px] border-[1.5px] border-dashed border-[#4C535F] bg-[#EDF2F6] p-[10px] text-center transition-all select-none group relative ${isEditing ? "cursor-pointer hover:bg-[#E6EDF3] hover:border-[#238B45]" : "cursor-not-allowed opacity-80"}`}>
+                  <label
+                    aria-disabled={!isEditing}
+                    className={`flex h-[124px] w-[124px] flex-col items-center justify-center gap-[10px] overflow-hidden rounded-[24px] border-[1.5px] border-dashed border-[#4C535F] bg-[#EDF2F6] p-[10px] text-center transition-all select-none group relative ${isEditing ? "cursor-pointer hover:bg-[#E6EDF3] hover:border-[#238B45]" : "cursor-not-allowed opacity-60"}`}
+                  >
                     {profileImage ? (
                       <>
                         <img src={profileImage} alt="Profile Preview" className="h-full w-full rounded-[20px] object-cover" />
-                        <span className="absolute bottom-[10px] right-[10px] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
-                          <LuImagePlus size={18} className="text-[#238B45]" />
-                        </span>
+                        {isEditing && (
+                          <span className="absolute bottom-[10px] right-[10px] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.18)]">
+                            <LuImagePlus size={18} className="text-[#238B45]" />
+                          </span>
+                        )}
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center">
-                        <LuImagePlus size={28} className="text-[#94A3B8] group-hover:text-[#16A34A] transition-colors mb-1.5" />
+                        <LuImagePlus size={28} className={`text-[#94A3B8] transition-colors mb-1.5 ${isEditing ? "group-hover:text-[#16A34A]" : ""}`} />
                         <span className="text-[12px] font-semibold text-[#64748B] leading-tight tracking-tight">
                           Upload your photo
                         </span>
@@ -1080,8 +1157,10 @@ emailAddress: emailAddress
                           disabled={!isEditing}
                           onClick={() => setShowPassword((current) => !current)}
                           className="cursor-pointer text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                          aria-label={showPassword ? "Hide new password" : "Show new password"}
+                          aria-pressed={showPassword}
                         >
-                          <img className="h-5 w-5" src={showPassword ? eyeShowIcon : eyeHideIcon} alt="eyeicon" />
+                          <img className="h-5 w-5" src={showPassword ? eyeShowIcon : eyeHideIcon} alt="" aria-hidden="true" />
                         </button>
                       </div>
                       {fieldErrors.password && (
@@ -1111,8 +1190,10 @@ emailAddress: emailAddress
                           disabled={!isEditing}
                           onClick={() => setShowConfirmPassword((current) => !current)}
                           className="cursor-pointer text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                          aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                          aria-pressed={showConfirmPassword}
                         >
-                          <img className="h-5 w-5" src={showConfirmPassword ? eyeShowIcon : eyeHideIcon} alt="eyeicon" />
+                          <img className="h-5 w-5" src={showConfirmPassword ? eyeShowIcon : eyeHideIcon} alt="" aria-hidden="true" />
                         </button>
                       </div>
                       {fieldErrors.confirmPassword && (
@@ -1126,6 +1207,7 @@ emailAddress: emailAddress
                           <div className="flex h-[48px] w-[497px] items-center rounded-[8px] bg-gray-50 px-4 py-3">
                             <input
                               type="email"
+                              maxLength={EMAIL_MAX_LENGTH}
                               value={emailAddress}
                               disabled={!isEditing}
                               onChange={(e) => handleEmailChange(e.target.value)}
@@ -1343,7 +1425,8 @@ emailAddress: emailAddress
                     <button
                       type="button"
                       onClick={handleSave}
-                      className="flex h-[48px] w-[215px] items-center justify-center gap-[12px] rounded-[8px] bg-[#238B45] p-[12px] font-poppins text-[20px] font-semibold capitalize leading-[100%] text-white opacity-100 transition-colors hover:bg-[#1C6E36]"
+                      disabled={!hasProfileChanges}
+                      className="flex h-[48px] w-[215px] items-center justify-center gap-[12px] rounded-[8px] bg-[#238B45] p-[12px] font-poppins text-[20px] font-semibold capitalize leading-[100%] text-white opacity-100 transition-colors hover:bg-[#1C6E36] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <span className="h-[18px] w-[183px] leading-[18px]">Save Changes</span>
                     </button>
@@ -1370,12 +1453,10 @@ emailAddress: emailAddress
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="Congratulations!"
-        message="Your Profile has been Updated successfully."
-        buttonText="Visit My Profile Screen"
+        message="Your changes have been updated successfully."
+        buttonText="Continue"
         onPrimaryAction={() => {
           setShowSuccessModal(false);
-          setLocalActiveTab("dashboard");
-          navigate("/parent/profile");
         }}
       />
     </div >

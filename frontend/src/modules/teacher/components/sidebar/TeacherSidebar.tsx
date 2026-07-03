@@ -6,6 +6,7 @@ import students from "../../../../assets/sidebar_icons/students.svg";
 import assignments from "../../../../assets/sidebar_icons/assignments.svg";
 import settings from "../../../../assets/sidebar_icons/settings.svg";
 import { useNavigate } from "react-router-dom";
+import { handleSidebarKeyDown } from "../../../../utils/sidebarKeyboardNavigation";
 
 
   const navItems = [
@@ -68,15 +69,21 @@ import { useNavigate } from "react-router-dom";
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-4 flex flex-col gap-[5px]">
+        <nav
+          aria-label="Teacher dashboard"
+          className="flex-1 px-4 flex flex-col gap-[5px]"
+          onKeyDown={handleSidebarKeyDown}
+        >
           {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
             <button
               key={item.id}
               type="button"
+              data-sidebar-item
+              aria-current={isActive ? "page" : undefined}
               onClick={() => handleNavigation(item.id)}
-              className={`group flex w-[246px] h-[48px] items-center gap-3 rounded-[12px] px-4 py-3 text-left text-[16px] leading-[100%] transition-colors ${
+              className={`group flex w-[246px] h-[48px] items-center gap-3 rounded-[12px] px-4 py-3 text-left text-[16px] leading-[100%] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#238B45] ${
                 isActive
                   ? "bg-[#F1FFF6] text-[#238B45] font-semibold"
                   : "text-[#292D32] opacity-70 font-normal hover:bg-[#ECECEC] hover:text-[#292D32]"

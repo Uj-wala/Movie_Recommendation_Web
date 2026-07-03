@@ -1,4 +1,18 @@
 import api from "../api/axios";
+import { API_BASE_URL } from "../config/env";
+
+const resolveProfileImageUrl = (imageUrl?: string | null): string | null => {
+  if (!imageUrl) return null;
+
+  return new URL(imageUrl, API_BASE_URL).toString();
+};
+
+const withResolvedProfileImage = <T extends { profile_image?: string | null }>(
+  profile: T,
+): T => ({
+  ...profile,
+  profile_image: resolveProfileImageUrl(profile.profile_image),
+});
 
 export interface TeacherProfile {
   id: string;
@@ -10,6 +24,7 @@ export interface TeacherProfile {
   years_of_experience: string;
   subjects: string[];
   profile_image: string;
+  role?: string | null;
 }
 
 export interface UpdateTeacherProfilePayload {
@@ -29,6 +44,10 @@ export interface UpdateTeacherPasswordPayload {
 
 export interface TeacherDashboard {
   full_name: string;
+  email?: string | null;
+  phone_number?: string | null;
+  profile_image?: string | null;
+  role?: string | null;
   subjects: string[];
   years_of_experience: string;
   qualification: string;
@@ -42,7 +61,7 @@ export const getTeacherProfile = async (): Promise<TeacherProfile> => {
     "/teacher/profile"
   );
 
-  return response.data;
+  return withResolvedProfileImage(response.data);
 };
 
 export const updateTeacherProfile = async (
@@ -53,7 +72,7 @@ export const updateTeacherProfile = async (
     payload
   );
 
-  return response.data;
+  return withResolvedProfileImage(response.data);
 };
 
 export const updateTeacherPassword = async (
@@ -87,7 +106,7 @@ export const uploadTeacherProfileImage = async (
     }
   );
 
-  return response.data;
+  return withResolvedProfileImage(response.data);
 };
 
 export const getTeacherDashboard = async (): Promise<TeacherDashboard> => {
@@ -95,5 +114,5 @@ export const getTeacherDashboard = async (): Promise<TeacherDashboard> => {
     "/teacher/dashboard"
   );
 
-  return response.data;
+  return withResolvedProfileImage(response.data);
 };

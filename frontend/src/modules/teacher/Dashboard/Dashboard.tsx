@@ -17,11 +17,9 @@ import activityIcon2 from "../../../assets/teacher_module_recent_activity_2.jpeg
 import activityIcon3 from "../../../assets/teacher_module_recent_activity_3.jpeg";
 import activityIcon4 from "../../../assets/teacher_module_recent_activity_4.jpeg";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import teacherProfile from "../../../assets/teacher_profile.jpeg";
 import type { TeacherLayoutContext } from "../Layout/TeacherLayout";
 import { ProfileMenu } from "../../profile";
 import Logout from "../../../components/Logout";
-import { getAuthenticatedLoginIdentifier } from "../../../utils/authIdentity";
  
 interface StatCard {
   id: number;
@@ -473,17 +471,7 @@ const PeriodDropdown: React.FC<PeriodDropdownProps> = ({ value, options, onChang
  
 const TeacherDashboard: React.FC = () => {
   const { setActiveTab } = useOutletContext<TeacherLayoutContext>();
-  const userName =
-    localStorage.getItem("userName") ||
-    localStorage.getItem("full_name") ||
-    localStorage.getItem("name") ||
-    getAuthenticatedLoginIdentifier();
  const navigate = useNavigate();
-  const userEmail =
-    localStorage.getItem("userEmail") ||
-    localStorage.getItem("email") ||
-    localStorage.getItem("phone_number") ||
-    "";
   const [dashboardData, setDashboardData] = useState<TeacherDashboardData | null>(null);
  const [activityPeriod, setActivityPeriod] = useState("Today");
  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
@@ -515,7 +503,9 @@ const TeacherDashboard: React.FC = () => {
  
         <div className="w-[384px] h-[64px] flex flex-col gap-1">
           <h1 className="w-[500px] h-[36px] text-[28px] font-semibold leading-[100%] text-black">
-            Welcome back, {dashboardData?.full_name || userName}! 👋
+            {dashboardData?.full_name
+              ? `Welcome back, ${dashboardData.full_name}! 👋`
+              : "Welcome back! 👋"}
           </h1>
  
           <p className="w-[384px] h-[24px] text-[#8B8B8B] text-[16px] font-normal leading-[100%] flex items-center">
@@ -527,10 +517,10 @@ const TeacherDashboard: React.FC = () => {
         <Logout redirectTo="/" toastDuration={5000} dismissExistingToasts>
           {({ logout }) => (
             <ProfileMenu
-              userEmail={userEmail}
-              userName={dashboardData?.full_name || userName}
-              userRole="Teacher"
-              avatarSrc={teacherProfile}
+              userEmail={dashboardData?.email || dashboardData?.phone_number || ""}
+              userName={dashboardData?.full_name || ""}
+              userRole={dashboardData?.role || ""}
+              avatarSrc={dashboardData?.profile_image || undefined}
               onProfileClick={() => navigate("/teacher/profile")}
               onSettingsClick={() => setActiveTab("settings")}
               onLogoutClick={logout}
@@ -577,19 +567,25 @@ const TeacherDashboard: React.FC = () => {
         <div className="w-full h-[80px] flex items-center justify-between">
         <div className="flex items-center gap-4">
  
-          <img
-            src={teacherProfile}
-            alt=""
-            className="w-[80px] h-[80px] rounded-[40px] object-cover"
-          />
+          <div className="w-[80px] h-[80px] rounded-[40px] overflow-hidden bg-[#DDEEDD] flex items-center justify-center text-2xl font-semibold text-[#238B45]">
+            {dashboardData?.profile_image ? (
+              <img
+                src={dashboardData.profile_image}
+                alt={`${dashboardData.full_name || "User"} profile`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              dashboardData?.full_name?.charAt(0).toUpperCase() || "U"
+            )}
+          </div>
  
           <div className="w-[180px] h-[47px] flex flex-col gap-1">
             <h3 className="w-[180px] h-[24px] font-poppins text-[18px] font-semibold leading-[21.47px] text-[#141414]">
-              {dashboardData?.full_name || userName}
+              {dashboardData?.full_name || "—"}
             </h3>
  
             <p className="w-[180px] h-[19px] font-poppins text-[14px] font-normal leading-[18.17px] tracking-[-0.01em] text-[#141414] opacity-50">
-              {userEmail}
+              {dashboardData?.email || dashboardData?.phone_number || "—"}
             </p>
           </div>
         </div>

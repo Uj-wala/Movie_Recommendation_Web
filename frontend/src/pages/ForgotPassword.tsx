@@ -6,12 +6,27 @@ import Logo from '../components/Logo';
 import _PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { forgotPassword } from "../services/authService";
-import { EMAIL_FORMAT_ERROR, isValidEmailFormat } from "../utils/validation";
+import {
+  EMAIL_FORMAT_ERROR,
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
+  hasReachedEmailMaxLength,
+  isValidEmailFormat,
+  isUnregisteredMobileNumberError,
+  limitEmailInput,
+  UNREGISTERED_MOBILE_NUMBER_ERROR,
+} from "../utils/validation";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
+
+type PhoneCountry = {
+  dialCode?: string;
+};
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [mobile, setMobile] = useState('');
+  const [mobileError, setMobileError] = useState('');
   const isEmailDisabled = Boolean(mobile.trim());
   const isMobileDisabled = Boolean(email.trim());
   const navigate = useNavigate();
@@ -33,7 +48,13 @@ const ForgotPassword = () => {
       e.preventDefault();
 
       setError("");
+      setMobileError("");
       setSuccess("");
+
+      if (!email.trim() && !mobile.trim()) {
+        setError("Please fill all required fields.");
+        return;
+      }
 
       if (email.trim() && !isValidEmailFormat(email)) {
         setError(EMAIL_FORMAT_ERROR);
@@ -53,7 +74,7 @@ const ForgotPassword = () => {
 
         if (mobile.trim()) {
           payload.phone_number =
-            mobile.trim();
+            `+${mobile.trim()}`;
         }
 
         const response =
@@ -71,15 +92,21 @@ const ForgotPassword = () => {
           {
             state: {
               email,
-              phone_number: mobile,
+              phone_number: payload.phone_number || '',
             },
           }
         );
 
       } catch (error: any) {
+        const detail = error?.response?.data?.detail;
+
+        if (mobile.trim() && isUnregisteredMobileNumberError(detail)) {
+          setMobileError(UNREGISTERED_MOBILE_NUMBER_ERROR);
+          return;
+        }
 
         setError(
-          error?.response?.data?.detail ||
+          detail ||
           "Failed to send OTP"
         );
 
@@ -109,7 +136,7 @@ const ForgotPassword = () => {
 
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 mt-6 sm:mt-0 text-left">Forgot Password</h1>
         <p className="text-gray-500 mb-8 text-xs sm:text-sm text-left">
-          Enter your registered email id to reset your Password
+          Enter your registered email ID to reset your password
         </p>
 
         <form className="w-full" onSubmit={handleForgotPassword} noValidate>
@@ -123,6 +150,7 @@ const ForgotPassword = () => {
               </div>
               <input
                 type="email"
+                maxLength={EMAIL_MAX_LENGTH}
                 className={`block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green transition-colors disabled:cursor-not-allowed ${isEmailDisabled
                     ? 'bg-gray-200 text-gray-400 opacity-70'
                     : 'bg-white'
@@ -130,15 +158,21 @@ const ForgotPassword = () => {
                 placeholder="Enter Your Email Address"
                 value={email}
                 disabled={isEmailDisabled}
-                style={{
-                  backgroundColor: isEmailDisabled ? '#e5e7eb' : undefined,
-                  color: isEmailDisabled ? '#9ca3af' : undefined,
-                  opacity: isEmailDisabled ? 0.7 : undefined,
-                  cursor: isEmailDisabled ? 'not-allowed' : undefined,
+                onChange={(e) => {
+                  const limitedEmail = limitEmailInput(e.target.value);
+                  setEmail(limitedEmail);
+                  if (limitedEmail.trim()) setMobileError('');
+                  setEmailError(
+                    hasReachedEmailMaxLength(e.target.value)
+                      ? EMAIL_MAX_LENGTH_ERROR
+                      : '',
+                  );
                 }}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+            {emailError && (
+              <p className="mt-1 text-sm text-red-500">{emailError}</p>
+            )}
           </div>
 
           <div className="relative mb-4 mt-6">
@@ -158,11 +192,21 @@ const ForgotPassword = () => {
               <PhoneInput
                 country={'in'}
                 value={mobile}
-                onChange={(phone: string) =>
-                  setMobile(`+${phone}`)
-                } enableSearch={true}
+                onChange={(phone: string, country: PhoneCountry) => {
+                  const dialCode = (country?.dialCode || '').replace(/\D/g, '');
+                  const phoneDigits = phone.replace(/\D/g, '');
+                  const hasSubscriberNumber = phoneDigits.length > dialCode.length;
+                  const nextMobile = hasSubscriberNumber ? phoneDigits : '';
+
+                  setMobile(nextMobile);
+                  setMobileError('');
+                }}
+                enableSearch={true}
+                countryCodeEditable={false}
                 disabled={isMobileDisabled}
                 inputProps={{
+                  name: 'phone',
+                  autoComplete: 'tel',
                   disabled: isMobileDisabled,
                 }}
                 inputStyle={{
@@ -177,16 +221,22 @@ const ForgotPassword = () => {
                   cursor: isMobileDisabled ? 'not-allowed' : undefined,
                 }}
                 containerClass="!w-full !h-full"
-                inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm disabled:!cursor-not-allowed focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${isMobileDisabled
+                inputClass={`!w-full !h-full !rounded-md !text-sm disabled:!cursor-not-allowed focus:!outline-none focus:!ring-1 ${mobileError
+                    ? '!border-red-400 focus:!ring-red-400 focus:!border-red-400'
+                    : '!border-gray-200 focus:!ring-brand-green focus:!border-brand-green'
+                  } ${isMobileDisabled
                     ? '!bg-gray-200 !text-gray-400 !opacity-70'
                     : '!bg-white'
                   }`}
-                buttonClass={`!border-gray-200 !rounded-l-md disabled:!cursor-not-allowed ${isMobileDisabled
+                buttonClass={`${mobileError ? '!border-red-400' : '!border-gray-200'} !rounded-l-md disabled:!cursor-not-allowed ${isMobileDisabled
                     ? '!bg-gray-200 !opacity-70'
                     : '!bg-gray-50'
                   }`}
               />
             </div>
+            {mobileError && (
+              <p className="mt-2 text-sm text-red-600">{mobileError}</p>
+            )}
           </div>
 
           {error && (

@@ -46,49 +46,44 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const testimonialAutoScrollStyles = `
-@keyframes testimonial-auto-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-50% - 12px));
-  }
-}
-
-.testimonial-auto-track {
-  animation: testimonial-auto-scroll 34s linear infinite;
-}
-
-.testimonial-auto-track:hover {
-  animation-play-state: paused;
-}
-`;
-
 const StudentTestimonials: React.FC = () => {
   const testimonialSlides = [...testimonials, ...testimonials];
   const [activeTestimonialDot, setActiveTestimonialDot] = React.useState(0);
+  const [isTestimonialTransitionEnabled, setIsTestimonialTransitionEnabled] = React.useState(true);
 
   React.useEffect(() => {
     const timer = window.setInterval(() => {
-      setActiveTestimonialDot((current) => (current + 1) % 3);
+      setActiveTestimonialDot((current) => current + 1);
     }, 4200);
 
     return () => window.clearInterval(timer);
   }, []);
 
+  React.useEffect(() => {
+    if (activeTestimonialDot < testimonials.length) return;
+
+    const resetTimer = window.setTimeout(() => {
+      setIsTestimonialTransitionEnabled(false);
+      setActiveTestimonialDot((current) => current - testimonials.length);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setIsTestimonialTransitionEnabled(true));
+      });
+    }, 500);
+
+    return () => window.clearTimeout(resetTimer);
+  }, [activeTestimonialDot]);
+
   return (
     <>
-      <style>{testimonialAutoScrollStyles}</style>
       <section className="w-full bg-white">
-        <div className="mx-auto max-w-[1440px] px-6 py-8">
+        <div className="mx-auto max-w-[1440px] px-6 py-4">
           <div className="text-center">
             <p className="text-sm font-semibold text-green-500">
               Student Testimonial
             </p>
 
             <h2 className="mt-3 text-3xl font-medium text-[#102d52]">
-              Feedback Form{" "}
+              Feedback From{" "}
               <span className="relative inline-block text-green-400">
                 Student
                 <img
@@ -100,8 +95,15 @@ const StudentTestimonials: React.FC = () => {
             </h2>
           </div>
 
-          <div className="mx-auto mt-14 h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
-            <div className="testimonial-auto-track flex w-max gap-6">
+          <div className="mx-auto mt-10 h-[510px] w-full max-w-[1340px] overflow-hidden px-[2px]">
+            <div
+              className={`flex w-max gap-6 ${
+                isTestimonialTransitionEnabled
+                  ? "transition-transform duration-500 ease-in-out"
+                  : "transition-none"
+              }`}
+              style={{ transform: `translateX(-${activeTestimonialDot * 647}px)` }}
+            >
               {testimonialSlides.map((student, index) => (
                 <div
                   key={`${student.name}-${index}`}
@@ -171,22 +173,27 @@ const StudentTestimonials: React.FC = () => {
             </div>
           </div>
 
-          <div className="mx-auto mt-12 flex h-[15px] w-[140px] items-center justify-between">
-            {[0, 1, 2].map((dot) => (
+          <div className="mx-auto mt-6 flex h-[15px] w-[220px] items-center justify-between">
+            {testimonials.map((testimonial, dot) => (
               <button
-                key={dot}
+                key={`${testimonial.name}-${dot}`}
                 type="button"
                 aria-label={`Show testimonial slide ${dot + 1}`}
-                onClick={() => setActiveTestimonialDot(dot)}
+                aria-current={activeTestimonialDot % testimonials.length === dot ? "true" : undefined}
+                onClick={() => {
+                  const currentDot = activeTestimonialDot % testimonials.length;
+                  const forwardSteps = (dot - currentDot + testimonials.length) % testimonials.length;
+                  setActiveTestimonialDot((current) => current + forwardSteps);
+                }}
                 className={`h-[15px] w-[15px] rounded-full transition-colors ${
-                  activeTestimonialDot === dot ? "bg-[#0DD37D]" : "bg-[#D1D5DB]"
+                  activeTestimonialDot % testimonials.length === dot ? "bg-[#0DD37D]" : "bg-[#D1D5DB]"
                 }`}
               />
             ))}
           </div>
         </div>
 
-        <div className="relative mt-6 overflow-hidden bg-[#e4f7ec] px-6 py-6">
+        <div className="relative mt-16 overflow-hidden bg-[#e4f7ec] px-6 py-6">
           <img
             src={arrowFive}
             alt="Arrow Decoration"

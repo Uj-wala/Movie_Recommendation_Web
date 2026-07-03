@@ -15,11 +15,15 @@ import {
 import type { PhoneRegistrationData } from "../services/PhoneRegistrationService";
 import {
   EMAIL_FORMAT_ERROR,
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
   PASSWORD_COMPLEXITY_ERROR,
   PASSWORD_LENGTH_ERROR,
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
   isValidEmailFormat,
+  hasReachedEmailMaxLength,
+  limitEmailInput,
   isValidPasswordComplexity,
   isValidPasswordLength,
   sanitizePasswordInput,
@@ -29,6 +33,14 @@ const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
 const FULL_NAME_MAX_LENGTH = 24;
 const PASSWORD_MAX_LENGTH = 12;
 const SECURITY_ANSWER_MAX_LENGTH = 10;
+const SECURITY_QUESTIONS = [
+  { value: "favorite_food", label: "What is your Favorite Food?" },
+  { value: "favorite_country", label: "What is your Favorite Country?" },
+  { value: "favorite_sport", label: "What is your Favorite Sport?" },
+] as const;
+const isValidSecurityQuestion = (value: string) =>
+  SECURITY_QUESTIONS.some((question) => question.value === value);
+const SECURITY_QUESTION_REQUIRED_ERROR = "Please select a security question.";
 type RegistrationFormDraft = {
   registrationType: "email" | "phone";
   phoneNumber: string;
@@ -135,8 +147,11 @@ const Register = () => {
   const [phoneNumber, setPhoneNumber] = useState(initialRegistrationDraft.phoneNumber);
   const [fullName, setFullName] = useState(initialRegistrationDraft.fullName);
   const [fullNameError, setFullNameError] = useState("");
-  const [email, setEmail] = useState(initialRegistrationDraft.email);
+  const [email, setEmail] = useState(
+    limitEmailInput(initialRegistrationDraft.email)
+  );
   const [emailError, setEmailError] = useState("");
+  const [phoneNumberError, setPhoneNumberError] = useState("");
   const [password, setPassword] = useState(initialRegistrationDraft.password);
   const [passwordError, setPasswordError] = useState("");
   const [confirmPassword, setConfirmPassword] = useState(
@@ -144,20 +159,27 @@ const Register = () => {
   );
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [securityQuestion, setSecurityQuestion] = useState(
-    initialRegistrationDraft.securityQuestion
+    isValidSecurityQuestion(initialRegistrationDraft.securityQuestion)
+      ? initialRegistrationDraft.securityQuestion
+      : ""
   );
+  const [securityQuestionError, setSecurityQuestionError] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState(
-    initialRegistrationDraft.securityAnswer
+    isValidSecurityQuestion(initialRegistrationDraft.securityQuestion)
+      ? initialRegistrationDraft.securityAnswer
+      : ""
   );
   const [securityAnswerError, setSecurityAnswerError] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(
     initialRegistrationDraft.agreeToTerms
   );
+  const [termsError, setTermsError] = useState("");
   const [activeLegalModal, setActiveLegalModal] = useState<
     "terms" | "privacy" | null
   >(null);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [showRequiredFieldErrors, setShowRequiredFieldErrors] = useState(false);
 
   const navigate = useNavigate();
 
@@ -186,6 +208,8 @@ const Register = () => {
   useEffect(() => {
     if (!shouldRestoreRegistrationDraft) {
       clearRegistrationDraft();
+      localStorage.removeItem("selected_role");
+      localStorage.removeItem("selected_role_id");
     }
   }, [shouldRestoreRegistrationDraft]);
 
@@ -217,20 +241,84 @@ const Register = () => {
     e.preventDefault();
     setFormError("");
 
-    if (
-      !fullName ||
-      (registrationType === "phone" ? !phoneNumber : !email) ||
-      !password ||
-      !confirmPassword ||
-      !securityQuestion ||
-      !securityAnswer
-    ) {
-      setFormError("Please fill all required fields");
+    const requiredValues = [
+      fullName.trim(),
+      registrationType === "phone" ? phoneNumber.trim() : email.trim(),
+      password,
+      confirmPassword,
+      isValidSecurityQuestion(securityQuestion) ? securityQuestion : "",
+      ...(isValidSecurityQuestion(securityQuestion)
+        ? [securityAnswer.trim()]
+        : []),
+    ];
+    const allRequiredFieldsEmpty = requiredValues.every((field) => !field);
+    const hasMissingRequiredFields = requiredValues.some((field) => !field);
+
+    if (hasMissingRequiredFields) {
+      if (allRequiredFieldsEmpty) {
+        setShowRequiredFieldErrors(false);
+        setFormError("Please fill all required fields.");
+        setFullNameError("");
+        setEmailError("");
+        setPhoneNumberError("");
+        setPasswordError("");
+        setConfirmPasswordError("");
+        setSecurityQuestionError(SECURITY_QUESTION_REQUIRED_ERROR);
+        setSecurityAnswerError("");
+      } else {
+        setShowRequiredFieldErrors(true);
+        setFullNameError(fullName.trim() ? "" : "Full Name is required.");
+        if (registrationType === "email") {
+          setEmailError(
+            !email.trim()
+              ? "Email Address is required."
+              : !isValidEmailFormat(email)
+                ? EMAIL_FORMAT_ERROR
+                : "",
+          );
+          setPhoneNumberError("");
+        } else {
+          setPhoneNumberError(phoneNumber.trim() ? "" : "Phone Number is required.");
+          setEmailError("");
+        }
+        setPasswordError(
+          !password
+            ? "Password is required."
+            : hasRestrictedPasswordChars(password)
+              ? PASSWORD_RESTRICTED_CHAR_ERROR
+              : !isValidPasswordLength(password)
+                ? PASSWORD_LENGTH_ERROR
+                : !isValidPasswordComplexity(password)
+                  ? PASSWORD_COMPLEXITY_ERROR
+                  : "",
+        );
+        setConfirmPasswordError(
+          !confirmPassword
+            ? "Confirm Password is required."
+            : hasRestrictedPasswordChars(confirmPassword)
+              ? PASSWORD_RESTRICTED_CHAR_ERROR
+              : !isValidPasswordLength(confirmPassword)
+                ? "Confirm Password must be 8 to 12 characters"
+                : password && password !== confirmPassword
+                  ? "Passwords do not match"
+                  : "",
+        );
+        setSecurityQuestionError(
+          isValidSecurityQuestion(securityQuestion)
+            ? ""
+            : SECURITY_QUESTION_REQUIRED_ERROR,
+        );
+        setSecurityAnswerError(
+          isValidSecurityQuestion(securityQuestion) && !securityAnswer.trim()
+            ? "Security Answer is required."
+            : "",
+        );
+      }
       return;
     }
 
     if (!agreeToTerms) {
-      setFormError("Please agree to terms and privacy policy");
+      setTermsError("Please agree to the terms and privacy policy.");
       return;
     }
 
@@ -270,7 +358,7 @@ const Register = () => {
     }
 
     if (password !== confirmPassword) {
-      setFormError("Passwords do not match");
+      setConfirmPasswordError("Passwords do not match");
       return;
     }
 
@@ -333,8 +421,11 @@ const Register = () => {
         localStorage.setItem("email", registeredEmail);
       }
 
-      localStorage.setItem("userPassword", password);
+      localStorage.removeItem("userPassword");
+      localStorage.removeItem("password");
       localStorage.setItem("registration_type", registrationType);
+      localStorage.removeItem("selected_role");
+      localStorage.removeItem("selected_role_id");
       clearRegistrationDraft();
 
       navigate("/select-role", {
@@ -433,13 +524,17 @@ const Register = () => {
                     if (sanitizedName.length > FULL_NAME_MAX_LENGTH) {
                       setFullNameError(`Full Name cannot exceed ${FULL_NAME_MAX_LENGTH} characters`);
                     } else {
-                      setFullNameError("");
+                      setFullNameError(
+                        showRequiredFieldErrors && !sanitizedName.trim()
+                          ? "Full Name is required."
+                          : "",
+                      );
                     }
 
                     setFullName(sanitizedName.slice(0, FULL_NAME_MAX_LENGTH));
                   }}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
-                  placeholder="Enter the full name "
+                  placeholder="Enter Your Full Name as per Certificate"
                 />
               </div>
               {fullNameError && (
@@ -463,11 +558,17 @@ const Register = () => {
 
                     <input
                       type="email"
+                      maxLength={EMAIL_MAX_LENGTH}
                       required={registrationType === 'email'}
                       value={email}
                       onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (!e.target.value.trim() || isValidEmailFormat(e.target.value)) {
+                        const limitedEmail = limitEmailInput(e.target.value);
+                        setEmail(limitedEmail);
+                        if (hasReachedEmailMaxLength(e.target.value)) {
+                          setEmailError(EMAIL_MAX_LENGTH_ERROR);
+                        } else if (showRequiredFieldErrors && !limitedEmail.trim()) {
+                          setEmailError("Email Address is required.");
+                        } else if (!limitedEmail.trim() || isValidEmailFormat(limitedEmail)) {
                           setEmailError("");
                         }
                       }}
@@ -485,7 +586,14 @@ const Register = () => {
                     <PhoneInput
                       country="in"
                       value={phoneNumber}
-                      onChange={(phone: string) => setPhoneNumber(phone)}
+                      onChange={(phone: string) => {
+                        setPhoneNumber(phone);
+                        setPhoneNumberError(
+                          showRequiredFieldErrors && !phone.trim()
+                            ? "Phone Number is required."
+                            : "",
+                        );
+                      }}
                       enableSearch={true}
                       countryCodeEditable={false}
                       disableCountryCode={false}
@@ -499,6 +607,9 @@ const Register = () => {
                       buttonClass="!bg-gray-50 !border-gray-100 !shadow-[0_2px_10px_rgba(0,0,0,0.02)] !rounded-l-md"
 
                     />
+                    {phoneNumberError && (
+                      <p className={inlineErrorClass}>{phoneNumberError}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -533,7 +644,11 @@ const Register = () => {
                       } else if (nextPassword.length > PASSWORD_MAX_LENGTH) {
                         setPasswordError(PASSWORD_LENGTH_ERROR);
                       } else {
-                        setPasswordError("");
+                        setPasswordError(
+                          showRequiredFieldErrors && !nextPassword
+                            ? "Password is required."
+                            : "",
+                        );
                       }
 
                       setPassword(nextPassword.slice(0, PASSWORD_MAX_LENGTH));
@@ -546,6 +661,8 @@ const Register = () => {
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     onClick={() => setShowPassword((current) => !current)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? (
                       <Eye className="w-4 h-4" />
@@ -589,7 +706,11 @@ const Register = () => {
                       } else if (nextConfirmPassword.length > PASSWORD_MAX_LENGTH) {
                         setConfirmPasswordError("Confirm Password must be 8 to 12 characters");
                       } else {
-                        setConfirmPasswordError("");
+                        setConfirmPasswordError(
+                          showRequiredFieldErrors && !nextConfirmPassword
+                            ? "Confirm Password is required."
+                            : "",
+                        );
                       }
 
                       setConfirmPassword(
@@ -604,6 +725,8 @@ const Register = () => {
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                     onClick={() => setShowConfirmPassword((current) => !current)}
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    aria-pressed={showConfirmPassword}
                   >
                     {showConfirmPassword ? (
                       <Eye className="w-4 h-4" />
@@ -626,23 +749,45 @@ const Register = () => {
               </label>
 
               <div className="relative">
-                <select required value={securityQuestion} onChange={(e) => setSecurityQuestion(e.target.value)} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
-                  <option value="">Select a Security Question</option>
-                  <option value="favorite_food">What is your Favorite Food?</option>
-                  <option value="favorite_country">What is your Favorite Country?</option>
-                  <option value="favorite_sport">What is your Favorite Sport?</option>
+                <select required value={securityQuestion} onChange={(e) => {
+                  const nextSecurityQuestion = e.target.value;
+                  const hasValidSecurityQuestion =
+                    isValidSecurityQuestion(nextSecurityQuestion);
+
+                  setSecurityQuestion(nextSecurityQuestion);
+                  setSecurityQuestionError(
+                    showRequiredFieldErrors && !hasValidSecurityQuestion
+                      ? SECURITY_QUESTION_REQUIRED_ERROR
+                      : "",
+                  );
+
+                  if (!hasValidSecurityQuestion) {
+                    setSecurityAnswer("");
+                    setSecurityAnswerError("");
+                  }
+                }} className="block w-full pl-3 pr-10 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green bg-white">
+                  <option value="">Select Security Question</option>
+                  {SECURITY_QUESTIONS.map((question) => (
+                    <option key={question.value} value={question.value}>
+                      {question.label}
+                    </option>
+                  ))}
                 </select>
 
                 <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
                   <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
+              {securityQuestionError && (
+                <p className={inlineErrorClass}>{securityQuestionError}</p>
+              )}
             </div>
 
             <div className="mb-6">
               <input
                 type="text"
-                required
+                required={isValidSecurityQuestion(securityQuestion)}
+                disabled={!isValidSecurityQuestion(securityQuestion)}
                 value={securityAnswer}
                 onChange={(e) => {
                   if (/\s/.test(e.target.value)) {
@@ -656,14 +801,18 @@ const Register = () => {
                       `Security answer cannot exceed ${SECURITY_ANSWER_MAX_LENGTH} characters`
                     );
                   } else if (!/\s/.test(e.target.value)) {
-                    setSecurityAnswerError("");
+                    setSecurityAnswerError(
+                      showRequiredFieldErrors && !sanitizedAnswer
+                        ? "Security Answer is required."
+                        : "",
+                    );
                   }
 
                   setSecurityAnswer(
                     sanitizedAnswer.slice(0, SECURITY_ANSWER_MAX_LENGTH)
                   );
                 }}
-                className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
+                className="block w-full px-3 py-3 text-sm border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                 placeholder="Enter your answer"
               />
               {securityAnswerError && (
@@ -679,7 +828,10 @@ const Register = () => {
                 type="checkbox"
                 required
                 checked={agreeToTerms}
-                onChange={(e) => setAgreeToTerms(e.target.checked)}
+                onChange={(e) => {
+                  setAgreeToTerms(e.target.checked);
+                  if (e.target.checked) setTermsError("");
+                }}
                 className="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"
               />
 
@@ -708,6 +860,9 @@ const Register = () => {
                 </a>
               </label>
             </div>
+            {termsError && (
+              <p className={`${inlineErrorClass} -mt-4 mb-6`}>{termsError}</p>
+            )}
 
             <button
               type="submit"

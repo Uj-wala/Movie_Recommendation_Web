@@ -12,7 +12,7 @@ const ConfirmRole = () => {
   const [error, setError] = useState('');
   const storedRole = localStorage.getItem('selected_role');
   const storedRoleId = localStorage.getItem('selected_role_id');
-  const role = searchParams.get('role') || storedRole || 'Student';
+  const role = searchParams.get('role') || storedRole || '';
   const roleId = searchParams.get('role_id') || storedRoleId;
   // Capitalize the role
   const displayRole = role.charAt(0).toUpperCase() + role.slice(1);
@@ -42,7 +42,7 @@ const ConfirmRole = () => {
       }
 
       if (!roleId) {
-        setError('Role ID not found. Please select your role again.');
+        setError('Please fill all required fields.');
         return;
       }
 
@@ -100,7 +100,7 @@ navigate(getNextRoute());
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Are you sure?</h2>
             <p className="text-sm text-gray-500">
-              This will Determine your Dashboard access
+              This will determine your dashboard access
             </p>
           </div>
 
@@ -111,6 +111,11 @@ navigate(getNextRoute());
           <div className="flex flex-col sm:flex-row gap-4">
             <Link
               to="/select-role"
+              state={
+                roleId && role
+                  ? { selectedRole: { id: roleId, name: role } }
+                  : undefined
+              }
               onClick={() => {
                 if (roleId) {
                   localStorage.setItem('selected_role_id', roleId);

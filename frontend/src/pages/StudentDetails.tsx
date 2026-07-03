@@ -19,6 +19,7 @@ const StudentDetails = () => {
 
   // State elements
   const [grade, setGrade] = useState('');
+  const [gradeError, setGradeError] = useState('');
   const [workPlace, setWorkPlace] = useState('');
   const [workPlaceError, setWorkPlaceError] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -42,19 +43,21 @@ const StudentDetails = () => {
     }
 
     setSchoolNameError('');
+    if (sanitizedValue.trim()) setWorkPlaceError('');
     setSchoolName(sanitizedValue);
   };
 
   const handleWorkPlaceChange = (value: string) => {
     if (value.length > MAX_WORK_PLACE_LENGTH) {
       setWorkPlaceError(
-        `Work Place must not exceed ${MAX_WORK_PLACE_LENGTH} characters.`
+        `Workplace must not exceed ${MAX_WORK_PLACE_LENGTH} characters.`
       );
       setWorkPlace(value.slice(0, MAX_WORK_PLACE_LENGTH));
       return;
     }
 
     setWorkPlaceError('');
+    if (value.trim()) setSchoolNameError('');
     setWorkPlace(value);
   };
 
@@ -80,6 +83,7 @@ const StudentDetails = () => {
 
   const selectGrade = (selectedGrade: string) => {
     setGrade(selectedGrade);
+    setGradeError('');
     setIsGradeOpen(false);
     gradeTriggerRef.current?.focus();
   };
@@ -148,8 +152,23 @@ const StudentDetails = () => {
     e.preventDefault();
     setError('');
 
-    if (!grade) {
-      alert("Please select a grade.");
+    const hasInstitution = Boolean(schoolName.trim() || workPlace.trim());
+
+    if (!grade && !hasInstitution) {
+      setError("Please fill all required fields.");
+      setGradeError('');
+      setSchoolNameError('');
+      setWorkPlaceError('');
+      return;
+    }
+
+    if (!grade || !hasInstitution) {
+      setGradeError(grade ? '' : 'Please select a grade.');
+      const institutionError = hasInstitution
+        ? ''
+        : 'School / University / Institute or Workplace is required.';
+      setSchoolNameError(institutionError);
+      setWorkPlaceError(institutionError);
       return;
     }
 
@@ -279,6 +298,9 @@ const StudentDetails = () => {
                     </div>
                   )}
                 </div>
+                {gradeError && (
+                  <p className="mt-2 text-sm text-red-600">{gradeError}</p>
+                )}
               </div>
 
               {/* School Name */}
@@ -317,7 +339,7 @@ const StudentDetails = () => {
               {/* Work Place */}
               <div className="mb-6">
                 <label className="block text-[14px] font-bold text-[#1F2937] mb-3">
-                  Work Place
+                  Workplace
                 </label>
                 <input
                   type="text"
@@ -328,7 +350,7 @@ const StudentDetails = () => {
                       ? 'bg-gray-200 text-gray-400 opacity-70'
                       : 'text-gray-700'
                     }`}
-                  placeholder="Enter your Work place"
+                  placeholder="Enter your workplace"
                   value={workPlace}
                   disabled={isWorkPlaceDisabled}
                   onChange={(e) => handleWorkPlaceChange(e.target.value)}

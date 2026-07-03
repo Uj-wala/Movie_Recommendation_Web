@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './UserManagement.css';
 import { Search, Plus } from 'lucide-react';
 
@@ -41,6 +41,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [successModalVariant, setSuccessModalVariant] = useState<'default' | 'memberAdded'>('default');
   const [lastAddedMember, setLastAddedMember] = useState<UserOrRole | null>(null);
+  const isCompletingSuccessAction = useRef(false);
 
   const fetchRoles = async () => {
     try {
@@ -120,12 +121,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
     setIsRoleModalOpen(true);
   };
 
-  const handleSaveRole = (userData?: UserOrRole) => {
+  const handleSaveRole = async (userData?: UserOrRole) => {
     const roleName = userData?.role_name
       ? userData.role_name.charAt(0).toUpperCase() + userData.role_name.slice(1)
       : '';
 
-    fetchUserDetails();
+    const clearedFilters: FiltersState = {
+      selectedRoleIds: [],
+      active: false,
+      deactive: false,
+    };
+
+    setSearchQuery('');
+    setFilters(clearedFilters);
+    await Promise.all([
+      fetchUserDetails('', clearedFilters),
+      fetchRoles(),
+    ]);
 
     const isTeacherRole = Boolean(userData) && roleName.toLowerCase() === 'teacher';
 
@@ -133,7 +145,20 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
     setLastAddedMember(isTeacherRole && userData ? { ...userData } : null);
 
     setIsRoleModalOpen(false);
+    isCompletingSuccessAction.current = false;
     setIsSuccessModalOpen(true);
+
+    if (setActiveTab) {
+      setActiveTab('users');
+    }
+  };
+
+  const handleContinue = () => {
+    if (isCompletingSuccessAction.current) return;
+
+    isCompletingSuccessAction.current = true;
+    setIsSuccessModalOpen(false);
+    setLastAddedMember(null);
 
     if (setActiveTab) {
       setActiveTab('users');
@@ -158,7 +183,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
           <input
             type="text"
             className="search-input"
-            placeholder="Search by user name, user ID..."
+            placeholder="Search by Full name, Email ID, or Status..."
             value={searchQuery}
             onChange={handleSearchChange}
           />
@@ -230,7 +255,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
                   checked={filters.deactive}
                   onChange={() => toggleStatusFilter('deactive')}
                 />
-                <span className="filter-checkbox-label">Deactive</span>
+                <span className="filter-checkbox-label">Inactive</span>
               </label>
             </div>
           )}
@@ -267,7 +292,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ setActiveTab }) => {
 
       <SuccessModal
         isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
+        onClose={handleContinue}
+        onPrimaryAction={handleContinue}
         message="A new role has been created successfully."
         title="Congratulations!"
         buttonText="Continue"

@@ -12,18 +12,28 @@ import 'react-phone-input-2/lib/style.css';
 import { getSocialAuthUrl, loginUser, type SocialAuthProvider } from "../services/authService";
 import {
   EMAIL_FORMAT_ERROR,
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
   PASSWORD_LENGTH_ERROR,
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
   isValidEmailFormat,
+  hasReachedEmailMaxLength,
+  limitEmailInput,
   isValidPasswordLength,
+  isUnregisteredEmailError,
+  isUnregisteredMobileNumberError,
   sanitizePasswordInput,
+  UNREGISTERED_EMAIL_ERROR,
+  UNREGISTERED_MOBILE_NUMBER_ERROR,
 } from "../utils/validation";
 import {
   getAuthenticatedLoginIdentifier,
   persistLoginIdentity,
 } from "../utils/authIdentity";
 const PhoneInput = (_PhoneInput as any).default || _PhoneInput;
+const PASSWORD_MAX_LENGTH = 12;
+const PASSWORD_MAX_LENGTH_ERROR = "Password cannot exceed 12 characters.";
 const TERMS_OF_USE_CONTENT = [
   "By using Alcademy, you agree to use the platform responsibly and only for lawful educational purposes. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.",
   "You agree not to misuse the service, attempt unauthorized access, interfere with platform security, upload harmful content, or use the platform in a way that disrupts learning experiences for other users.",
@@ -98,6 +108,8 @@ const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [phoneNumberError, setPhoneNumberError] = useState('');
+  const [showRequiredFieldErrors, setShowRequiredFieldErrors] = useState(false);
   const isEmailDisabled = Boolean(phoneNumber.trim());
   const isPhoneDisabled = Boolean(email.trim());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,6 +151,7 @@ const Login = () => {
 
     setError("");
     setEmailError("");
+    setPhoneNumberError("");
     setPasswordError("");
 
     const identifier =
@@ -147,12 +160,31 @@ const Login = () => {
 
     setIdentifier(identifier);
 
-    if (!identifier) {
+    if (!identifier && !password) {
+      setShowRequiredFieldErrors(false);
+      setError("Please fill all required fields.");
+      return;
+    }
 
-      setError(
-        "Email or phone number is required"
+    if (!identifier || !password) {
+      setShowRequiredFieldErrors(true);
+      if (!identifier) {
+        setEmailError("Email Address or Phone Number is required.");
+        setPhoneNumberError("Email Address or Phone Number is required.");
+      } else if (email.trim() && !isValidEmailFormat(email)) {
+        setEmailError(EMAIL_FORMAT_ERROR);
+      }
+      setPasswordError(
+        !password
+          ? "Password is required."
+          : hasRestrictedPasswordChars(password)
+            ? PASSWORD_RESTRICTED_CHAR_ERROR
+            : password.length > PASSWORD_MAX_LENGTH
+              ? PASSWORD_MAX_LENGTH_ERROR
+            : !isValidPasswordLength(password)
+              ? PASSWORD_LENGTH_ERROR
+              : "",
       );
-
       return;
     }
 
@@ -166,13 +198,17 @@ const Login = () => {
       return;
     }
 
+    if (password.length > PASSWORD_MAX_LENGTH) {
+      setPasswordError(PASSWORD_MAX_LENGTH_ERROR);
+      return;
+    }
+
     if (!isValidPasswordLength(password)) {
       setPasswordError(PASSWORD_LENGTH_ERROR);
       return;
     }
 
     if (!captchaRef.current?.validate()) {
-      setError("Incorrect CAPTCHA.");
       return;
     }
 
@@ -210,7 +246,8 @@ const Login = () => {
         identifier,
         email.trim() ? "email" : "phone"
       );
-      localStorage.setItem("userPassword", password);
+      localStorage.removeItem("userPassword");
+      localStorage.removeItem("password");
 
       const loginDisplayName =
         getLoginDisplayName(response) || getAuthenticatedLoginIdentifier();
@@ -244,6 +281,18 @@ const Login = () => {
         return;
       }
 
+      if (phoneNumber.trim() && isUnregisteredMobileNumberError(detail)) {
+        setPhoneNumberError(UNREGISTERED_MOBILE_NUMBER_ERROR);
+        setError("");
+        return;
+      }
+
+      if (email.trim() && isUnregisteredEmailError(detail)) {
+        setEmailError(UNREGISTERED_EMAIL_ERROR);
+        setError("");
+        return;
+      }
+
       setError(getLoginErrorMessage(detail));
 
     } finally {
@@ -264,22 +313,38 @@ const Login = () => {
   };
 
   const handleEmailChange = (value: string) => {
-    setEmail(value);
+    const limitedValue = limitEmailInput(value);
+    setEmail(limitedValue);
 
-    if (value.trim() && !isValidEmailFormat(value)) {
+    if (hasReachedEmailMaxLength(value)) {
+      setEmailError(EMAIL_MAX_LENGTH_ERROR);
+      return;
+    }
+
+    if (limitedValue.trim() && !isValidEmailFormat(limitedValue)) {
       setEmailError(EMAIL_FORMAT_ERROR);
       return;
     }
 
-    setEmailError("");
+    setEmailError(
+      showRequiredFieldErrors && !limitedValue.trim() && !phoneNumber.trim()
+        ? "Email Address or Phone Number is required."
+        : "",
+    );
+    if (value.trim()) setPhoneNumberError("");
   };
 
   const handlePasswordChange = (value: string) => {
     const sanitizedValue = sanitizePasswordInput(value);
-    setPassword(sanitizedValue);
+    setPassword(sanitizedValue.slice(0, PASSWORD_MAX_LENGTH));
 
     if (hasRestrictedPasswordChars(value)) {
       setPasswordError(PASSWORD_RESTRICTED_CHAR_ERROR);
+      return;
+    }
+
+    if (sanitizedValue.length > PASSWORD_MAX_LENGTH) {
+      setPasswordError(PASSWORD_MAX_LENGTH_ERROR);
       return;
     }
 
@@ -288,7 +353,9 @@ const Login = () => {
       return;
     }
 
-    setPasswordError("");
+    setPasswordError(
+      showRequiredFieldErrors && !sanitizedValue ? "Password is required." : "",
+    );
   };
 
   const handlePasswordKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -332,6 +399,7 @@ const Login = () => {
                 </div>
                 <input
                   type="email"
+                  maxLength={EMAIL_MAX_LENGTH}
                   value={email}
                   disabled={isEmailDisabled}
                   style={{
@@ -396,25 +464,38 @@ const Login = () => {
                     opacity: isPhoneDisabled ? 0.7 : undefined,
                     cursor: isPhoneDisabled ? 'not-allowed' : undefined,
                   }}
-                  onChange={(phone: string) => {
-
-                    const formattedPhone =
-                      `+${phone}`;
+                  onChange={(phone: string, country: { dialCode?: string }) => {
+                    const dialCode = country?.dialCode || '';
+                    const formattedPhone = phone.length > dialCode.length
+                      ? `+${phone}`
+                      : '';
 
                     setPhoneNumber(formattedPhone);
+                    setPhoneNumberError(
+                      showRequiredFieldErrors && !formattedPhone && !email.trim()
+                        ? "Email Address or Phone Number is required."
+                        : "",
+                    );
+                    if (formattedPhone.trim()) setEmailError("");
                   }}
                   enableSearch={true}
                   containerClass="!w-full !h-full"
-                  inputClass={`!w-full !h-full !border-gray-200 !rounded-md !text-sm focus:!outline-none focus:!ring-1 focus:!ring-brand-green focus:!border-brand-green ${isPhoneDisabled
+                  inputClass={`!w-full !h-full !rounded-md !text-sm focus:!outline-none focus:!ring-1 ${phoneNumberError
+                    ? '!border-red-400 focus:!ring-red-400 focus:!border-red-400'
+                    : '!border-gray-200 focus:!ring-brand-green focus:!border-brand-green'
+                    } ${isPhoneDisabled
                     ? '!bg-gray-200 !text-gray-400 !opacity-70 !cursor-not-allowed'
                     : '!bg-white'
                     }`}
-                  buttonClass={`!border-gray-200 !rounded-l-md ${isPhoneDisabled
+                  buttonClass={`${phoneNumberError ? '!border-red-400' : '!border-gray-200'} !rounded-l-md ${isPhoneDisabled
                     ? '!bg-gray-200 !opacity-70 !cursor-not-allowed'
                     : '!bg-gray-50'
                     }`}
                 />
               </div>
+              {phoneNumberError && (
+                <p className="mt-2 text-sm text-red-600">{phoneNumberError}</p>
+              )}
             </div>
 
             <div className="mb-2">
@@ -431,6 +512,8 @@ const Login = () => {
                   value={password}
                   onChange={(e) => handlePasswordChange(e.target.value)}
                   onKeyDown={handlePasswordKeyDown}
+                  aria-invalid={Boolean(passwordError)}
+                  aria-describedby={passwordError ? "login-password-error" : undefined}
                   className={`block w-full pl-10 pr-10 py-3 border rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 tracking-[0.2em] ${passwordError
                       ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
                       : 'border-gray-200 focus:ring-brand-green focus:border-brand-green'
@@ -441,6 +524,8 @@ const Login = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? (
                     <Eye className="h-4 w-4" />
@@ -465,7 +550,7 @@ const Login = () => {
             )}
 
             <p className="text-xs text-[#ffb700] font-bold mb-5">
-              Note : Password will be Valid for 45 days only.
+              Note : Password will be valid for 45 days only.
             </p>
 
             <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
@@ -518,7 +603,7 @@ const Login = () => {
               </span>
               <Link
                 to="/register"
-                className="text-[#ff7b72] hover:text-[#e06961] font-bold"
+                className="text-[#0F172A] hover:text-[#1E3A8A] font-bold"
               >
                 Sign up
               </Link>

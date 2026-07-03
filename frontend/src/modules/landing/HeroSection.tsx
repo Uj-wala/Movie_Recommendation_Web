@@ -19,9 +19,9 @@ const HeroSection: React.FC = () => {
 
           <div className="relative inline-block">
             <h1 className="max-w-[720px] font-roboto-flex text-[44px] font-semibold leading-[1.11] tracking-[0] text-[#2D312E] sm:text-[56px] xl:text-[68px]">
-              Now learning from
+              Learn from
               <br />
-              anywhere, and build
+              anywhere and build
               <br />
               your{" "}
               <span className="relative inline-block pb-[38px] text-[#55B779]">

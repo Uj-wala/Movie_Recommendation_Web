@@ -26,6 +26,8 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
 
   const [error, setError] =
     useState("");
+  const [securityQuestionError, setSecurityQuestionError] = useState("");
+  const [securityAnswerError, setSecurityAnswerError] = useState("");
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -61,16 +63,21 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
 
               e.preventDefault();
 
-              if (!securityQuestion) {
-                setError(
-                  "Please select a security question"
-                );
+              setError("");
+
+              if (!securityQuestion && !securityAnswer.trim()) {
+                setError("Please fill all required fields.");
+                setSecurityQuestionError("");
+                setSecurityAnswerError("");
                 return;
               }
 
-              if (!securityAnswer.trim()) {
-                setError(
-                  "Please enter your security answer"
+              if (!securityQuestion || !securityAnswer.trim()) {
+                setSecurityQuestionError(
+                  securityQuestion ? "" : "Please select a Security Question.",
+                );
+                setSecurityAnswerError(
+                  securityAnswer.trim() ? "" : "Security Answer is required.",
                 );
                 return;
               }
@@ -118,9 +125,10 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
               <div className="relative">
                 <select
                   value={securityQuestion}
-                  onChange={(e) =>
-                    setSecurityQuestion(e.target.value)
-                  }
+                  onChange={(e) => {
+                    setSecurityQuestion(e.target.value);
+                    if (e.target.value) setSecurityQuestionError("");
+                  }}
                   className="block w-full appearance-none px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
                 >
                   <option value="">
@@ -143,6 +151,9 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
                   <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
+              {securityQuestionError && (
+                <p className="mt-1 text-sm text-red-500">{securityQuestionError}</p>
+              )}
             </div>
 
             <div className="mb-8">
@@ -157,16 +168,21 @@ const AccountBlockedModal: React.FC<AccountBlockedModalProps> = ({
     const value = e.target.value.replace(/\s/g, "");
 
     if (value.length > 10) {
-      setError("Security answer must not exceed 10 characters.");
+      setSecurityAnswerError("Security answer must not exceed 10 characters.");
       return;
     }
 
-    setError("");
+    setSecurityAnswerError(
+      value ? "" : securityAnswerError ? "Security Answer is required." : "",
+    );
     setSecurityAnswer(value);
   }}
   className="block w-full px-3 py-3 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-green focus:border-brand-green"
   placeholder="Type your answer here"
 />
+              {securityAnswerError && (
+                <p className="mt-1 text-sm text-red-500">{securityAnswerError}</p>
+              )}
 
             </div>
             {error && (

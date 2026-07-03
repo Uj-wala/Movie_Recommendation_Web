@@ -12,26 +12,35 @@ interface CaptchaProps {
   onTermsClick?: () => void;
 }
 
-const generateCaptcha = () => {
-  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+const CAPTCHA_LENGTH = 8;
+const CAPTCHA_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+const generateCaptcha = (currentCaptcha?: string) => {
+  let nextCaptcha = '';
+
+  do {
+    nextCaptcha = Array.from({ length: CAPTCHA_LENGTH }, () =>
+      CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)]
+    ).join('');
+  } while (nextCaptcha === currentCaptcha);
+
+  return nextCaptcha;
 };
 
 const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTermsClick }, ref) => {
   const [value, setValue] = useState('');
   const [status, setStatus] = useState<CaptchaStatus>('default');
+  const [errorMessage, setErrorMessage] = useState('');
   const [captchaText, setCaptchaText] = useState(() => generateCaptcha());
+  const [showHelp, setShowHelp] = useState(false);
 
   const isCaptchaValid = (input: string) => input === captchaText;
 
   useImperativeHandle(ref, () => ({
     validate: () => {
-      const isValid = isCaptchaValid(value);
+      const isValid = value === captchaText;
       setStatus(isValid ? 'success' : 'error');
+      setErrorMessage(isValid ? '' : value ? 'Incorrect CAPTCHA.' : 'CAPTCHA is required.');
       return isValid;
     },
   }), [captchaText, value]);
@@ -42,11 +51,14 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTer
 
     if (val.length === 0) {
       setStatus('default');
+      setErrorMessage('');
     } else if (val.length >= captchaText.length) {
       if (isCaptchaValid(val)) {
         setStatus('success');
+        setErrorMessage('');
       } else {
         setStatus('error');
+        setErrorMessage('Incorrect CAPTCHA.');
       }
     } else {
       // While typing, stay in default state until full length is reached
@@ -55,9 +67,23 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTer
   };
 
   const handleRefresh = () => {
-    setCaptchaText(generateCaptcha());
+    window.speechSynthesis?.cancel();
+    setCaptchaText(generateCaptcha(captchaText));
     setValue('');
     setStatus('default');
+    setErrorMessage('');
+  };
+
+  const handlePlayAudio = () => {
+    if (!('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(
+      captchaText.split('').join(', '),
+    );
+    utterance.rate = 0.7;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
   };
 
   const getScribbleClass = (index: number) => {
@@ -85,10 +111,12 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTer
         {/* Left Column: Image Box and Input */}
         <div className="flex-1 flex flex-col gap-4">
           {/* Captcha Image */}
-          <div className={`w-full bg-white rounded-md h-[68px] flex items-center justify-center text-[34px] tracking-[0.2em] font-mono text-gray-800 border ${status === 'default' ? 'border-gray-200' :
+          <div className={`w-full bg-white rounded-md h-[68px] flex items-center justify-center text-[34px] tracking-[0.2em] font-black text-gray-800 border ${status === 'default' ? 'border-gray-200' :
               status === 'error' ? 'border-[#ff4d4d]' :
                 'border-[#33cc66]'
-            }`}>
+            }`}
+            style={{ fontFamily: 'Verdana, Arial, sans-serif' }}
+          >
             {captchaText.split('').map((char, index) => (
               <span
                 key={index}
@@ -117,28 +145,52 @@ const Captcha = forwardRef<CaptchaHandle, CaptchaProps>(({ onPrivacyClick, onTer
           <button
             type="button"
             onClick={handleRefresh}
+            aria-label="Generate a new CAPTCHA"
             className="w-[34px] h-[34px] flex items-center justify-center rounded bg-[#c5d8fe] text-gray-800 hover:bg-[#b0c8ff] transition-colors"
           >
             <RefreshCw className="w-[18px] h-[18px]" strokeWidth={2} />
           </button>
-          <button type="button" className="w-[34px] h-[34px] flex items-center justify-center rounded bg-[#c5d8fe] text-gray-800 hover:bg-[#b0c8ff] transition-colors">
+          <button
+            type="button"
+            onClick={handlePlayAudio}
+            aria-label="Play audio CAPTCHA"
+            className="w-[34px] h-[34px] flex items-center justify-center rounded bg-[#c5d8fe] text-gray-800 hover:bg-[#b0c8ff] transition-colors"
+          >
             <Volume2 className="w-[18px] h-[18px]" strokeWidth={2} />
           </button>
-          <button type="button" className="w-[34px] h-[34px] flex items-center justify-center rounded bg-[#c5d8fe] text-gray-800 hover:bg-[#b0c8ff] transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowHelp((isVisible) => !isVisible)}
+            aria-label={showHelp ? 'Hide CAPTCHA help' : 'Show CAPTCHA help'}
+            aria-expanded={showHelp}
+            aria-controls="captcha-help"
+            className="w-[34px] h-[34px] flex items-center justify-center rounded bg-[#c5d8fe] text-gray-800 hover:bg-[#b0c8ff] transition-colors"
+          >
             <HelpCircle className="w-[18px] h-[18px]" strokeWidth={2} />
           </button>
         </div>
       </div>
 
+      {showHelp && (
+        <div
+          id="captcha-help"
+          role="status"
+          className="mt-4 rounded-md bg-white/80 px-3 py-2 text-[12px] leading-5 text-gray-700"
+        >
+          Enter the characters shown in the image. Use the refresh button for a
+          new CAPTCHA or the audio button to hear the characters.
+        </div>
+      )}
+
       {status === 'error' && (
         <div className="mt-4 text-[13px] text-gray-500 font-bold">
-          <span className="text-[#ff4d4d]">Incorrect CAPTCHA.</span>
+          <span className="text-[#ff4d4d]">{errorMessage}</span>
         </div>
       )}
 
       {status === 'success' && (
         <div className="mt-4 text-[13px] text-gray-600 font-bold">
-          <span className="text-[#33cc66]">CAPTCHA</span> verified Successfully..
+          <span className="text-[#33cc66]">CAPTCHA</span> verified successfully.
         </div>
       )}
 

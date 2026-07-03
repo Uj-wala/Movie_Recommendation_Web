@@ -1,5 +1,13 @@
+import { useState } from "react";
+import { Globe, Mail, Phone } from "lucide-react";
 import Logo from "../../components/Logo";
 import { useLogoNavigation } from "../../hooks/useLogoNavigation";
+import {
+  EMAIL_MAX_LENGTH,
+  EMAIL_MAX_LENGTH_ERROR,
+  hasReachedEmailMaxLength,
+  limitEmailInput,
+} from "../../utils/validation";
 
 const categoryLinks: string[] = [
   "Creative Writing",
@@ -22,7 +30,7 @@ const footerStyles = `
 .landing-footer {
   background: #e1f3e7;
   color: #212832;
-  font-family: Roboto, Arial, Helvetica, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   height: 512px;
   overflow: hidden;
   position: relative;
@@ -108,7 +116,7 @@ const footerStyles = `
 
 .footer-brand-name {
   color: #238b45;
-  font-family: Poppins, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 24px;
   font-weight: 600;
   height: 24px;
@@ -131,42 +139,59 @@ const footerStyles = `
 
 .footer-address {
   font-style: normal;
-  margin-top: 57px;
+  margin-top: 26px;
 }
 
 .footer-address strong {
   color: #212832;
   display: block;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 32px;
   font-weight: 400;
-  height: 35px;
-  line-height: 1.11;
-  margin: 0 0 6px;
+  height: 50px;
+  line-height: 50px;
+  margin: 0;
 }
 
 .footer-address span {
   color: #51a06f;
   display: block;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 20px;
   font-weight: 400;
-  height: 22px;
-  line-height: 1.11;
+  height: 50px;
+  line-height: 50px;
 }
 
 .footer-contact {
+  align-items: center;
   color: #212832;
-  font-family: Roboto, sans-serif;
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 2.5;
-  margin: 30px 0 0 23px;
+  display: flex;
+  gap: 14px;
+  margin-top: 22px;
 }
 
-.footer-contact p {
-  height: 50px;
-  margin: 0;
+.footer-contact a {
+  align-items: center;
+  border: 1px solid rgba(35, 139, 69, 0.28);
+  border-radius: 50%;
+  color: #238b45;
+  display: inline-flex;
+  height: 42px;
+  justify-content: center;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+  width: 42px;
+}
+
+.footer-contact a:hover {
+  background: #238b45;
+  color: #ffffff;
+  transform: translateY(-3px);
+}
+
+.footer-contact a:focus-visible {
+  outline: 3px solid rgba(98, 199, 134, 0.38);
+  outline-offset: 3px;
 }
 
 .footer-column,
@@ -177,18 +202,18 @@ const footerStyles = `
 .footer-column h2,
 .footer-subscribe h2 {
   color: #212832;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 600;
   height: 35px;
   line-height: 1.11;
-  margin: 0 0 33px;
+  margin: 0 0 20px;
 }
 
 .footer-column a {
   color: #212832;
   display: block;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 20px;
   font-weight: 400;
   line-height: 2.5;
@@ -224,31 +249,32 @@ const footerStyles = `
 
 .footer-subscribe p {
   color: #212832;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 20px;
   font-weight: 400;
   height: 66px;
   line-height: 1.11;
-  margin: 48px 0 44px;
+  margin: 20px 0 44px;
   width: 306px;
 }
 
 .footer-subscribe input {
-  background: #ffffff;
+  background: #f1fff6;
   border: 0;
   border-radius: 15px;
+  box-sizing: border-box;
   box-shadow: 0 4px 7px rgba(0, 0, 0, 0.24);
   color: #424242;
   display: block;
-  font-family: Roboto, sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 20px;
   font-weight: 400;
-  height: 59px;
+  height: 63px;
   margin-bottom: 40px;
   outline: 0;
   padding: 0 28px;
   transition: box-shadow 180ms ease, transform 180ms ease;
-  width: 289px;
+  width: 310px;
 }
 
 .footer-subscribe input::placeholder {
@@ -269,7 +295,7 @@ const footerStyles = `
   box-shadow: 0 0 0 rgba(23, 135, 59, 0);
   color: #ffffff;
   cursor: pointer;
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Segoe UI", sans-serif;
   font-size: 23px;
   font-weight: 600;
   height: 51px;
@@ -370,7 +396,7 @@ const footerStyles = `
   .footer-column h2,
   .footer-subscribe h2 {
     font-size: 32px;
-    margin-bottom: 34px;
+    margin-bottom: 20px;
   }
 
   .footer-subscribe input {
@@ -381,7 +407,9 @@ const footerStyles = `
 `;
 
 const Footer = () => {
-  const handleLogoClick = useLogoNavigation();
+  const handleLogoClick = useLogoNavigation("/");
+  const [subscriptionEmail, setSubscriptionEmail] = useState("");
+  const [subscriptionEmailError, setSubscriptionEmailError] = useState("");
 
   return (
     <>
@@ -390,7 +418,7 @@ const Footer = () => {
         <div className="landing-footer-container">
           <div className="footer-brand-column">
             <div className="footer-logo-row">
-              <Logo className="footer-logo" imgClassName="footer-logo-image" />
+              <Logo destination="/" className="footer-logo" imgClassName="footer-logo-image" />
               <button type="button" onClick={handleLogoClick} className="footer-brand-link" aria-label="Go to Home Page">
                 <p className="footer-brand-name">E-Learning</p>
                 <p className="footer-brand-subtitle">AI-Powered</p>
@@ -402,9 +430,24 @@ const Footer = () => {
               <span>Haymarket, Virginia(VA)</span>
             </address>
 
-            <div className="footer-contact">
-              <p>Mail Id</p>
-              <p>Phone Number</p>
+            <div className="footer-contact" aria-label="Contact and social links">
+              <a href="mailto:" aria-label="Send us an email" title="Email">
+                <Mail aria-hidden="true" size={21} />
+              </a>
+              <a href="tel:" aria-label="Call us" title="Phone">
+                <Phone aria-hidden="true" size={21} />
+              </a>
+              <a href="/" aria-label="Visit our website" title="Website">
+                <Globe aria-hidden="true" size={21} />
+              </a>
+              <a href="https://twitter.com" aria-label="Follow us on Twitter" title="Twitter">
+                <svg aria-hidden="true" height="19" viewBox="0 0 24 24" width="19">
+                  <path
+                    d="M18.9 2H22l-6.77 7.74L23.2 22h-6.24l-4.89-6.39L6.48 22H3.36l7.25-8.29L2.97 2h6.4l4.42 5.84L18.9 2Zm-1.1 17.84h1.73L8.43 4.05H6.58L17.8 19.84Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </a>
             </div>
           </div>
 
@@ -429,21 +472,42 @@ const Footer = () => {
           <form className="footer-subscribe">
             <h2>Subscribe</h2>
             <p>
-              Lorem Ipsum has been them an industry printer took a galley make
-              book
+              Get course updates, learning tips, and exclusive offers delivered
+              to your inbox.
             </p>
-            <input
-              aria-label="Email address"
-              autoComplete="email"
-              inputMode="email"
-              maxLength={254}
-              name="email"
-              pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
-              placeholder="Enter your email"
-              required
-              title="Enter a valid email address, for example name@example.com"
-              type="email"
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                aria-label="Email address"
+                aria-describedby={subscriptionEmailError ? "footer-email-error" : undefined}
+                aria-invalid={Boolean(subscriptionEmailError)}
+                autoComplete="email"
+                inputMode="email"
+                maxLength={EMAIL_MAX_LENGTH}
+                name="email"
+                onChange={(event) => {
+                  setSubscriptionEmail(limitEmailInput(event.target.value));
+                  setSubscriptionEmailError(
+                    hasReachedEmailMaxLength(event.target.value)
+                      ? EMAIL_MAX_LENGTH_ERROR
+                      : "",
+                  );
+                }}
+                pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
+                placeholder="Enter your Email"
+                required
+                title="Enter a valid email address, for example name@example.com"
+                type="email"
+                value={subscriptionEmail}
+              />
+              {subscriptionEmailError && (
+                <span
+                  id="footer-email-error"
+                  style={{ color: "#ef4444", fontSize: "12px", left: 0, position: "absolute", top: "63px" }}
+                >
+                  {subscriptionEmailError}
+                </span>
+              )}
+            </div>
             <button type="submit">Subscribe Now</button>
           </form>
         </div>

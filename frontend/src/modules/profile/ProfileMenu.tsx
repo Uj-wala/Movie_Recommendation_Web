@@ -49,7 +49,7 @@ export default function ProfileMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | HTMLDivElement | null>>([]);
 
-  const displayIdentifier = getAuthenticatedLoginIdentifier() || userEmail;
+  const displayIdentifier = userEmail || getAuthenticatedLoginIdentifier();
   const displayName = userName || formatNameFromEmail(displayIdentifier, userRole);
   const initial = displayName.charAt(0).toUpperCase() || userRole.charAt(0).toUpperCase() || "U";
 
@@ -180,6 +180,7 @@ export default function ProfileMenu({
           >
             <span>Signed in as</span>
             <strong>{displayIdentifier}</strong>
+            {userRole && <span>{userRole}</span>}
           </div>
 
           <div className="profile-menu__actions">

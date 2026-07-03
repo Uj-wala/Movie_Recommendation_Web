@@ -1,4 +1,18 @@
 import api from "../api/axios";
+import { API_BASE_URL } from "../config/env";
+
+const resolveProfileImageUrl = (imageUrl?: string | null): string | null => {
+    if (!imageUrl) return null;
+
+    return new URL(imageUrl, API_BASE_URL).toString();
+};
+
+const withResolvedProfileImage = <T extends { profile_image_url?: string | null }>(
+    profile: T,
+): T => ({
+    ...profile,
+    profile_image_url: resolveProfileImageUrl(profile.profile_image_url),
+});
 
 export interface UpdateParentProfileRequest {
     full_name: string;
@@ -22,7 +36,7 @@ export const getParentProfile = async () => {
         "/parent-profile"
     );
 
-    return response.data;
+    return withResolvedProfileImage(response.data);
 };
 
 export const updateParentProfile = async (
@@ -33,7 +47,7 @@ export const updateParentProfile = async (
         data
     );
 
-    return response.data;
+    return withResolvedProfileImage(response.data);
 };
 
 export const addChild = async (
@@ -73,7 +87,7 @@ export const getParentDashboard = async () => {
         "/parent-profile/dashboard"
     );
 
-    return response.data;
+    return withResolvedProfileImage(response.data);
 };
 
 export const fetchStudentDetailsByRegistrationNumber = async (
@@ -84,4 +98,15 @@ export const fetchStudentDetailsByRegistrationNumber = async (
     );
 
     return response.data;
+};
+
+export const uploadParentProfileImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/parent-profile/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return withResolvedProfileImage(response.data);
 };

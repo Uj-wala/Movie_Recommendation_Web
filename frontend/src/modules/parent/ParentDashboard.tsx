@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import parentProfileImage from "../../assets/parent_profile .jpeg";
 import { ProfileMenu } from "../profile";
 import Logout from "../../components/Logout";
 import { useLogoNavigation } from "../../hooks/useLogoNavigation";
 import { getParentDashboard } from "../../services/ParentDashboardProfileService";
+import { handleSidebarKeyDown } from "../../utils/sidebarKeyboardNavigation";
 
 const ParentDashboard = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const ParentDashboard = () => {
     parent_email: string;
     parent_phone_number: string;
     profile_image_url: string | null;
+    role: string | null;
 
     child: {
       id: string;
@@ -45,16 +46,13 @@ const ParentDashboard = () => {
   // User Profile Data
   const profile = {
     name:
-      dashboardData?.parent_name ||
-      localStorage.getItem("full_name") ||
-      "Parent",
+      dashboardData?.parent_name || "",
     email:
       dashboardData?.parent_email || "",
     phone:
       dashboardData?.parent_phone_number || "",
     image:
-      dashboardData?.profile_image_url ||
-      parentProfileImage,
+      dashboardData?.profile_image_url || undefined,
   };
 
   const handleProfileClick = () => {
@@ -167,15 +165,21 @@ const ParentDashboard = () => {
         </button>
 
         {/* Sidebar Navigation Items */}
-        <div className="mt-[48px] flex w-[246px] flex-col gap-[8px]">
+        <nav
+          aria-label="Parent dashboard"
+          className="mt-[48px] flex w-[246px] flex-col gap-[8px]"
+          onKeyDown={handleSidebarKeyDown}
+        >
           {menuItems.map((item) => {
             const isActive = activeTab === item.name;
             return (
               <button
                 key={item.name}
                 type="button"
+                data-sidebar-item
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => handleMenuItemClick(item.name)}
-                className={`flex h-[48px] w-[246px] cursor-pointer items-center gap-[12px] rounded-[12px] border-none py-[12px] pl-[16px] pr-[16px] text-left outline-none transition-all ${isActive ? "bg-[#EEF8F1] opacity-100" : "bg-transparent opacity-70"
+                className={`flex h-[48px] w-[246px] cursor-pointer items-center gap-[12px] rounded-[12px] border-none py-[12px] pl-[16px] pr-[16px] text-left outline-none transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#238B45] ${isActive ? "bg-[#EEF8F1] opacity-100" : "bg-transparent opacity-70"
                   }`}
               >
                 <img
@@ -193,7 +197,7 @@ const ParentDashboard = () => {
               </button>
             );
           })}
-        </div>
+        </nav>
       </aside>
 
       {/* MAIN CONTENT AREA */}
@@ -205,7 +209,10 @@ const ParentDashboard = () => {
           {/* Main Welcome Message Banner */}
           <div className="mt-[84px] flex h-[64px] w-[384px] flex-col gap-[4px]">
             <h1 className="m-0 h-[36px] w-[384px] font-['Poppins',sans-serif] text-[28px] font-semibold leading-none text-black">
-              Welcome back, {dashboardData?.parent_name || "Parent"}! 👋            </h1>
+              {dashboardData?.parent_name
+                ? `Welcome back, ${dashboardData.parent_name}! 👋`
+                : "Welcome back! 👋"}
+            </h1>
             <p className="m-0 h-[24px] w-[384px] font-['Poppins',sans-serif] text-[16px] font-normal leading-none text-[#8B8B8B]">
               Here's what's happening in your profile today.
             </p>
@@ -216,7 +223,7 @@ const ParentDashboard = () => {
               <ProfileMenu
                 userEmail={profile.email}
                 userName={profile.name}
-                userRole="Parent"
+                userRole={dashboardData?.role || ""}
                 avatarSrc={profile.image}
                 onProfileClick={handleProfileClick}
                 onSettingsClick={handleSettingsClick}

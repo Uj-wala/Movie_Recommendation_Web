@@ -4,6 +4,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import SplitScreenLayout from '../components/SplitScreenLayout';
 import Logo from '../components/Logo';
 import { forgotPassword, verifyOTP } from "../services/authService";
+import {
+  isUnregisteredMobileNumberError,
+  UNREGISTERED_MOBILE_NUMBER_ERROR,
+} from "../utils/validation";
 
 const OTP_TIMER_SECONDS = 5 * 60;
 const formatTimer = (seconds: number) => {
@@ -71,7 +75,13 @@ const VerifyOTP = () => {
 
         setOtpSent(true);
 
-      } catch {
+      } catch (error: any) {
+        const detail = error?.response?.data?.detail;
+
+        if (phone_number && isUnregisteredMobileNumberError(detail)) {
+          setError(UNREGISTERED_MOBILE_NUMBER_ERROR);
+          return;
+        }
       }
     };
 
@@ -81,6 +91,7 @@ const VerifyOTP = () => {
     const newOtp = [...otp];
     newOtp[index] = digit.slice(0, 1);
     setOtp(newOtp);
+    if (newOtp.join('').length === 6) setError("");
 
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -105,13 +116,13 @@ const VerifyOTP = () => {
       const otpCode =
         otp.join("");
 
-      if (
-        otpCode.length !== 6
-      ) {
+      if (!otpCode.length) {
+        setError("Please fill all required fields.");
+        return;
+      }
 
-        setError(
-          "Please enter a valid OTP"
-        );
+      if (otpCode.length !== 6) {
+        setError("Please enter a valid 6-digit OTP.");
 
         return;
       }
@@ -137,9 +148,15 @@ const VerifyOTP = () => {
         );
 
       } catch (error: any) {
+        const detail = error?.response?.data?.detail;
+
+        if (phone_number && isUnregisteredMobileNumberError(detail)) {
+          setError(UNREGISTERED_MOBILE_NUMBER_ERROR);
+          return;
+        }
 
         setError(
-          error?.response?.data?.detail ||
+          detail ||
           "OTP verification failed"
         );
 

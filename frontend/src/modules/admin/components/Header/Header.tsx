@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './Header.css';
 import { Menu } from 'lucide-react';
-import adminProfile from '../../../../assets/admin_profile.jpeg';
 import { ProfileMenu } from '../../../profile';
 import Logout from '../../../../components/Logout';
 import api from '../../../../api/axios';
@@ -12,44 +11,24 @@ interface HeaderProps {
   toggleSidebar?: () => void;
 }
 
-const formatNameFromEmail = (email: string) => {
-  const localPart = email.split("@")[0] || "";
-  const words = localPart
-    .replace(/[._-]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (!words.length) return "Admin";
-
-  return words
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
+type AuthenticatedProfile = {
+  full_name?: string | null;
+  email?: string | null;
+  phone_number?: string | null;
+  role?: string | null;
+  profile_image?: string | null;
 };
 
 const Header: React.FC<HeaderProps> = ({ setActiveTab, userEmail, toggleSidebar }) => {
-  const displayEmail = userEmail || localStorage.getItem("userEmail") || "";
-  const [authenticatedName, setAuthenticatedName] = useState("");
-  const displayName =
-    authenticatedName ||
-    localStorage.getItem("userName") ||
-    localStorage.getItem("full_name") ||
-    localStorage.getItem("name") ||
-    formatNameFromEmail(displayEmail);
+  const [profile, setProfile] = useState<AuthenticatedProfile | null>(null);
+  const displayIdentifier = profile?.email || profile?.phone_number || userEmail || "";
 
   useEffect(() => {
-    const userId = localStorage.getItem("user_id");
-    if (!userId) return;
-
     let isMounted = true;
 
-    api.get<{ name?: string }>(`/admin/users/${userId}`)
+    api.get<AuthenticatedProfile>("/auth/me")
       .then(({ data }) => {
-        const name = data.name?.trim();
-        if (!name || !isMounted) return;
-
-        localStorage.setItem("userName", name);
-        setAuthenticatedName(name);
+        if (isMounted) setProfile(data);
       })
       .catch((error) => {
         console.error("Unable to load authenticated admin details", error);
@@ -83,10 +62,10 @@ const Header: React.FC<HeaderProps> = ({ setActiveTab, userEmail, toggleSidebar 
       >
         {({ logout }) => (
           <ProfileMenu
-            userEmail={displayEmail}
-            userName={displayName}
-            userRole="Admin"
-            avatarSrc={adminProfile}
+            userEmail={displayIdentifier}
+            userName={profile?.full_name || ""}
+            userRole={profile?.role || ""}
+            avatarSrc={profile?.profile_image || undefined}
             onProfileClick={handleProfileClick}
             onSettingsClick={handleSettingsClick}
             onLogoutClick={logout}
