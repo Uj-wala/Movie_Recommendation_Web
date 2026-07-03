@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.database import Base, engine
 from app.api import auth_routes, auth_login, phone_registration,admin_rbca,admin_manage_user
@@ -23,6 +24,7 @@ from app.scripts.create_admin import create_admin
 from app.api.parent_profile_router import router as parent_profile_router
 from app.api.student_routes import router as student_router
 from app.api.teacher_routes import router as teacher_router
+from app.api.course_router import router as course_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -38,6 +40,12 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads",
+)
+
 app.include_router(auth_routes.router)
 app.include_router(phone_router)
 app.include_router(otp_router)
@@ -48,6 +56,7 @@ app.include_router(admin_manage_user.router)
 app.include_router(student_router)
 app.include_router(teacher_router)
 app.include_router(parent_profile_router)
+app.include_router(course_router)
 
 seed_countries();   
 seed_roles();

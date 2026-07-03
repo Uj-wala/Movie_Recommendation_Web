@@ -2,10 +2,11 @@ export interface User {
   id?: string;
   name: string;
   email: string;
+  phone_number: string;
   role_name: string;
   role_id: string | null;
   is_active: number;
-  registration_number:string;
+  registration_number: string;
 }
 
 export interface Role {
