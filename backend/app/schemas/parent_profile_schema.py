@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Optional 
+from typing import Optional
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -176,3 +176,124 @@ class StudentLookupResponse(BaseModel):
     child_name: str
     grade: str | None
     school_name: str | None
+
+
+class AddEmailRequest(BaseModel):
+    new_email: EmailStr
+ 
+    @field_validator("new_email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return value.strip().lower()
+    
+class UpdateEmailRequest(BaseModel):
+    new_email: EmailStr
+    set_as_primary: bool = True
+
+    @field_validator("new_email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return value.strip().lower()
+ 
+ 
+class VerifyEmailOTPRequest(BaseModel):
+    email: EmailStr
+    otp_code: str
+    
+ 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, value: str) -> str:
+        return value.strip().lower()
+ 
+    @field_validator("otp_code")
+    @classmethod
+    def validate_otp(cls, value: str) -> str:
+        value = value.strip()
+ 
+        if len(value) != 6:
+            raise ValueError("OTP must be 6 digits")
+ 
+        if not value.isdigit():
+            raise ValueError("OTP must contain only digits")
+ 
+        return value
+ 
+ 
+class OTPSentResponse(BaseModel):
+    message: str
+    email: str
+    
+ 
+ 
+class OTPVerifyResponse(BaseModel):
+    message: str
+    success: bool
+ 
+ 
+class AddPhoneRequest(BaseModel):
+    new_phone_number: str
+ 
+    @field_validator("new_phone_number")
+    @classmethod
+    def validate_phone(cls, value: str) -> str:
+        value = value.strip()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError("Invalid phone number format")
+ 
+        return value
+
+class UpdatePhoneRequest(BaseModel):
+    new_phone_number: str
+    set_as_primary: bool = True
+ 
+    @field_validator("new_phone_number")
+    @classmethod
+    def validate_phone(cls, value: str) -> str:
+        value = value.strip()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError("Invalid phone number format")
+ 
+        return value
+ 
+ 
+class VerifyPhoneOTPRequest(BaseModel):
+    phone_number: str
+    otp_code: str
+ 
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone(cls, value: str) -> str:
+        value = value.strip()
+ 
+        if not PHONE_REGEX.match(value):
+            raise ValueError("Invalid phone number format")
+ 
+        return value
+ 
+    @field_validator("otp_code")
+    @classmethod
+    def validate_otp(cls, value: str) -> str:
+        value = value.strip()
+ 
+        if len(value) != 6:
+            raise ValueError("OTP must be 6 digits")
+ 
+        if not value.isdigit():
+            raise ValueError("OTP must contain only digits")
+ 
+        return value
+ 
+ 
+class PhoneOTPSentResponse(BaseModel):
+    message: str
+    phone_number: str
+ 
+ 
+class PhoneOTPVerifyResponse(BaseModel):
+    message: str
+    success: bool
+ 
+ 
