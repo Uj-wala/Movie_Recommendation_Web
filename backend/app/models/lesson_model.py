@@ -62,7 +62,7 @@ class Lesson(
 
     duration_minutes: Mapped[int] = mapped_column(
         Integer,
-        nullable=False,
+        nullable=True,
     )
 
     display_order: Mapped[int] = mapped_column(
