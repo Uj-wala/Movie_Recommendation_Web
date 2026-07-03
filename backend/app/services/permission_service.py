@@ -113,16 +113,25 @@ class PermissionService:
         payload: CreateUserSchema
     ):
         try:
-            # 1. Check duplicate email
-            existing_user = PermissionRepository.get_user_by_email(
-                db,
-                payload.email
-            )
-            if existing_user:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Email already exists"
+            # 1. Check duplicate email only if email is provided
+            if payload.email:
+                existing_user = PermissionRepository.get_user_by_email(
+                    db,
+                    payload.email
                 )
+                if existing_user:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Email already exists"
+                    )
+            # 2. Check duplicate phone number only if phone number is provided        
+            if payload.phone_number:
+                existing_user = db.query(User).filter(User.phone_number == payload.phone_number).first();
+                if existing_user:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Phone number already exists"
+                    )        
 
             # 2. Validate role
             role = PermissionRepository.get_role_by_id(
@@ -148,20 +157,22 @@ class PermissionService:
                 )
 
             # 4. Generate temp password
-            temp_password = generate_temp_password(
-                payload.name,
-                payload.email
-            )
+            if payload.email:
+             temp_password = generate_temp_password()
+            else: 
+                temp_password = "DefaultPassword123!"  # Default password if email is not provided
             hashed_password = pwd_context.hash(temp_password)
             registration_number = generate_registration_number(db, role.name)  
             # 5. Create user
             new_user = User(
                 full_name=payload.name,
-                email=payload.email,
+                email=payload.email if payload.email else None,
+                phone_number=payload.phone_number if payload.phone_number else None,
                 role_id=payload.role_id,
                 password_hash=hashed_password,
                 registration_number=registration_number,
-                is_active=True
+                is_active=True,
+                is_verified=True # verified by default since the user is created by admin
             )
 
             db.add(new_user)
@@ -180,20 +191,21 @@ class PermissionService:
             if permission_objects:
                 db.add_all(permission_objects)
 
-            email_sent = send_generated_password_mail(
-                new_user.email,
-                new_user.full_name,
-                temp_password,
-            )
-            if not email_sent:
-                raise HTTPException(
-                    status_code=502,
-                    detail=(
-                        "The user was not created because the invitation email "
-                        "could not be sent. Please verify the email address and "
-                        "try again."
-                    ),
+            if new_user.email:
+                email_sent = send_generated_password_mail(
+                    new_user.email,
+                    new_user.full_name,
+                    temp_password,
                 )
+                if not email_sent:
+                    raise HTTPException(
+                        status_code=502,
+                        detail=(
+                            "The user was not created because the invitation email "
+                            "could not be sent. Please verify the email address and "
+                            "try again."
+                        ),
+                    )
 
             db.commit()
             db.refresh(new_user)
@@ -204,6 +216,7 @@ class PermissionService:
                     "id": str(new_user.id),
                     "name": new_user.full_name,
                     "email": new_user.email,
+                    "phone_number": new_user.phone_number,
                     "role_id": str(new_user.role_id),
                     "role_name": role.name,
                     "is_active": new_user.is_active,
@@ -220,7 +233,7 @@ class PermissionService:
             db.rollback()
             raise HTTPException(
                 status_code=400,
-                detail="Email already exists"
+                detail="Email or phone number already exists"
             )
 
         except Exception as e:

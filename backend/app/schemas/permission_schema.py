@@ -25,7 +25,8 @@ class UserPermissionResponse(BaseModel):
 
 class CreateUserSchema(BaseModel):
     name: str
-    email: EmailStr
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
     role_id: str
     permissions: List[str] = []
 
@@ -57,9 +58,10 @@ class UserBasicResponse(
 ):
     id: str
     full_name: str
-    email: str
-    role_id: Optional[str]
-    role_name: Optional[str]
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+    role_id: Optional[str] = None
+    role_name: Optional[str] = None
     is_active: bool
 
     class Config:

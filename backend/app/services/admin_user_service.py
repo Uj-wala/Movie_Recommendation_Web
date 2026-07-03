@@ -90,7 +90,10 @@ class UserService:
     ):
         query = (
             db.query(User)
-            .filter(User.email != "admin@aipeta.com")
+            .filter(or_(
+            User.email != "admin@aipeta.com",
+            User.email.is_(None)
+        ))
             .options(joinedload(User.role))
         )
 
@@ -101,11 +104,22 @@ class UserService:
             query = query.filter(User.is_active == is_active)
 
         if search and search.strip():
-            search_term = f"%{search.strip()}%"
+            search = search.strip()
+
+            search_term = f"%{search}%"
+
+            phone_search = (
+                search[1:]
+                if search.startswith("+")
+                else search
+            )
+
             query = query.filter(
                 or_(
                     User.full_name.ilike(search_term),
-                    User.email.ilike(search_term)
+                    User.email.ilike(search_term),
+                    User.phone_number.ilike(search_term),
+                    User.phone_number.ilike(f"%{phone_search}%"),
                 )
             )
 
@@ -117,6 +131,7 @@ class UserService:
                 "id": user.id,
                 "name": user.full_name,
                 "email": user.email,
+                "phone_number": user.phone_number,
                 "role_id": user.role_id,
                 "role_name": user.role.name if user.role else None,
                 "register_number":user.registration_number,
