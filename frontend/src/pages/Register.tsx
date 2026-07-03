@@ -22,10 +22,12 @@ import {
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
   isValidEmailFormat,
+  getEmailValidationError,
   hasReachedEmailMaxLength,
   limitEmailInput,
   isValidPasswordComplexity,
   isValidPasswordLength,
+  sanitizeEmailInput,
   sanitizePasswordInput,
 } from "../utils/validation";
 
@@ -516,7 +518,6 @@ const Register = () => {
                   onCopy={blockClipboardAction}
                   onCut={blockClipboardAction}
                   onPaste={blockClipboardAction}
-                  onContextMenu={blockClipboardAction}
                   onKeyDown={blockClipboardShortcut}
                   onChange={(e) => {
                     const sanitizedName = e.target.value.replace(/[^a-zA-Z\s\'.-]/g, "");
@@ -562,13 +563,20 @@ const Register = () => {
                       required={registrationType === 'email'}
                       value={email}
                       onChange={(e) => {
-                        const limitedEmail = limitEmailInput(e.target.value);
+                        const limitedRawEmail = limitEmailInput(e.target.value);
+                        const limitedEmail = limitEmailInput(sanitizeEmailInput(limitedRawEmail));
                         setEmail(limitedEmail);
                         if (hasReachedEmailMaxLength(e.target.value)) {
                           setEmailError(EMAIL_MAX_LENGTH_ERROR);
+                        } else if (limitedRawEmail !== limitedEmail) {
+                          setEmailError("Email address contains invalid characters.");
                         } else if (showRequiredFieldErrors && !limitedEmail.trim()) {
                           setEmailError("Email Address is required.");
-                        } else if (!limitedEmail.trim() || isValidEmailFormat(limitedEmail)) {
+                        } else {
+                          setEmailError(getEmailValidationError(limitedEmail));
+                        }
+
+                        if (!limitedEmail.trim()) {
                           setEmailError("");
                         }
                       }}

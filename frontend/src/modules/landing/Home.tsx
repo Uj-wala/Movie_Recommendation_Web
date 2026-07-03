@@ -926,7 +926,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[#fafaf9] font-sans relative">
       {/* Header */}
-      <header className="relative z-50 flex min-h-[61px] w-full flex-wrap items-center gap-x-7 gap-y-3 border-l-[3px] border-l-[#4a99ff] bg-[#aaf5bf] px-4 py-2 text-[#031b12] shadow-[inset_0_-1px_0_rgba(35,139,69,0.12)] sm:px-[38px] xl:flex-nowrap">
+      <header className="relative z-50 flex min-h-[61px] w-full flex-wrap items-center gap-x-7 gap-y-3 bg-[#aaf5bf] px-4 py-2 text-[#031b12] shadow-[inset_0_-1px_0_rgba(35,139,69,0.12)] sm:px-[38px] xl:flex-nowrap">
         <div className="flex shrink-0 items-center gap-[13px]">
           <Logo destination="/" className="flex items-center" imgClassName="h-[45px] w-[45px] object-contain" />
           <Link to="/" className="leading-none no-underline" aria-label="Go to Home Page">

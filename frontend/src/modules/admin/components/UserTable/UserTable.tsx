@@ -26,7 +26,7 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 const sortColumns: Array<{ key: SortKey; label: string }> = [
   { key: 'name', label: 'Full Name' },
-  { key: 'email', label: 'Email ID/Phone' },
+  { key: 'email', label: 'Email ID' },
   { key: 'role_name', label: 'Role' },
   { key: 'is_active', label: 'Status' },
   { key: 'actions', label: 'Actions' },
@@ -56,8 +56,7 @@ const getSortValue = (
     case 'name':
       return user.name || '';
     case 'email':
-      // Email column shows Email ID or Phone, so consider both for sorting
-      return user.email || user.phone_number || '';
+      return user.email || '';
     case 'role_name':
       return user.role_name || '';
     case 'is_active':
@@ -205,7 +204,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, fetchUserDetails, showAddR
             {paginatedUsers.map((user) => (
               <tr key={user.id}>
                 <td>{user.name}</td>
-                <td>{user.email ? user.email : user.phone_number}</td>
+                <td>{user.email}</td>
                 <td>{user.role_name}</td>
                 <td>
                   <span className={`status-badge ${user.is_active ? 'status-active' : 'status-blocked'}`}>

@@ -18,11 +18,13 @@ import {
   PASSWORD_RESTRICTED_CHAR_ERROR,
   hasRestrictedPasswordChars,
   isValidEmailFormat,
+  getEmailValidationError,
   hasReachedEmailMaxLength,
   limitEmailInput,
   isValidPasswordLength,
   isUnregisteredEmailError,
   isUnregisteredMobileNumberError,
+  sanitizeEmailInput,
   sanitizePasswordInput,
   UNREGISTERED_EMAIL_ERROR,
   UNREGISTERED_MOBILE_NUMBER_ERROR,
@@ -313,7 +315,8 @@ const Login = () => {
   };
 
   const handleEmailChange = (value: string) => {
-    const limitedValue = limitEmailInput(value);
+    const limitedRawValue = limitEmailInput(value);
+    const limitedValue = limitEmailInput(sanitizeEmailInput(limitedRawValue));
     setEmail(limitedValue);
 
     if (hasReachedEmailMaxLength(value)) {
@@ -321,8 +324,14 @@ const Login = () => {
       return;
     }
 
-    if (limitedValue.trim() && !isValidEmailFormat(limitedValue)) {
-      setEmailError(EMAIL_FORMAT_ERROR);
+    if (limitedRawValue !== limitedValue) {
+      setEmailError("Email address contains invalid characters.");
+      return;
+    }
+
+    const emailValidationError = getEmailValidationError(limitedValue);
+    if (limitedValue.trim() && emailValidationError) {
+      setEmailError(emailValidationError || EMAIL_FORMAT_ERROR);
       return;
     }
 

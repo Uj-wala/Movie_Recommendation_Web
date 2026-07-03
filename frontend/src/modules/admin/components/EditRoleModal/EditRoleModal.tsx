@@ -37,7 +37,7 @@ type PermissionOption = {
 const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, user, existingEmails = [] }) => {
   const [permissionOptions, setPermissionOptions] = useState<PermissionOption[]>([]);
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]=useState(false)
   const [selectedRole, setSelectedRole] = useState<RoleOption>({
     id: user?.role_id ?? "",
     name: user?.role_name ?? "",
@@ -242,7 +242,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
         permissions: selectedPermissionIds
       }
       const res = await createRole(payload);
-      console.log("res", res)
+      console.log("res",res)
       const userData: UserOrRole = {
         id: res?.data?.user?.id ?? "",
         name: res?.data?.user?.name,
@@ -261,7 +261,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
         setPermissionError(TEACHER_PERMISSION_ERROR);
       }
       console.log("Error Creating Role :::", error)
-    } finally {
+    }finally{
       setLoading(false)
     }
   };
@@ -270,7 +270,7 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
   const roleLabelPrefix = hasSelectedRole
     ? selectedRole.name.charAt(0).toUpperCase() + selectedRole.name.slice(1)
     : "";
-
+    
 
   return (
     <div className="modal-overlay">
@@ -339,10 +339,10 @@ const EditRoleModal: React.FC<EditRoleModalProps> = ({ isOpen, onClose, onSave, 
                     hasReachedEmailMaxLength(e.target.value.trim())
                       ? EMAIL_MAX_LENGTH_ERROR
                       : nextEmail && !validateEmail(nextEmail)
-                        ? "Please enter a valid email address"
-                        : nextEmail && isDuplicateEmail(nextEmail)
-                          ? "This email is already added"
-                          : ""
+                      ? "Please enter a valid email address"
+                      : nextEmail && isDuplicateEmail(nextEmail)
+                        ? "This email is already added"
+                        : ""
                   );
                 }}
               />
