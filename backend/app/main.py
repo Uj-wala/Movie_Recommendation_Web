@@ -23,6 +23,7 @@ from app.routers import (
     movies,
     omdb,
     omdb_reviews,
+    omdb_watchlist,
     profile,
     recently_viewed,
     recommendations,
@@ -52,6 +53,7 @@ app.include_router(admin.router)
 app.include_router(omdb.router)
 app.include_router(history.router)
 app.include_router(omdb_reviews.router)
+app.include_router(omdb_watchlist.router)
 app.include_router(dashboard.router)
 app.include_router(recently_viewed.router)
 app.include_router(recommendations.router)

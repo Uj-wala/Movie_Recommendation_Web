@@ -4,6 +4,7 @@ from app.models.genre import Genre
 from app.models.movie import Movie
 from app.models.notification import Notification
 from app.models.omdb_review import OmdbReview
+from app.models.omdb_watchlist import OmdbWatchlist
 from app.models.otp import OTPVerification
 from app.models.person import Actor, Director
 from app.models.recently_viewed import RecentlyViewed
@@ -20,6 +21,7 @@ __all__ = [
     "Director",
     "Review",
     "OmdbReview",
+    "OmdbWatchlist",
     "SearchHistory",
     "RecentlyViewed",
     "UserPreference",

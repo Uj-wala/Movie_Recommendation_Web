@@ -142,6 +142,21 @@ export const recommendationApi = {
     api.get<{ genre: string; score: number }[]>("/preferences").then((r) => r.data),
 };
 
+export interface OmdbWatchlistItem {
+  movie_id: string;
+  movie_title: string;
+  poster: string | null;
+  genre: string | null;
+  year: string | null;
+}
+
+export const watchlistApi = {
+  list: () =>
+    api.get<OmdbWatchlistItem[]>("/omdb-watchlist").then((r) => r.data),
+  add: (item: OmdbWatchlistItem) => api.post("/omdb-watchlist", item),
+  remove: (movieId: string) => api.delete(`/omdb-watchlist/${movieId}`),
+};
+
 export const activityApi = {
   recordView: (imdb_id: string, movie_title: string, genre?: string | null) =>
     api.post("/recently-viewed", { imdb_id, movie_title, genre }),
