@@ -1,38 +1,131 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600&family=Outfit:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400&family=Roboto+Flex:wght@125;200;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
- 
+
 @theme {
   --font-sans: "Outfit", "Poppins", sans-serif;
-  --font-outfit: "Outfit", sans-serif;
-  --font-poppins: "Poppins", sans-serif;
-  --font-instrument-sans: "Instrument Sans", sans-serif;
-  --font-roboto: "Roboto", sans-serif;
-  --font-roboto-flex: "Roboto Flex", sans-serif;
-  --color-brand-green: #248943;
-  --color-brand-green-hover: #1d6e35;
-  --color-brand-blue: #4c6ef5;
+
+  /* ── MovieVerse AI palette ── */
+  --color-bg: #131216;
+  --color-surface: #1A1722;
+  --color-card: #1D1A24;
+  --color-sidebar: #1B1824;
+  --color-border: #2A2633;
+
+  --color-primary: #C63D82;
+  --color-primary-dark: #A4306F;
+  --color-primary-hover: #D94C92;
+  --color-secondary: #C63D82;
+
+  --color-purple: #4C354B;
+  --color-deep-purple: #2F2240;
+
+  --color-text: #FFFFFF;
+  --color-text-secondary: #D8D8D8;
+  --color-muted: #A6A6A6;
+  --color-placeholder: #7B7B84;
+  --color-disabled: #5D5D65;
+
+  --color-rating: #FFC107;
+  --color-gold: #F5C542;
+
+  --color-chip: #242032;
+  --color-chip-hover: #34304A;
+}
+
+/* ── Light theme overrides (toggled via [data-theme="light"] on <html>) ── */
+:root[data-theme="light"] {
+  --color-bg: #F4F2F7;
+  --color-surface: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-sidebar: #FFFFFF;
+  --color-border: #E3DFEA;
+
+  --color-text: #1A1722;
+  --color-text-secondary: #45414F;
+  --color-muted: #6B6775;
+  --color-placeholder: #9A96A3;
+  --color-disabled: #B7B3BF;
+
+  --color-chip: #ECE9F2;
+  --color-chip-hover: #DED9E9;
 }
 
 html,
 body,
 #root {
   max-width: 100%;
-  overflow-x: auto;
+  min-height: 100%;
 }
 
-/* Password fields use an application-provided visibility toggle. */
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+:root[data-theme="light"] .skeleton {
+  background: linear-gradient(90deg, #ECE9F2 25%, #F6F4FA 50%, #ECE9F2 75%);
+  background-size: 800px 100%;
+}
+
+::placeholder {
+  color: var(--color-placeholder);
+}
+
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
 }
 
-@utility no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-  &::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-  }
+/* Gradient helpers */
+@utility gradient-primary {
+  background-image: linear-gradient(135deg, #C83C7C, #7F3E9D);
 }
- 
+@utility gradient-hero {
+  background-image: linear-gradient(135deg, #222B53, #304F89, #284B62, #151D38);
+}
+@utility text-gradient {
+  background-image: linear-gradient(135deg, #C83C7C, #7F3E9D);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #1D1A24 25%, #262230 50%, #1D1A24 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: fadeInUp 0.4s ease-out both;
+}

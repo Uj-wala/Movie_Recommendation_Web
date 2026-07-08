@@ -1,70 +1,38 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
+from app.core.config import settings
 from app.core.database import Base, engine
-from app.api import auth_routes, auth_login, phone_registration,admin_rbca,admin_manage_user
 
-
-from app.models.user_model import User
-from app.models.otp_verification_model import OTPVerification
-from app.models.user_session_model import UserSession
-from app.models.student_profile_model import StudentProfile
-from app.models.teacher_profile_model import TeacherProfile
-from app.models.parent_profile_model import ParentProfile
-from app.authotp.otp_router import router as otp_router
-from app.api.phone_registration import router as phone_router
-from app.api.auth_login import router as auth_login
-from app.api.dropdown_router import router as dropdown_router
-from app.scripts.seed_roles import seed_roles
-from app.scripts.seed_countries import seed_countries
-from app.scripts.seed_subjects import seed_subjects
-from app.scripts.seed_permissions import seed_permissions
-from app.scripts.create_admin import create_admin
-from app.api.parent_profile_router import router as parent_profile_router
-from app.api.student_routes import router as student_router
-from app.api.teacher_routes import router as teacher_router
-from app.api.course_router import router as course_router
+# Import models so metadata is registered before create_all.
+import app.models  # noqa: F401
+from app.routers import admin, auth, catalog, library, movies, omdb, profile, reviews
+from app.seed import seed
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="AI Powered Education Tutoring App"
-)
+app = FastAPI(title=settings.PROJECT_NAME)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
-app.mount(
-    "/uploads",
-    StaticFiles(directory="uploads"),
-    name="uploads",
-)
+app.include_router(auth.router)
+app.include_router(movies.router)
+app.include_router(catalog.router)
+app.include_router(reviews.router)
+app.include_router(library.router)
+app.include_router(profile.router)
+app.include_router(admin.router)
+app.include_router(omdb.router)
 
-app.include_router(auth_routes.router)
-app.include_router(phone_router)
-app.include_router(otp_router)
-app.include_router(auth_login)
-app.include_router(dropdown_router)
-app.include_router(admin_rbca.router)
-app.include_router(admin_manage_user.router)
-app.include_router(student_router)
-app.include_router(teacher_router)
-app.include_router(parent_profile_router)
-app.include_router(course_router)
+seed()
 
-seed_countries();   
-seed_roles();
-seed_subjects();
-seed_permissions();
-create_admin();
 
 @app.get("/")
 def root():
-    return {"message": "AI Powered Education Tutoring App is running"}
-
+    return {"message": f"{settings.PROJECT_NAME} API is running"}

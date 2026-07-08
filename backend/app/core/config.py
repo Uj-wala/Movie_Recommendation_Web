@@ -8,7 +8,12 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
 
-    PROJECT_NAME: str = "AI Powered Education Tutoring App"
+    PROJECT_NAME: str = "MovieVerse AI"
+
+    # In dev mode every generated OTP is forced to DEV_OTP_CODE and email
+    # sending is best-effort (login still succeeds if the email fails).
+    DEV_MODE: bool = True
+    DEV_OTP_CODE: str = "123456"
 
     DB_USER: str
     DB_PASSWORD: str
@@ -32,13 +37,13 @@ class Settings(BaseSettings):
     EMAIL_USERNAME: str | None = None
     EMAIL_PASSWORD: str | None = None
     RESEND_API_KEY: str | None = None
-    EMAIL_FROM: str = "AI Tutoring App <onboarding@resend.dev>"
+    EMAIL_FROM: str = "MovieVerse AI <onboarding@resend.dev>"
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     SMTP_FROM_EMAIL: str | None = None
-    SMTP_FROM_NAME: str = "AI Tutoring App"
+    SMTP_FROM_NAME: str = "MovieVerse AI"
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = False
 
@@ -47,6 +52,28 @@ class Settings(BaseSettings):
     TWILIO_AUTH_TOKEN: str
     TWILIO_PHONE_NUMBER: str
     TWILIO_VERIFY_SERVICE_SID: str"""
+
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+
+    MICROSOFT_CLIENT_ID: str | None = None
+    MICROSOFT_CLIENT_SECRET: str | None = None
+    MICROSOFT_TENANT_ID: str = "common"
+
+    APPLE_CLIENT_ID: str | None = None
+    APPLE_TEAM_ID: str | None = None
+    APPLE_KEY_ID: str | None = None
+    APPLE_PRIVATE_KEY: str | None = None
+
+    # Comma-separated allow-list of frontend origins social login is allowed to redirect back to.
+    ALLOWED_SOCIAL_REDIRECT_ORIGINS: str = "http://localhost:5173"
+
+    # This backend's own public URL, used to build the OAuth callback registered with each provider.
+    API_BASE_URL: str = "http://localhost:8000"
+
+    # OMDb API — key stays server-side; the frontend only ever talks to our proxy.
+    OMDB_API_KEY: str | None = None
+    OMDB_BASE_URL: str = "https://www.omdbapi.com/"
 
     @property
     def DATABASE_URL(self):
