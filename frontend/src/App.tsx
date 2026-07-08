@@ -11,6 +11,7 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const Home = lazy(() => import("./pages/Home"));
 const Browse = lazy(() => import("./pages/Browse"));
 const Explore = lazy(() => import("./pages/Explore"));
+const OmdbMovieDetails = lazy(() => import("./pages/OmdbMovieDetails"));
 const Trending = lazy(() => import("./pages/Trending"));
 const Search = lazy(() => import("./pages/Search"));
 const MovieDetails = lazy(() => import("./pages/MovieDetails"));
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/movies" element={<Browse heading="Movies" />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/omdb/movie/:imdbId" element={<OmdbMovieDetails />} />
             <Route path="/genres" element={<Browse heading="Genres" />} />
             <Route path="/trending" element={<Trending />} />
             <Route path="/search" element={<Search />} />
