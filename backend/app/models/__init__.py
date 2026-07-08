@@ -3,6 +3,7 @@ from app.models.favorite import Favorite, Watchlist
 from app.models.genre import Genre
 from app.models.movie import Movie
 from app.models.notification import Notification
+from app.models.omdb_review import OmdbReview
 from app.models.otp import OTPVerification
 from app.models.person import Actor, Director
 from app.models.review import Review
@@ -16,6 +17,7 @@ __all__ = [
     "Actor",
     "Director",
     "Review",
+    "OmdbReview",
     "SearchHistory",
     "Favorite",
     "Watchlist",
