@@ -5,24 +5,49 @@ from app.models.search_history import SearchHistory
 
 
 def record_search(db: Session, user_id: str, keyword: str) -> None:
-    """Best-effort log of a user's search. Never raises into the search request."""
+    """Best-effort log of a user's search. Never raises into the search request.
+    Skips consecutive duplicates (same keyword as the user's most recent search)."""
     keyword = (keyword or "").strip()
     if not keyword:
         return
     try:
+        last = (
+            db.query(SearchHistory.keyword)
+            .filter(SearchHistory.user_id == user_id)
+            .order_by(SearchHistory.searched_at.desc())
+            .first()
+        )
+        if last and last[0].lower() == keyword.lower():
+            return
         db.add(SearchHistory(user_id=user_id, keyword=keyword))
         db.commit()
     except Exception:
         db.rollback()
 
 
-def list_history(db: Session, user_id: str) -> list[SearchHistory]:
+def list_history(db: Session, user_id: str, limit: int = 10) -> list[SearchHistory]:
     return (
         db.query(SearchHistory)
         .filter(SearchHistory.user_id == user_id)
         .order_by(SearchHistory.searched_at.desc())
+        .limit(limit)
         .all()
     )
+
+
+def recent_keywords(db: Session, user_id: str, limit: int = 3) -> list[str]:
+    rows = (
+        db.query(SearchHistory.keyword)
+        .filter(SearchHistory.user_id == user_id)
+        .order_by(SearchHistory.searched_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return [k for (k,) in rows]
+
+
+def count_searches(db: Session, user_id: str) -> int:
+    return db.query(SearchHistory).filter(SearchHistory.user_id == user_id).count()
 
 
 def clear_history(db: Session, user_id: str) -> int:

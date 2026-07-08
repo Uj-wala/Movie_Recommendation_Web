@@ -11,9 +11,13 @@ router = APIRouter(prefix="/history", tags=["history"])
 
 
 @router.get("", response_model=list[SearchHistoryResponse])
-def get_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """Return the logged-in user's search history, newest first."""
-    return history_service.list_history(db, user.id)
+def get_history(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    limit: int = Query(10, ge=1, le=50),
+):
+    """Return the logged-in user's most recent searches, newest first (default 10)."""
+    return history_service.list_history(db, user.id, limit)
 
 
 @router.get("/trending", response_model=list[TrendingSearch])

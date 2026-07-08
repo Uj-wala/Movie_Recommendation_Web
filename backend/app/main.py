@@ -17,6 +17,7 @@ from app.routers import (
     admin,
     auth,
     catalog,
+    dashboard,
     history,
     library,
     movies,
@@ -49,6 +50,7 @@ app.include_router(admin.router)
 app.include_router(omdb.router)
 app.include_router(history.router)
 app.include_router(omdb_reviews.router)
+app.include_router(dashboard.router)
 
 seed()
 
