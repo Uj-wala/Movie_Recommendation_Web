@@ -1,6 +1,7 @@
 from pathlib import Path
 from urllib.parse import quote_plus
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -15,12 +16,15 @@ class Settings(BaseSettings):
     DEV_MODE: bool = True
     DEV_OTP_CODE: str = "123456"
 
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_HOST: str
-    DB_PORT: int
-    DB_NAME: str
-    
+    # Set DATABASE_URL directly (e.g. "sqlite:///./movies.db") to use SQLite or any
+    # other engine; when unset the MySQL URL is built from the DB_* parts below.
+    DATABASE_URL: str | None = None
+    DB_USER: str | None = None
+    DB_PASSWORD: str | None = None
+    DB_HOST: str | None = None
+    DB_PORT: int | None = None
+    DB_NAME: str | None = None
+
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -75,18 +79,19 @@ class Settings(BaseSettings):
     OMDB_API_KEY: str | None = None
     OMDB_BASE_URL: str = "https://www.omdbapi.com/"
 
-    @property
-    def DATABASE_URL(self):
-
-        password = quote_plus(self.DB_PASSWORD)
-
-        return (
-            f"mysql+pymysql://{self.DB_USER}:"
-            f"{password}@"
-            f"{self.DB_HOST}:"
-            f"{self.DB_PORT}/"
-            f"{self.DB_NAME}"
-        )
+    @model_validator(mode="after")
+    def _resolve_database_url(self):
+        # Explicit DATABASE_URL (e.g. sqlite:///./movies.db) wins; otherwise build
+        # the MySQL URL from the DB_* parts.
+        if not self.DATABASE_URL:
+            if not all([self.DB_USER, self.DB_HOST, self.DB_PORT, self.DB_NAME]):
+                raise ValueError("Set DATABASE_URL, or all of DB_USER/DB_HOST/DB_PORT/DB_NAME.")
+            password = quote_plus(self.DB_PASSWORD or "")
+            self.DATABASE_URL = (
+                f"mysql+pymysql://{self.DB_USER}:{password}@"
+                f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            )
+        return self
 
     class Config:
         env_file = BASE_DIR / ".env"

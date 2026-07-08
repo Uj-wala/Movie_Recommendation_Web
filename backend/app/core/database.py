@@ -18,7 +18,13 @@ Base = declarative_base(metadata=metadata)
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
-    future=True
+    future=True,
+    # SQLite needs check_same_thread disabled for FastAPI's threaded requests.
+    connect_args=(
+        {"check_same_thread": False}
+        if settings.DATABASE_URL.startswith("sqlite")
+        else {}
+    ),
 )
 
 SessionLocal = sessionmaker(
