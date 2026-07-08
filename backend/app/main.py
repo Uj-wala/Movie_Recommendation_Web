@@ -13,7 +13,7 @@ from app.utils.response import failure
 
 # Import models so metadata is registered before create_all.
 import app.models  # noqa: F401
-from app.routers import admin, auth, catalog, library, movies, omdb, profile, reviews
+from app.routers import admin, auth, catalog, history, library, movies, omdb, profile, reviews
 from app.seed import seed
 
 Base.metadata.create_all(bind=engine)
@@ -36,6 +36,7 @@ app.include_router(library.router)
 app.include_router(profile.router)
 app.include_router(admin.router)
 app.include_router(omdb.router)
+app.include_router(history.router)
 
 seed()
 
