@@ -1,13 +1,15 @@
 import { ArrowLeft, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { omdbApi, type OmdbDetail } from "../api/movieverse";
+import { activityApi, omdbApi, type OmdbDetail } from "../api/movieverse";
+import { useAuth } from "../context/AuthContext";
 import OmdbSaveButtons from "../components/OmdbSaveButtons";
 import { Spinner } from "../components/ui";
 import { OMDB_DETAIL_FIELDS, omdbErrText, omdbPoster } from "../lib/omdb";
 
 export default function OmdbMovieDetails() {
   const { imdbId = "" } = useParams();
+  const { isAuthenticated } = useAuth();
   const [movie, setMovie] = useState<OmdbDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,10 +20,16 @@ export default function OmdbMovieDetails() {
     setMovie(null);
     omdbApi
       .detail(imdbId)
-      .then(setMovie)
+      .then((m) => {
+        setMovie(m);
+        // Record the view (feeds recommendations); best-effort, only when logged in.
+        if (isAuthenticated) {
+          activityApi.recordView(m.imdbID, m.Title, m.Genre).catch(() => {});
+        }
+      })
       .catch((e) => setError(omdbErrText(e)))
       .finally(() => setLoading(false));
-  }, [imdbId]);
+  }, [imdbId, isAuthenticated]);
 
   return (
     <div className="animate-in">

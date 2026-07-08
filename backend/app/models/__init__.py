@@ -6,9 +6,11 @@ from app.models.notification import Notification
 from app.models.omdb_review import OmdbReview
 from app.models.otp import OTPVerification
 from app.models.person import Actor, Director
+from app.models.recently_viewed import RecentlyViewed
 from app.models.review import Review
 from app.models.search_history import SearchHistory
 from app.models.user import User
+from app.models.user_preference import UserPreference
 
 __all__ = [
     "User",
@@ -19,6 +21,8 @@ __all__ = [
     "Review",
     "OmdbReview",
     "SearchHistory",
+    "RecentlyViewed",
+    "UserPreference",
     "Favorite",
     "Watchlist",
     "Notification",

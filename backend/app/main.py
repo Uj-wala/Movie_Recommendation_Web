@@ -24,6 +24,8 @@ from app.routers import (
     omdb,
     omdb_reviews,
     profile,
+    recently_viewed,
+    recommendations,
     reviews,
 )
 from app.seed import seed
@@ -51,6 +53,8 @@ app.include_router(omdb.router)
 app.include_router(history.router)
 app.include_router(omdb_reviews.router)
 app.include_router(dashboard.router)
+app.include_router(recently_viewed.router)
+app.include_router(recommendations.router)
 
 seed()
 

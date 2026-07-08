@@ -123,6 +123,30 @@ export const omdbApi = {
     api.get<OmdbDetail>(`/omdb/${imdbId}`).then((r) => r.data),
 };
 
+// ── Recommendations & activity ────────────────────────────────────────
+export interface RecommendedMovie {
+  imdb_id: string;
+  title: string;
+  genre?: string | null;
+  poster?: string | null;
+  reason: string;
+  score: number;
+}
+
+export const recommendationApi = {
+  list: () =>
+    api
+      .get<{ recommended_movies: RecommendedMovie[] }>("/recommendations")
+      .then((r) => r.data.recommended_movies),
+  preferences: () =>
+    api.get<{ genre: string; score: number }[]>("/preferences").then((r) => r.data),
+};
+
+export const activityApi = {
+  recordView: (imdb_id: string, movie_title: string, genre?: string | null) =>
+    api.post("/recently-viewed", { imdb_id, movie_title, genre }),
+};
+
 // ── Profile ───────────────────────────────────────────────────────────
 export const profileApi = {
   get: () => api.get<Profile>("/profile").then((r) => r.data),

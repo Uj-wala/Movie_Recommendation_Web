@@ -39,3 +39,5 @@ class User(Base, BaseModel):
     otps = relationship("OTPVerification", back_populates="user", cascade="all, delete-orphan")
     search_history = relationship("SearchHistory", back_populates="user", cascade="all, delete-orphan")
     omdb_reviews = relationship("OmdbReview", back_populates="user", cascade="all, delete-orphan")
+    recently_viewed = relationship("RecentlyViewed", back_populates="user", cascade="all, delete-orphan")
+    preferences = relationship("UserPreference", back_populates="user", cascade="all, delete-orphan")
