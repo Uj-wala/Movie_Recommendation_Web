@@ -26,6 +26,8 @@ export interface RegisterPayload {
 
 export const authApi = {
   register: (data: RegisterPayload) => api.post("/auth/register", data),
+  login: (email: string, password: string) =>
+    api.post("/auth/login", { email, password }),
   sendEmailOtp: (email: string) => api.post("/auth/send-email-otp", { email }),
   sendPhoneOtp: (phone_number: string) => api.post("/auth/send-phone-otp", { phone_number }),
   verifyEmailOtp: (email: string, otp: string) =>
