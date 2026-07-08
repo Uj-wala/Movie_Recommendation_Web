@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { activityApi, omdbApi, type OmdbDetail } from "../api/movieverse";
 import { useAuth } from "../context/AuthContext";
+import MovieReviews from "../components/MovieReviews";
 import OmdbSaveButtons from "../components/OmdbSaveButtons";
 import { Spinner } from "../components/ui";
 import { OMDB_DETAIL_FIELDS, omdbErrText, omdbPoster } from "../lib/omdb";
@@ -111,6 +112,8 @@ export default function OmdbMovieDetails() {
           </div>
         </div>
       )}
+
+      {!loading && movie && <MovieReviews imdbId={movie.imdbID} title={movie.Title} />}
     </div>
   );
 }

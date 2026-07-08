@@ -123,6 +123,41 @@ export const omdbApi = {
     api.get<OmdbDetail>(`/omdb/${imdbId}`).then((r) => r.data),
 };
 
+// ── OMDb movie reviews ────────────────────────────────────────────────
+export interface MovieReview {
+  id: string;
+  user_name: string;
+  movie_title: string;
+  imdb_id: string;
+  rating: number;
+  review: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MovieReviewPage {
+  page: number;
+  limit: number;
+  total: number;
+  data: MovieReview[];
+}
+
+export const movieReviewsApi = {
+  list: (imdbId: string, page = 1, limit = 10) =>
+    api
+      .get<MovieReviewPage>(`/movie-reviews/${imdbId}`, { params: { page, limit } })
+      .then((r) => r.data),
+  rating: (imdbId: string) =>
+    api
+      .get<{ average_rating: number; total_reviews: number }>(`/movie-reviews/${imdbId}/rating`)
+      .then((r) => r.data),
+  add: (movie_id: string, movie_title: string, rating: number, review: string) =>
+    api.post<MovieReview>("/movie-reviews", { imdb_id: movie_id, movie_title, rating, review }).then((r) => r.data),
+  update: (reviewId: string, rating: number, review: string) =>
+    api.put<MovieReview>(`/movie-reviews/${reviewId}`, { rating, review }).then((r) => r.data),
+  remove: (reviewId: string) => api.delete(`/movie-reviews/${reviewId}`),
+};
+
 // ── Recommendations & activity ────────────────────────────────────────
 export interface RecommendedMovie {
   imdb_id: string;
