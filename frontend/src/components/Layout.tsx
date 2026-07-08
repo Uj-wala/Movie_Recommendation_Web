@@ -20,7 +20,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { catalogApi, profileApi } from "../api/movieverse";
+import { catalogApi, notificationsApi } from "../api/movieverse";
 import type { Notification } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useWatchlist } from "../context/WatchlistContext";
@@ -150,8 +150,19 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    profileApi.notifications().then(setNotifs).catch(() => {});
+    notificationsApi.list().then(setNotifs).catch(() => {});
   }, []);
+
+  async function markAllRead() {
+    setNotifs((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    notificationsApi.markAllRead().catch(() => {});
+  }
+
+  function readOne(n: Notification) {
+    if (n.is_read) return;
+    setNotifs((prev) => prev.map((x) => (x.id === n.id ? { ...x, is_read: true } : x)));
+    notificationsApi.markRead(n.id).catch(() => {});
+  }
 
   useEffect(() => {
     if (query.trim().length < 1) {
@@ -258,20 +269,42 @@ function Header({ onMenu }: { onMenu: () => void }) {
         >
           <Bell size={20} />
           {unread > 0 && (
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
+            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
+              {unread > 9 ? "9+" : unread}
+            </span>
           )}
         </button>
         {showNotifs && (
-          <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border bg-card p-2 shadow-2xl">
-            <p className="px-2 py-1.5 text-sm font-semibold">Notifications</p>
+          <div className="absolute right-0 mt-2 max-h-96 w-80 overflow-y-auto rounded-lg border border-border bg-card p-2 shadow-2xl">
+            <div className="flex items-center justify-between px-2 py-1.5">
+              <p className="text-sm font-semibold">Notifications</p>
+              {unread > 0 && (
+                <button onClick={markAllRead} className="text-xs text-primary hover:underline">
+                  Mark all read
+                </button>
+              )}
+            </div>
             {notifs.length === 0 ? (
-              <p className="p-3 text-sm text-muted">You're all caught up</p>
+              <div className="p-6 text-center">
+                <Bell size={28} className="mx-auto mb-2 text-muted" />
+                <p className="text-sm font-medium">You're all caught up!</p>
+                <p className="text-xs text-muted">No new notifications.</p>
+              </div>
             ) : (
-              notifs.slice(0, 8).map((n) => (
-                <div key={n.id} className="rounded-md p-2 hover:bg-chip">
-                  <p className="text-sm font-medium">{n.title}</p>
-                  {n.message && <p className="text-xs text-muted">{n.message}</p>}
-                </div>
+              notifs.slice(0, 10).map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => readOne(n)}
+                  className={`block w-full rounded-md p-2 text-left hover:bg-chip ${
+                    n.is_read ? "opacity-60" : "bg-chip/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {!n.is_read && <span className="h-2 w-2 shrink-0 rounded-full bg-[#FF4D6D]" />}
+                    <p className="text-sm font-medium">{n.title}</p>
+                  </div>
+                  {n.message && <p className="ml-4 text-xs text-muted">{n.message}</p>}
+                </button>
               ))
             )}
           </div>

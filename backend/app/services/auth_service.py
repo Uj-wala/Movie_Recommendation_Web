@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.enums import OTPChannel, OTPType
+from app.core.enums import NotificationType, OTPChannel, OTPType
 from app.core.security import hash_password, verify_password
 from app.models.genre import Genre
 from app.models.user import User
@@ -47,6 +47,16 @@ def register(db: Session, data: RegisterRequest) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    from app.services import notification_service
+
+    notification_service.create(
+        db,
+        user.id,
+        NotificationType.SYSTEM,
+        "Welcome to MovieVerse AI 🎬",
+        "Start searching and adding favorites to get personalized recommendations.",
+    )
     return user
 
 

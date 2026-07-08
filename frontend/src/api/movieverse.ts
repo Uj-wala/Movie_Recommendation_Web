@@ -206,6 +206,15 @@ export const profileApi = {
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
 };
 
+// ── Notifications ─────────────────────────────────────────────────────
+export const notificationsApi = {
+  list: () => api.get<Notification[]>("/notifications").then((r) => r.data),
+  unreadCount: () =>
+    api.get<{ count: number }>("/notifications/unread-count").then((r) => r.data.count),
+  markRead: (id: string) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put("/notifications/read-all"),
+};
+
 // ── Admin ─────────────────────────────────────────────────────────────
 export const adminApi = {
   stats: () => api.get<AdminStats>("/admin/stats").then((r) => r.data),

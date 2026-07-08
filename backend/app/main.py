@@ -21,6 +21,7 @@ from app.routers import (
     history,
     library,
     movies,
+    notifications,
     omdb,
     omdb_reviews,
     omdb_watchlist,
@@ -57,6 +58,7 @@ app.include_router(omdb_watchlist.router)
 app.include_router(dashboard.router)
 app.include_router(recently_viewed.router)
 app.include_router(recommendations.router)
+app.include_router(notifications.router)
 
 seed()
 
