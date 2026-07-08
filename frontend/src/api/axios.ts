@@ -1,88 +1,53 @@
 import axios from "axios";
-import { API_BASE_URL } from "../config/env";
 import toast from "react-hot-toast";
+import { API_BASE_URL } from "../config/env";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
-
-  headers: {
-    "Content-Type":
-      "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-/**
- * Adds token automatically
- */
-api.interceptors.request.use(
-  (config: any) => {
-    const token = localStorage.getItem("access_token");
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-
-  (error: any) => {
-    return Promise.reject(
-      error
-    );
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-
-/**
- * Handle common errors
- */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Backend wraps success responses as {success, message, data}. Unwrap here
+    // so callers keep reading r.data as the raw payload.
+    const body = response.data;
+    if (body && typeof body === "object" && "success" in body && "data" in body) {
+      response.data = body.data;
+    }
+    return response;
+  },
   async (error) => {
-    const originalRequest = error.config;
-    console.log("interceptor error", error)
-    if (
-      error.response?.status === 401 &&
-      !originalRequest._retry
-    ) {
-      originalRequest._retry = true;
-
+    const original = error.config;
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
-
-        const response = await axios.post(
-          "http://localhost:8000/auth/refresh",
-          {
-            refresh_token: refreshToken,
-          }
-        );
-
-        const newAccessToken = response.data.access_token;
-
-        localStorage.setItem(
-          "access_token",
-          newAccessToken
-        );
-
-        originalRequest.headers.Authorization =
-          `Bearer ${newAccessToken}`;
-
-        return api(originalRequest);
+        const refresh_token = localStorage.getItem("refresh_token");
+        if (!refresh_token) throw new Error("no refresh token");
+        const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token });
+        // Raw axios call bypasses the unwrap interceptor above, so unwrap the envelope here.
+        const tokens = res.data?.data ?? res.data;
+        localStorage.setItem("access_token", tokens.access_token);
+        localStorage.setItem("refresh_token", tokens.refresh_token);
+        original.headers.Authorization = `Bearer ${tokens.access_token}`;
+        return api(original);
       } catch (refreshError) {
-        // localStorage.removeItem("access_token");
-        // localStorage.removeItem("refresh_token");
-        toast.error("Session Expired")
-        window.location.href = "/login";
-
+        localStorage.clear();
+        if (!location.pathname.startsWith("/login")) {
+          toast.error("Session expired, please sign in again");
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       }
-    } else if (
-      error.response?.status === 403
-    ) {
-      console.log("Forbidden");
     }
-
     return Promise.reject(error);
   }
 );
