@@ -1,10 +1,9 @@
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { omdbApi, type OmdbSearchItem } from "../api/movieverse";
-import OmdbSaveButtons from "../components/OmdbSaveButtons";
+import OmdbMovieCard from "../components/OmdbMovieCard";
 import { Button, PosterSkeleton } from "../components/ui";
-import { omdbErrText, omdbPoster } from "../lib/omdb";
+import { omdbErrText } from "../lib/omdb";
 
 export default function Explore() {
   const [term, setTerm] = useState("");
@@ -84,7 +83,7 @@ export default function Explore() {
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {data.results.map((m) => (
-              <OmdbCard key={m.imdbID} movie={m} />
+              <OmdbMovieCard key={m.imdbID} movie={m} />
             ))}
           </div>
           <Pagination
@@ -97,32 +96,6 @@ export default function Explore() {
           />
         </>
       )}
-    </div>
-  );
-}
-
-function OmdbCard({ movie }: { movie: OmdbSearchItem }) {
-  const navigate = useNavigate();
-  return (
-    <div
-      onClick={() => navigate(`/omdb/movie/${movie.imdbID}`)}
-      className="group animate-in cursor-pointer overflow-hidden rounded-xl bg-card transition-transform hover:-translate-y-1"
-    >
-      <div className="relative aspect-[2/3] overflow-hidden">
-        <img
-          src={omdbPoster(movie.Poster)}
-          alt={movie.Title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-        />
-        <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
-          <OmdbSaveButtons movie={movie} />
-        </div>
-      </div>
-      <div className="p-3">
-        <p className="truncate text-sm font-semibold">{movie.Title}</p>
-        <p className="text-xs text-muted">{movie.Year}</p>
-      </div>
     </div>
   );
 }

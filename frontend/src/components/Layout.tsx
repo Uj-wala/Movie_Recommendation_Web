@@ -1,5 +1,6 @@
 import {
   Bell,
+  Bookmark,
   Clapperboard,
   Film,
   Flame,
@@ -22,6 +23,7 @@ import toast from "react-hot-toast";
 import { catalogApi, profileApi } from "../api/movieverse";
 import type { Notification } from "../api/types";
 import { useAuth } from "../context/AuthContext";
+import { useWatchlist } from "../context/WatchlistContext";
 import { PLACEHOLDER_POSTER } from "../lib/format";
 import ThemeToggle from "./ThemeToggle";
 
@@ -33,6 +35,7 @@ const NAV = [
   { to: "/trending", label: "Trending", icon: Flame },
   { to: "/watchlist", label: "Watchlist", icon: ListVideo },
   { to: "/favorites", label: "Favorites", icon: Heart },
+  { to: "/my-list", label: "My List", icon: Bookmark },
   { to: "/reviews", label: "Reviews", icon: Star },
   { to: "/profile", label: "Profile", icon: User },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -40,6 +43,8 @@ const NAV = [
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { favorites } = useWatchlist();
+  const favCount = favorites.length;
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -81,6 +86,11 @@ export default function Layout() {
             >
               <Icon size={18} />
               {label}
+              {to === "/my-list" && favCount > 0 && (
+                <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+                  {favCount}
+                </span>
+              )}
             </NavLink>
           ))}
           {user?.is_admin && (
