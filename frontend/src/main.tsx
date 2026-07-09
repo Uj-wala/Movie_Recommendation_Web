@@ -5,6 +5,7 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { WatchlistProvider } from "./context/WatchlistContext";
+import { CompareProvider } from "./context/CompareContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -12,6 +13,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
     <AuthProvider>
     <WatchlistProvider>
+    <CompareProvider>
       <App />
       <Toaster
         position="top-right"
@@ -25,6 +27,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           },
         }}
       />
+    </CompareProvider>
     </WatchlistProvider>
     </AuthProvider>
     </ThemeProvider>

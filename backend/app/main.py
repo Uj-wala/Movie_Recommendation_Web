@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
-from app.core.database import Base, engine
+from app.core.database import Base, engine, ensure_collection_schema
 from app.utils.response import failure
 
 # Import models so metadata is registered before create_all.
@@ -17,6 +17,8 @@ from app.routers import (
     admin,
     auth,
     catalog,
+    collections,
+    compare,
     dashboard,
     history,
     library,
@@ -29,10 +31,12 @@ from app.routers import (
     recently_viewed,
     recommendations,
     reviews,
+    watched,
 )
 from app.seed import seed
 
 Base.metadata.create_all(bind=engine)
+ensure_collection_schema()
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -59,6 +63,9 @@ app.include_router(dashboard.router)
 app.include_router(recently_viewed.router)
 app.include_router(recommendations.router)
 app.include_router(notifications.router)
+app.include_router(compare.router)
+app.include_router(watched.router)
+app.include_router(collections.router)
 
 seed()
 

@@ -5,16 +5,22 @@ import OmdbMovieCard from "../components/OmdbMovieCard";
 import { Chip } from "../components/ui";
 import { useWatchlist, type SavedMovie } from "../context/WatchlistContext";
 
-type Tab = "favorites" | "watchlist";
+type Tab = "favorites" | "watchlist" | "watched";
 type Sort = "recent" | "title" | "year";
 
 export default function OmdbLibrary() {
-  const { favorites, watchlist } = useWatchlist();
+  const { favorites, watchlist, watched } = useWatchlist();
   const [tab, setTab] = useState<Tab>("favorites");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("recent");
 
-  const source = tab === "favorites" ? favorites : watchlist;
+  const watchedAsSaved: SavedMovie[] = watched.map((m) => ({
+    imdbID: m.movie_id,
+    Title: m.movie_title,
+    Year: "",
+    Poster: m.poster || "",
+  }));
+  const source = tab === "favorites" ? favorites : tab === "watchlist" ? watchlist : watchedAsSaved;
 
   // Context stores newest-first, so "recent" needs no re-sort.
   const movies = [...source]
@@ -40,6 +46,9 @@ export default function OmdbLibrary() {
         </Chip>
         <Chip active={tab === "watchlist"} onClick={() => setTab("watchlist")}>
           Watchlist ({watchlist.length})
+        </Chip>
+        <Chip active={tab === "watched"} onClick={() => setTab("watched")}>
+          Watched ({watched.length})
         </Chip>
       </div>
 
@@ -82,9 +91,7 @@ function EmptyState({ tab }: { tab: Tab }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-12 text-center">
       <Heart size={40} className="mx-auto mb-3 text-primary" />
-      <p className="text-lg font-semibold">
-        No {tab === "favorites" ? "favorite" : "watchlist"} movies yet
-      </p>
+      <p className="text-lg font-semibold">No {tab} movies yet</p>
       <p className="mt-1 text-sm text-muted">
         Start exploring movies and add them to your {tab}.
       </p>

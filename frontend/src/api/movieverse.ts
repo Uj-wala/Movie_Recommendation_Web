@@ -7,6 +7,7 @@ import type {
   MovieDetail,
   Notification,
   Person,
+  Preference,
   Profile,
   Review,
 } from "./types";
@@ -123,6 +124,33 @@ export const omdbApi = {
     api.get<OmdbDetail>(`/omdb/${imdbId}`).then((r) => r.data),
 };
 
+// ── Movie comparison ──────────────────────────────────────────────────
+export interface ComparedMovie {
+  movie_id: string;
+  title: string;
+  poster: string | null;
+  year: string | null;
+  genre: string | null;
+  runtime: string | null;
+  director: string | null;
+  cast: string | null;
+  plot: string | null;
+  imdb_rating: number | null;
+  user_average_rating: number;
+  total_reviews: number;
+}
+
+export interface ComparisonResult {
+  movie1: ComparedMovie;
+  movie2: ComparedMovie;
+  comparison_summary: string[];
+}
+
+export const compareApi = {
+  compare: (movie1: string, movie2: string) =>
+    api.get<ComparisonResult>("/compare", { params: { movie1, movie2 } }).then((r) => r.data),
+};
+
 // ── OMDb movie reviews ────────────────────────────────────────────────
 export interface MovieReview {
   id: string;
@@ -173,8 +201,10 @@ export const recommendationApi = {
     api
       .get<{ recommended_movies: RecommendedMovie[] }>("/recommendations")
       .then((r) => r.data.recommended_movies),
-  preferences: () =>
-    api.get<{ genre: string; score: number }[]>("/preferences").then((r) => r.data),
+  preferences: () => api.get<Preference[]>("/preferences").then((r) => r.data),
+  addPreference: (genre: string) =>
+    api.post<Preference>("/preferences", { genre }).then((r) => r.data),
+  deletePreference: (id: string) => api.delete(`/preferences/${id}`),
 };
 
 export interface OmdbWatchlistItem {
@@ -192,14 +222,135 @@ export const watchlistApi = {
   remove: (movieId: string) => api.delete(`/omdb-watchlist/${movieId}`),
 };
 
+// ── Watched history ───────────────────────────────────────────────────
+export interface WatchedItem {
+  id: string;
+  movie_id: string;
+  movie_title: string;
+  poster: string | null;
+  genre: string | null;
+  imdb_rating: number | null;
+  watched_at: string;
+}
+
+export interface WatchedCreate {
+  movie_id: string;
+  movie_title: string;
+  poster?: string | null;
+  genre?: string | null;
+  imdb_rating?: number | null;
+}
+
+export const watchedApi = {
+  list: () => api.get<WatchedItem[]>("/watched").then((r) => r.data),
+  mark: (item: WatchedCreate) => api.post<WatchedItem>("/watched", item).then((r) => r.data),
+  remove: (movieId: string) => api.delete(`/watched/${movieId}`),
+  status: (movieId: string) =>
+    api.get<{ is_watched: boolean }>(`/watched/status/${movieId}`).then((r) => r.data.is_watched),
+  moveToWatchlist: (movieId: string) => api.post(`/watched/${movieId}/move-to-watchlist`),
+};
+
+// ── Analytics dashboard ───────────────────────────────────────────────
+// Collections
+export interface CollectionMovie {
+  id: string;
+  movie_id: string;
+  movie_title: string;
+  poster: string | null;
+  genre: string | null;
+  year: string | null;
+  created_at: string;
+}
+
+export interface MovieCollection {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  movies: CollectionMovie[];
+}
+
+export interface CollectionMoviePayload {
+  movie_id: string;
+  movie_title: string;
+  poster?: string | null;
+  genre?: string | null;
+  year?: string | null;
+}
+
+export interface MovieCollectionStatus {
+  collection_id: string;
+  name: string;
+  contains_movie: boolean;
+}
+
+export const collectionsApi = {
+  list: () => api.get<MovieCollection[]>("/collections").then((r) => r.data),
+  create: (name: string, description?: string | null) =>
+    api.post<MovieCollection>("/collections", { name, description }).then((r) => r.data),
+  update: (id: string, data: { name?: string; description?: string | null }) =>
+    api.put<MovieCollection>(`/collections/${id}`, data).then((r) => r.data),
+  remove: (id: string) => api.delete(`/collections/${id}`),
+  addMovie: (collectionId: string, item: CollectionMoviePayload) =>
+    api
+      .post<CollectionMovie>(`/collections/${collectionId}/movies`, item)
+      .then((r) => r.data),
+  removeMovie: (collectionId: string, movieId: string) =>
+    api.delete(`/collections/${collectionId}/movies/${movieId}`),
+  memberships: (movieId: string) =>
+    api.get<MovieCollectionStatus[]>(`/collections/movie/${movieId}`).then((r) => r.data),
+};
+
+export interface DashboardStats {
+  watched_count: number;
+  favorites_count: number;
+  watchlist_count: number;
+  reviews_count: number;
+  collections_count: number;
+  total_searches: number;
+}
+
+export interface GenreCount {
+  genre: string;
+  count: number;
+}
+
+export interface MonthlyCount {
+  month: string;
+  count: number;
+}
+
+export interface RecentActivity {
+  recent_watched: { title: string; poster: string | null; watched_date: string }[];
+  recent_favorites: { title: string; poster: string | null }[];
+  recent_reviews: { movie_title: string; rating: number; created_at: string }[];
+}
+
+export const dashboardApi = {
+  stats: () => api.get<DashboardStats>("/dashboard").then((r) => r.data),
+  genres: () => api.get<GenreCount[]>("/dashboard/genres").then((r) => r.data),
+  monthly: () => api.get<MonthlyCount[]>("/dashboard/monthly").then((r) => r.data),
+  recent: () => api.get<RecentActivity>("/dashboard/recent").then((r) => r.data),
+};
+
 export const activityApi = {
   recordView: (imdb_id: string, movie_title: string, genre?: string | null) =>
     api.post("/recently-viewed", { imdb_id, movie_title, genre }),
 };
 
 // ── Profile ───────────────────────────────────────────────────────────
+export interface ProfileStats {
+  watched_count: number;
+  favorites_count: number;
+  watchlist_count: number;
+  reviews_count: number;
+  collections_count: number;
+}
+
 export const profileApi = {
   get: () => api.get<Profile>("/profile").then((r) => r.data),
+  stats: () => api.get<ProfileStats>("/profile/stats").then((r) => r.data),
   update: (data: Omit<Partial<Profile>, "favorite_genres"> & { favorite_genres?: string[] }) =>
     api.put<Profile>("/profile", data).then((r) => r.data),
   notifications: () => api.get<Notification[]>("/notifications").then((r) => r.data),

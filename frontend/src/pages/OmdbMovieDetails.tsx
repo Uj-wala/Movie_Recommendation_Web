@@ -5,7 +5,6 @@ import { activityApi, omdbApi, type OmdbDetail } from "../api/movieverse";
 import { useAuth } from "../context/AuthContext";
 import MovieReviews from "../components/MovieReviews";
 import OmdbSaveButtons from "../components/OmdbSaveButtons";
-import { Spinner } from "../components/ui";
 import { OMDB_DETAIL_FIELDS, omdbErrText, omdbPoster } from "../lib/omdb";
 
 export default function OmdbMovieDetails() {
@@ -92,6 +91,10 @@ export default function OmdbMovieDetails() {
                   Poster: movie.Poster,
                 }}
                 size="lg"
+                genre={movie.Genre && movie.Genre !== "N/A" ? movie.Genre : null}
+                imdbRating={
+                  movie.imdbRating && movie.imdbRating !== "N/A" ? Number(movie.imdbRating) : null
+                }
               />
             </div>
 

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 import { catalogApi, moviesApi } from "../api/movieverse";
 import type { Genre, Movie } from "../api/types";
 import MovieGrid from "../components/MovieGrid";
 import { Chip } from "../components/ui";
+
+const showToast = (message: string) => toast.error(message);
 
 export default function Browse({ heading = "Movies" }: { heading?: string }) {
   const [params, setParams] = useSearchParams();
@@ -20,7 +23,7 @@ export default function Browse({ heading = "Movies" }: { heading?: string }) {
   );
 
   useEffect(() => {
-    catalogApi.genres().then(setGenres).catch(() => {});
+    catalogApi.genres().then(setGenres).catch(() => showToast("Could not load genres."));
   }, []);
 
   useEffect(() => {

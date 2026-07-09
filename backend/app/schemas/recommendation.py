@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RecommendedMovie(BaseModel):
@@ -15,5 +15,10 @@ class RecommendationResponse(BaseModel):
 
 
 class GenrePreference(BaseModel):
+    id: str
     genre: str
     score: float
+
+
+class PreferenceCreate(BaseModel):
+    genre: str = Field(min_length=1, max_length=80)

@@ -60,6 +60,14 @@ export interface Profile {
   favorites_count: number;
   watchlist_count: number;
   reviews_count: number;
+  watched_count: number;
+  collections_count: number;
+}
+
+export interface Preference {
+  id: string;
+  genre: string;
+  score: number;
 }
 
 export interface Notification {

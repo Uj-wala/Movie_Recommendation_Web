@@ -1,0 +1,19 @@
+import { Navigate } from "react-router-dom";
+import type { ReactNode } from "react";
+import { useAuth } from "../context/AuthContext";
+import { PageLoader } from "./ui";
+
+export function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!user.is_admin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}

@@ -1,9 +1,11 @@
 import {
   Bell,
   Bookmark,
+  CheckCircle2,
   Clapperboard,
   Film,
   Flame,
+  FolderHeart,
   Heart,
   Home,
   LayoutDashboard,
@@ -25,16 +27,20 @@ import type { Notification } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { useWatchlist } from "../context/WatchlistContext";
 import { PLACEHOLDER_POSTER } from "../lib/format";
+import CompareTray from "./CompareTray";
 import ThemeToggle from "./ThemeToggle";
 
 const NAV = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/", label: "Home", icon: Home, end: true },
   { to: "/movies", label: "Movies", icon: Film },
   { to: "/explore", label: "Explore (OMDb)", icon: Search },
   { to: "/genres", label: "Genres", icon: Shapes },
   { to: "/trending", label: "Trending", icon: Flame },
   { to: "/watchlist", label: "Watchlist", icon: ListVideo },
+  { to: "/watched", label: "Watched History", icon: CheckCircle2 },
   { to: "/favorites", label: "Favorites", icon: Heart },
+  { to: "/collections", label: "Collections", icon: FolderHeart },
   { to: "/my-list", label: "My List", icon: Bookmark },
   { to: "/reviews", label: "Reviews", icon: Star },
   { to: "/profile", label: "Profile", icon: User },
@@ -133,6 +139,7 @@ export default function Layout() {
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
           <Outlet />
         </main>
+        <CompareTray />
       </div>
     </div>
   );
@@ -192,12 +199,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const unread = notifs.filter((n) => !n.is_read).length;
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-bg/80 px-4 backdrop-blur sm:px-6">
-      <button className="lg:hidden" onClick={onMenu} aria-label="open menu">
+    <header className="sticky top-0 z-20 grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] items-center gap-3 border-b border-border bg-bg/80 px-4 backdrop-blur sm:px-6">
+      <button className="justify-self-start lg:hidden" onClick={onMenu} aria-label="open menu">
         <Menu size={22} />
       </button>
 
-      <div ref={boxRef} className="relative flex-1 max-w-xl">
+      <div ref={boxRef} className="relative col-start-2 w-full min-w-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -255,25 +262,27 @@ function Header({ onMenu }: { onMenu: () => void }) {
         )}
       </div>
 
-      <ThemeToggle />
+      {/* Right side buttons group */}
+      <div className="col-start-3 flex items-center gap-2 justify-self-end">
+        <ThemeToggle />
 
-      {/* Notifications */}
-      <div className="relative">
-        <button
-          onClick={() => {
-            setShowNotifs((s) => !s);
-            setShowMenu(false);
-          }}
-          className="relative rounded-lg p-2 hover:bg-chip"
-          aria-label="notifications"
-        >
-          <Bell size={20} />
-          {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
-        </button>
+        {/* Notifications */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setShowNotifs((s) => !s);
+              setShowMenu(false);
+            }}
+            className="relative rounded-lg p-2 hover:bg-chip"
+            aria-label="notifications"
+          >
+            <Bell size={20} />
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[#FF4D6D] px-1 text-[10px] font-bold text-white">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
         {showNotifs && (
           <div className="absolute right-0 mt-2 max-h-96 w-80 overflow-y-auto rounded-lg border border-border bg-card p-2 shadow-2xl">
             <div className="flex items-center justify-between px-2 py-1.5">
@@ -309,49 +318,50 @@ function Header({ onMenu }: { onMenu: () => void }) {
             )}
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Profile */}
-      <div className="relative">
-        <button
-          onClick={() => {
-            setShowMenu((s) => !s);
-            setShowNotifs(false);
-          }}
-          className="flex items-center gap-2 rounded-lg p-1 hover:bg-chip"
-        >
-          <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full gradient-primary text-sm font-bold">
-            {user?.profile_image_url ? (
-              <img src={user.profile_image_url} className="h-full w-full object-cover" alt="" />
-            ) : (
-              user?.full_name?.[0]?.toUpperCase() || "U"
-            )}
-          </span>
-        </button>
-        {showMenu && (
-          <div className="absolute right-0 mt-2 w-52 rounded-lg border border-border bg-card p-2 shadow-2xl">
-            <div className="border-b border-border px-3 py-2">
-              <p className="truncate text-sm font-semibold">{user?.full_name}</p>
-              <p className="truncate text-xs text-muted">{user?.email}</p>
+        {/* Profile */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              setShowMenu((s) => !s);
+              setShowNotifs(false);
+            }}
+            className="flex items-center gap-2 rounded-lg p-1 hover:bg-chip"
+          >
+            <span className="grid h-8 w-8 place-items-center overflow-hidden rounded-full gradient-primary text-sm font-bold">
+              {user?.profile_image_url ? (
+                <img src={user.profile_image_url} className="h-full w-full object-cover" alt="" />
+              ) : (
+                user?.full_name?.[0]?.toUpperCase() || "U"
+              )}
+            </span>
+          </button>
+          {showMenu && (
+            <div className="absolute right-0 mt-2 w-52 rounded-lg border border-border bg-card p-2 shadow-2xl">
+              <div className="border-b border-border px-3 py-2">
+                <p className="truncate text-sm font-semibold">{user?.full_name}</p>
+                <p className="truncate text-xs text-muted">{user?.email}</p>
+              </div>
+              <Link to="/profile" onClick={() => setShowMenu(false)} className="block rounded-md px-3 py-2 text-sm hover:bg-chip">
+                Profile
+              </Link>
+              <Link to="/settings" onClick={() => setShowMenu(false)} className="block rounded-md px-3 py-2 text-sm hover:bg-chip">
+                Settings
+              </Link>
+              <button
+                onClick={() => {
+                  logout();
+                  toast.success("Signed out");
+                  navigate("/login");
+                }}
+                className="block w-full rounded-md px-3 py-2 text-left text-sm text-red-400 hover:bg-chip"
+              >
+                Logout
+              </button>
             </div>
-            <Link to="/profile" onClick={() => setShowMenu(false)} className="block rounded-md px-3 py-2 text-sm hover:bg-chip">
-              Profile
-            </Link>
-            <Link to="/settings" onClick={() => setShowMenu(false)} className="block rounded-md px-3 py-2 text-sm hover:bg-chip">
-              Settings
-            </Link>
-            <button
-              onClick={() => {
-                logout();
-                toast.success("Signed out");
-                navigate("/login");
-              }}
-              className="block w-full rounded-md px-3 py-2 text-left text-sm text-red-400 hover:bg-chip"
-            >
-              Logout
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

@@ -3,7 +3,7 @@ from app.utils.resend_mailer import send_resend_email
 from app.utils.smtp_mailer import send_smtp_email
 
 def send_email_otp(email: str, otp: str):
-    subject = "AI Tutoring App - Email OTP"
+    subject = "MovieVerse AI - Your OTP Code"
     body = f"""
 <h2>Your OTP for verification is: {otp}</h2>
 <p>This OTP will expire in 5 minutes.</p>

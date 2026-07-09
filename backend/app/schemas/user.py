@@ -26,6 +26,16 @@ class ProfileOut(BaseModel):
     favorites_count: int = 0
     watchlist_count: int = 0
     reviews_count: int = 0
+    watched_count: int = 0
+    collections_count: int = 0
+
+
+class StatsResponse(BaseModel):
+    watched_count: int
+    favorites_count: int
+    watchlist_count: int
+    reviews_count: int
+    collections_count: int
 
 
 class ProfileUpdate(BaseModel):

@@ -1,12 +1,5 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
- 
-from fastapi import HTTPException, status
-from jose import JWTError, jwt
- 
-from app.core.config import settings
- 
- 
 
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
@@ -14,59 +7,29 @@ from jose import JWTError, jwt
 from app.core.config import settings
 
 
-def create_access_token(user_id: str, role_id: str) -> str:
+def create_access_token(user_id: str, is_admin: bool = False) -> str:
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
- 
-
     payload = {
         "sub": str(user_id),
-        "role": str(role_id),
+        "is_admin": is_admin,
         "type": "access",
         "jti": str(uuid4()),
         "iat": now,
-        "exp": expires_at,
+        "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     }
- 
-
-    return jwt.encode(
-        payload,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
- 
- 
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
-def create_refresh_token(user_id: str) -> tuple[str, datetime]:
+def create_refresh_token(user_id: str) -> str:
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(
-        days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-    )
- 
-
     payload = {
         "sub": str(user_id),
         "type": "refresh",
         "jti": str(uuid4()),
         "iat": now,
-        "exp": expires_at,
+        "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     }
- 
-
-    token = jwt.encode(
-        payload,
-        settings.JWT_SECRET_KEY,
-        algorithm=settings.JWT_ALGORITHM
-    )
- 
-    return token, expires_at
- 
- 
-
-    return token, expires_at
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> dict:
@@ -74,12 +37,10 @@ def decode_token(token: str) -> dict:
         return jwt.decode(
             token,
             settings.JWT_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
+            algorithms=[settings.JWT_ALGORITHM],
         )
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
+            detail="Invalid or expired token",
         )
- 
-

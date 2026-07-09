@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.models.user_preference import UserPreference
@@ -25,6 +26,35 @@ def bump_genres(db: Session, user_id: str, genre_string: str | None, weight: flo
         db.commit()
     except Exception:
         db.rollback()
+
+
+def add_preference(db: Session, user_id: str, genre: str) -> UserPreference:
+    """Add a manual genre preference for the user. 409 if it already exists."""
+    genre = genre.strip()
+    exists = (
+        db.query(UserPreference)
+        .filter(UserPreference.user_id == user_id, UserPreference.genre == genre)
+        .first()
+    )
+    if exists:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Genre already exists")
+    pref = UserPreference(user_id=user_id, genre=genre, preference_score=1.0)
+    db.add(pref)
+    db.commit()
+    db.refresh(pref)
+    return pref
+
+
+def remove_preference(db: Session, user_id: str, preference_id: str) -> None:
+    pref = (
+        db.query(UserPreference)
+        .filter(UserPreference.id == preference_id, UserPreference.user_id == user_id)
+        .first()
+    )
+    if not pref:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Preference not found")
+    db.delete(pref)
+    db.commit()
 
 
 def list_preferences(db: Session, user_id: str) -> list[UserPreference]:

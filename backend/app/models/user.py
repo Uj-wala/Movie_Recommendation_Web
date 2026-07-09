@@ -40,5 +40,7 @@ class User(Base, BaseModel):
     search_history = relationship("SearchHistory", back_populates="user", cascade="all, delete-orphan")
     omdb_reviews = relationship("OmdbReview", back_populates="user", cascade="all, delete-orphan")
     omdb_watchlist = relationship("OmdbWatchlist", back_populates="user", cascade="all, delete-orphan")
+    watched_movies = relationship("WatchedMovie", back_populates="user", cascade="all, delete-orphan")
     recently_viewed = relationship("RecentlyViewed", back_populates="user", cascade="all, delete-orphan")
     preferences = relationship("UserPreference", back_populates="user", cascade="all, delete-orphan")
+    collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")

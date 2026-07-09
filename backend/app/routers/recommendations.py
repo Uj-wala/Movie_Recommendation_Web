@@ -7,6 +7,7 @@ from app.models.user import User
 from app.core.enums import NotificationType
 from app.schemas.recommendation import (
     GenrePreference,
+    PreferenceCreate,
     RecommendationResponse,
 )
 from app.services import notification_service, preference_service, recommendation_service
@@ -35,6 +36,28 @@ def get_recommendations(db: Session = Depends(get_db), user: User = Depends(get_
 def get_preferences(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """The user's genre preference scores, highest first."""
     return [
-        GenrePreference(genre=p.genre, score=round(p.preference_score, 1))
+        GenrePreference(id=p.id, genre=p.genre, score=round(p.preference_score, 1))
         for p in preference_service.list_preferences(db, user.id)
     ]
+
+
+@router.post("/preferences", response_model=GenrePreference, status_code=201)
+def add_preference(
+    data: PreferenceCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Add a manual genre preference."""
+    p = preference_service.add_preference(db, user.id, data.genre)
+    return GenrePreference(id=p.id, genre=p.genre, score=round(p.preference_score, 1))
+
+
+@router.delete("/preferences/{preference_id}")
+def delete_preference(
+    preference_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Remove one of the user's genre preferences."""
+    preference_service.remove_preference(db, user.id, preference_id)
+    return {"message": "Preference removed"}

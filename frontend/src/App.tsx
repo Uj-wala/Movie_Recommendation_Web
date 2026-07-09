@@ -17,7 +17,11 @@ const Trending = lazy(() => import("./pages/Trending"));
 const Search = lazy(() => import("./pages/Search"));
 const MovieDetails = lazy(() => import("./pages/MovieDetails"));
 const Watchlist = lazy(() => import("./pages/Watchlist"));
+const WatchedHistory = lazy(() => import("./pages/WatchedHistory"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Favorites = lazy(() => import("./pages/Favorites"));
+const Collections = lazy(() => import("./pages/Collections"));
+const CompareMovies = lazy(() => import("./pages/CompareMovies"));
 const Reviews = lazy(() => import("./pages/Reviews"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -45,10 +49,14 @@ export default function App() {
             <Route path="/trending" element={<Trending />} />
             <Route path="/search" element={<Search />} />
             <Route path="/movie/:slug" element={<MovieDetails />} />
+            <Route path="/compare" element={<CompareMovies />} />
 
             {/* Auth-only */}
             <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
+            <Route path="/watched" element={<ProtectedRoute><WatchedHistory /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+            <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
             <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
