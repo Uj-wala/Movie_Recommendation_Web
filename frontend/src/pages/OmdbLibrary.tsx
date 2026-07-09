@@ -2,6 +2,7 @@ import { Compass, Heart } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import OmdbMovieCard from "../components/OmdbMovieCard";
+import ScrollReveal from "../components/ScrollReveal";
 import { Chip } from "../components/ui";
 import { useWatchlist, type SavedMovie } from "../context/WatchlistContext";
 
@@ -77,9 +78,11 @@ export default function OmdbLibrary() {
       ) : movies.length === 0 ? (
         <p className="py-12 text-center text-muted">No matches for "{search}".</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {movies.map((m) => (
-            <OmdbMovieCard key={m.imdbID} movie={m} />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+          {movies.map((m, index) => (
+            <ScrollReveal key={m.imdbID} delay={(index % 5) * 55}>
+              <OmdbMovieCard movie={m} />
+            </ScrollReveal>
           ))}
         </div>
       )}

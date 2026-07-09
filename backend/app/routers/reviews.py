@@ -43,8 +43,8 @@ def movie_reviews(movie_id: str, db: Session = Depends(get_db)):
 def create_review(
     data: ReviewCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
-    if not 1 <= data.rating <= 10:
-        raise HTTPException(400, "Rating must be between 1 and 10")
+    if not 1 <= data.rating <= 5:
+        raise HTTPException(400, "Rating must be between 1 and 5")
     if not db.query(Movie).filter(Movie.id == data.movie_id).first():
         raise HTTPException(404, "Movie not found")
     if db.query(Review).filter(Review.user_id == user.id, Review.movie_id == data.movie_id).first():
@@ -71,8 +71,8 @@ def update_review(
     if review.user_id != user.id:
         raise HTTPException(403, "Not your review")
     if data.rating is not None:
-        if not 1 <= data.rating <= 10:
-            raise HTTPException(400, "Rating must be between 1 and 10")
+        if not 1 <= data.rating <= 5:
+            raise HTTPException(400, "Rating must be between 1 and 5")
         review.rating = data.rating
     if data.comment is not None:
         review.comment = data.comment

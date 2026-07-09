@@ -2,8 +2,10 @@ import { CheckCircle2, Compass, RotateCcw, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { WatchedItem } from "../api/movieverse";
+import ScrollReveal from "../components/ScrollReveal";
 import { Chip, PosterSkeleton } from "../components/ui";
 import { useWatchlist } from "../context/WatchlistContext";
+import { formatRatingLabelOutOf5 } from "../lib/format";
 import { omdbPoster } from "../lib/omdb";
 
 type Sort = "newest" | "oldest";
@@ -40,7 +42,7 @@ export default function WatchedHistory() {
       </h1>
 
       {watchedLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (
             <PosterSkeleton key={i} />
           ))}
@@ -70,14 +72,15 @@ export default function WatchedHistory() {
           {movies.length === 0 ? (
             <p className="py-12 text-center text-muted">No watched movies in "{genre}".</p>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {movies.map((m) => (
-                <WatchedCard
-                  key={m.id}
-                  movie={m}
-                  onRemove={() => removeWatched(m.id)}
-                  onMoveBack={() => moveBackToWatchlist(m)}
-                />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+              {movies.map((m, index) => (
+                <ScrollReveal key={m.id} delay={(index % 5) * 55}>
+                  <WatchedCard
+                    movie={m}
+                    onRemove={() => removeWatched(m.id)}
+                    onMoveBack={() => moveBackToWatchlist(m)}
+                  />
+                </ScrollReveal>
               ))}
             </div>
           )}
@@ -98,7 +101,7 @@ function WatchedCard({
 }) {
   const navigate = useNavigate();
   return (
-    <div className="group animate-in overflow-hidden rounded-xl bg-card transition-transform hover:-translate-y-1">
+    <div className="group movie-card-motion animate-in overflow-hidden rounded-xl bg-card">
       <div
         onClick={() => navigate(`/omdb/movie/${movie.movie_id}`)}
         className="relative aspect-[2/3] cursor-pointer overflow-hidden"
@@ -107,11 +110,11 @@ function WatchedCard({
           src={omdbPoster(movie.poster || undefined)}
           alt={movie.movie_title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          className="poster-motion h-full w-full object-cover"
         />
         {movie.imdb_rating != null && (
-          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-semibold text-rating">
-            <Star size={12} className="fill-rating" /> {movie.imdb_rating}
+          <span className="rating-pulse absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-xs font-semibold text-rating">
+            <Star size={12} className="fill-rating" /> {formatRatingLabelOutOf5(movie.imdb_rating)}
           </span>
         )}
       </div>

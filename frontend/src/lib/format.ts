@@ -6,6 +6,21 @@ export const runtimeLabel = (min: number | null) =>
 export const memberSince = (date: string) =>
   new Date(date).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
+export const ratingOutOf5 = (value: number | null | undefined) => {
+  if (value == null || Number.isNaN(value)) return null;
+  return value > 5 ? value / 2 : value;
+};
+
+export const formatRatingOutOf5 = (value: number | null | undefined) => {
+  const rating = ratingOutOf5(value);
+  return rating == null ? "N/A" : rating.toFixed(1);
+};
+
+export const formatRatingLabelOutOf5 = (value: number | null | undefined) => {
+  const rating = formatRatingOutOf5(value);
+  return rating === "N/A" ? rating : `${rating}/5`;
+};
+
 export const PLACEHOLDER_POSTER =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(

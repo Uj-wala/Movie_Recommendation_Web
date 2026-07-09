@@ -9,12 +9,14 @@ export default function CompareTray() {
   if (selected.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-40 w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 rounded-xl border border-border bg-card p-3 shadow-2xl lg:left-[calc(50%+8rem)]">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <GitCompare size={18} className="text-primary" />
-          <span className="shrink-0 text-sm font-semibold">Compare</span>
-          <div className="flex min-w-0 flex-1 gap-2">
+    <div className="animate-dock fixed bottom-3 left-1/2 z-40 w-[calc(100%-1rem)] max-w-2xl -translate-x-1/2 rounded-xl border border-border bg-card p-3 shadow-2xl shadow-black/40 sm:bottom-4 sm:w-[calc(100%-2rem)] lg:left-[calc(50%+8rem)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <GitCompare size={18} className="text-primary" />
+            <span className="shrink-0 text-sm font-semibold">Compare</span>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-wrap gap-2">
             {selected.map((movie) => (
               <button
                 key={movie.id}
@@ -37,14 +39,14 @@ export default function CompareTray() {
           type="button"
           disabled={selected.length !== 2}
           onClick={() => navigate("/compare")}
-          className="rounded-lg gradient-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="button-glow w-full rounded-lg gradient-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           Compare Movies
         </button>
         <button
           type="button"
           onClick={clear}
-          className="rounded-lg px-2 py-2 text-sm text-muted hover:bg-chip hover:text-text"
+          className="w-full rounded-lg px-2 py-2 text-sm text-muted hover:bg-chip hover:text-text sm:w-auto"
         >
           Clear
         </button>

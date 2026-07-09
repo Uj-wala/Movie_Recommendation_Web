@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { recommendationApi, type RecommendedMovie } from "../api/movieverse";
 import { PosterSkeleton } from "./ui";
 import { omdbPoster } from "../lib/omdb";
+import ScrollReveal from "./ScrollReveal";
 
 /** Personalized "Recommended For You" section, driven by the backend engine
  *  (search history + recently viewed). Re-fetches when `refreshKey` changes. */
@@ -34,14 +35,14 @@ export default function RecommendedForYou({ refreshKey = 0 }: { refreshKey?: num
         <button
           onClick={refresh}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-chip px-3 py-1.5 text-sm hover:bg-chip-hover disabled:opacity-50"
+          className="button-glow inline-flex items-center gap-1.5 rounded-lg bg-chip px-3 py-1.5 text-sm hover:bg-chip-hover disabled:opacity-50"
         >
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
             <PosterSkeleton key={i} />
           ))}
@@ -53,9 +54,11 @@ export default function RecommendedForYou({ refreshKey = 0 }: { refreshKey?: num
       ) : movies.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {movies.map((m) => (
-            <RecCard key={m.imdb_id} movie={m} />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+          {movies.map((m, index) => (
+            <ScrollReveal key={m.imdb_id} delay={(index % 5) * 60}>
+              <RecCard movie={m} />
+            </ScrollReveal>
           ))}
         </div>
       )}
@@ -68,14 +71,14 @@ function RecCard({ movie }: { movie: RecommendedMovie }) {
   return (
     <div
       onClick={() => navigate(`/omdb/movie/${movie.imdb_id}`)}
-      className="group animate-in cursor-pointer overflow-hidden rounded-xl bg-card transition-transform hover:-translate-y-1"
+      className="group movie-card-motion animate-in cursor-pointer overflow-hidden rounded-xl bg-card"
     >
       <div className="aspect-[2/3] overflow-hidden">
         <img
           src={omdbPoster(movie.poster || undefined)}
           alt={movie.title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          className="poster-motion h-full w-full object-cover"
         />
       </div>
       <div className="p-3">
@@ -98,7 +101,7 @@ function EmptyState() {
       </p>
       <Link
         to="/explore"
-        className="mt-4 inline-flex items-center gap-2 rounded-lg gradient-primary px-5 py-2.5 font-semibold text-white transition-transform hover:scale-105"
+        className="button-glow mt-4 inline-flex items-center gap-2 rounded-lg gradient-primary px-5 py-2.5 font-semibold text-white"
       >
         <Compass size={18} /> Browse Movies
       </Link>

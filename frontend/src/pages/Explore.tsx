@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { omdbApi, type OmdbSearchItem } from "../api/movieverse";
 import OmdbMovieCard from "../components/OmdbMovieCard";
+import ScrollReveal from "../components/ScrollReveal";
 import { Button, PosterSkeleton } from "../components/ui";
 import { omdbErrText } from "../lib/omdb";
 
@@ -58,7 +59,7 @@ export default function Explore() {
       </div>
 
       {loading && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (
             <PosterSkeleton key={i} />
           ))}
@@ -81,9 +82,11 @@ export default function Explore() {
 
       {!loading && !error && data && data.results.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {data.results.map((m) => (
-              <OmdbMovieCard key={m.imdbID} movie={m} />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+            {data.results.map((m, index) => (
+              <ScrollReveal key={m.imdbID} delay={(index % 5) * 55}>
+                <OmdbMovieCard movie={m} />
+              </ScrollReveal>
             ))}
           </div>
           <Pagination

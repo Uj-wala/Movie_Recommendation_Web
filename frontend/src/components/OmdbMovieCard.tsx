@@ -16,14 +16,14 @@ export default function OmdbMovieCard({ movie }: { movie: SavedMovie }) {
   return (
     <div
       onClick={() => navigate(`/omdb/movie/${movie.imdbID}`)}
-      className="group animate-in cursor-pointer overflow-hidden rounded-xl bg-card transition-transform hover:-translate-y-1"
+      className="group movie-card-motion animate-in cursor-pointer overflow-hidden rounded-xl bg-card"
     >
       <div className="relative aspect-[2/3] overflow-hidden">
         <img
           src={omdbPoster(movie.Poster)}
           alt={movie.Title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          className="poster-motion h-full w-full object-cover"
         />
         {has("watched", movie.imdbID) && (
           <div className="absolute left-2 top-2">
@@ -42,7 +42,7 @@ export default function OmdbMovieCard({ movie }: { movie: SavedMovie }) {
               source: "omdb",
             });
           }}
-          className={`absolute left-2 bottom-2 grid h-8 w-8 place-items-center rounded-full text-white opacity-0 transition-opacity group-hover:opacity-100 ${
+          className={`absolute left-2 bottom-2 grid h-8 w-8 place-items-center rounded-full text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 ${
             selected ? "gradient-primary opacity-100" : "bg-black/70 hover:bg-black/90"
           }`}
           aria-label={selected ? "Remove from compare" : "Add to compare"}

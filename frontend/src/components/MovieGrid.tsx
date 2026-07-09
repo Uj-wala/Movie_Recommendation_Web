@@ -1,5 +1,6 @@
 import type { Movie } from "../api/types";
 import MovieCard from "./MovieCard";
+import ScrollReveal from "./ScrollReveal";
 import { PosterSkeleton } from "./ui";
 
 export default function MovieGrid({
@@ -13,7 +14,7 @@ export default function MovieGrid({
 }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
         {Array.from({ length: 10 }).map((_, i) => (
           <PosterSkeleton key={i} />
         ))}
@@ -22,9 +23,11 @@ export default function MovieGrid({
   }
   if (movies.length === 0) return <p className="py-12 text-center text-muted">{empty}</p>;
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-      {movies.map((m) => (
-        <MovieCard key={m.id} movie={m} />
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+      {movies.map((m, index) => (
+        <ScrollReveal key={m.id} delay={(index % 5) * 55}>
+          <MovieCard movie={m} />
+        </ScrollReveal>
       ))}
     </div>
   );

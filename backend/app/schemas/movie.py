@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GenreOut(BaseModel):
@@ -53,12 +53,12 @@ class ReviewOut(BaseModel):
 
 class ReviewCreate(BaseModel):
     movie_id: str
-    rating: int
+    rating: int = Field(ge=1, le=5)
     comment: str | None = None
 
 
 class ReviewUpdate(BaseModel):
-    rating: int | None = None
+    rating: int | None = Field(default=None, ge=1, le=5)
     comment: str | None = None
 
 
@@ -71,5 +71,5 @@ class MovieCreate(BaseModel):
     release_date: date | None = None
     runtime: int | None = None
     language: str = "en"
-    rating: float = 0.0
+    rating: float = Field(default=0.0, ge=0, le=5)
     genre_slugs: list[str] = []

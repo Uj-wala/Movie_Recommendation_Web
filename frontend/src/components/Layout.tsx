@@ -58,11 +58,11 @@ export default function Layout() {
     <div className="min-h-screen bg-bg">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-border bg-sidebar transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 transform flex-col border-r border-border bg-sidebar transition-transform duration-200 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 items-center gap-2 px-5">
+        <div className="flex h-16 shrink-0 items-center gap-2 px-5">
           <Clapperboard className="text-primary" />
           <span className="text-lg font-extrabold">
             Movie<span className="text-gradient">Verse</span> AI
@@ -75,7 +75,7 @@ export default function Layout() {
             <X size={20} />
           </button>
         </div>
-        <nav className="flex flex-col gap-1 px-3 py-4">
+        <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-8 pt-4">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -199,12 +199,12 @@ function Header({ onMenu }: { onMenu: () => void }) {
   const unread = notifs.filter((n) => !n.is_read).length;
 
   return (
-    <header className="sticky top-0 z-20 grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] items-center gap-3 border-b border-border bg-bg/80 px-4 backdrop-blur sm:px-6">
-      <button className="justify-self-start lg:hidden" onClick={onMenu} aria-label="open menu">
+    <header className="sticky top-0 z-20 flex min-h-16 flex-wrap items-center gap-3 border-b border-border bg-bg/80 px-4 py-2 backdrop-blur sm:grid sm:h-16 sm:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] sm:flex-nowrap sm:px-6 sm:py-0">
+      <button className="order-1 shrink-0 justify-self-start lg:hidden" onClick={onMenu} aria-label="open menu">
         <Menu size={22} />
       </button>
 
-      <div ref={boxRef} className="relative col-start-2 w-full min-w-0">
+      <div ref={boxRef} className="relative order-3 w-full min-w-0 sm:order-none sm:col-start-2">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -263,7 +263,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
       </div>
 
       {/* Right side buttons group */}
-      <div className="col-start-3 flex items-center gap-2 justify-self-end">
+      <div className="order-2 ml-auto flex shrink-0 items-center gap-1 justify-self-end sm:order-none sm:col-start-3 sm:ml-0 sm:gap-2">
         <ThemeToggle />
 
         {/* Notifications */}

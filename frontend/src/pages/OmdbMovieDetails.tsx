@@ -5,6 +5,7 @@ import { activityApi, omdbApi, type OmdbDetail } from "../api/movieverse";
 import { useAuth } from "../context/AuthContext";
 import MovieReviews from "../components/MovieReviews";
 import OmdbSaveButtons from "../components/OmdbSaveButtons";
+import { formatRatingLabelOutOf5 } from "../lib/format";
 import { OMDB_DETAIL_FIELDS, omdbErrText, omdbPoster } from "../lib/omdb";
 
 export default function OmdbMovieDetails() {
@@ -77,7 +78,7 @@ export default function OmdbMovieDetails() {
               )}
               {movie.imdbRating && movie.imdbRating !== "N/A" && (
                 <span className="inline-flex items-center gap-1 font-semibold text-rating">
-                  <Star size={15} className="fill-rating text-rating" /> {movie.imdbRating}
+                  <Star size={15} className="fill-rating text-rating" /> {formatRatingLabelOutOf5(Number(movie.imdbRating))}
                 </span>
               )}
             </div>

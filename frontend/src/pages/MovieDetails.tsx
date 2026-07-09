@@ -6,9 +6,10 @@ import { libraryApi, moviesApi, reviewsApi } from "../api/movieverse";
 import type { Movie, MovieDetail, Review } from "../api/types";
 import MovieCard from "../components/MovieCard";
 import CollectionPickerButton from "../components/CollectionPickerButton";
+import ScrollReveal from "../components/ScrollReveal";
 import { Button, PageLoader, StarRating } from "../components/ui";
 import { useAuth } from "../context/AuthContext";
-import { PLACEHOLDER_POSTER, runtimeLabel, year } from "../lib/format";
+import { PLACEHOLDER_POSTER, ratingOutOf5, runtimeLabel, year } from "../lib/format";
 
 export default function MovieDetailsPage() {
   const { slug } = useParams();
@@ -153,9 +154,11 @@ export default function MovieDetailsPage() {
       {related.length > 0 && (
         <section className="mt-10">
           <h2 className="mb-3 text-xl font-bold">Related Movies</h2>
-          <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-            {related.map((m) => (
-              <MovieCard key={m.id} movie={m} />
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
+            {related.map((m, index) => (
+              <ScrollReveal key={m.id} delay={(index % 5) * 55}>
+                <MovieCard movie={m} />
+              </ScrollReveal>
             ))}
           </div>
         </section>
@@ -177,9 +180,15 @@ function ReviewsSection({
 }) {
   const { isAuthenticated } = useAuth();
   const mine = reviews.find((r) => r.user_id === userId);
-  const [rating, setRating] = useState(mine?.rating || 8);
+  const normalizedMineRating = Math.round(ratingOutOf5(mine?.rating) ?? 4);
+  const [rating, setRating] = useState(normalizedMineRating);
   const [comment, setComment] = useState(mine?.comment || "");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setRating(normalizedMineRating);
+    setComment(mine?.comment || "");
+  }, [mine?.id, mine?.rating, mine?.comment, normalizedMineRating]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -216,7 +225,7 @@ function ReviewsSection({
       {isAuthenticated && (
         <form onSubmit={submit} className="mb-6 rounded-xl bg-card p-4">
           <div className="mb-3 flex items-center gap-1">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <button key={i} type="button" onClick={() => setRating(i + 1)} aria-label={`rate ${i + 1}`}>
                 <Star
                   size={20}
@@ -224,7 +233,7 @@ function ReviewsSection({
                 />
               </button>
             ))}
-            <span className="ml-2 text-sm text-muted">{rating}/10</span>
+            <span className="ml-2 text-sm text-muted">{rating}/5</span>
           </div>
           <textarea
             value={comment}

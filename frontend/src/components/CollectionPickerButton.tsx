@@ -33,8 +33,8 @@ export default function CollectionPickerButton({
   const icon = size === "lg" ? 18 : 15;
   const buttonClass =
     variant === "secondary"
-      ? "inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/25 px-5 py-2.5 font-semibold text-text transition-all hover:bg-white/5"
-      : `inline-flex items-center justify-center rounded-full bg-black/60 text-sm font-medium text-white transition-colors hover:bg-black/80 ${dim}`;
+      ? "button-glow inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/25 px-5 py-2.5 font-semibold text-text transition-all hover:bg-white/5"
+      : `button-glow inline-flex items-center justify-center rounded-full bg-black/60 text-sm font-medium text-white transition-colors hover:bg-black/80 ${dim}`;
 
   useEffect(() => {
     if (!open || !isAuthenticated) return;
@@ -148,11 +148,11 @@ export default function CollectionPickerButton({
       {open &&
         createPortal(
         <div
-          className="fixed inset-0 z-[100] grid place-items-center bg-black/60 px-4 backdrop-blur-sm"
+          className="animate-modal-backdrop fixed inset-0 z-[100] grid place-items-center bg-black/60 px-4 backdrop-blur-sm"
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-2xl"
+            className="animate-soft-pop w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-2xl shadow-black/50"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
@@ -202,7 +202,7 @@ export default function CollectionPickerButton({
               />
               <button
                 type="submit"
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg gradient-primary text-white"
+                className="button-glow grid h-9 w-9 shrink-0 place-items-center rounded-lg gradient-primary text-white"
                 aria-label="Create collection"
               >
                 <Plus size={16} />

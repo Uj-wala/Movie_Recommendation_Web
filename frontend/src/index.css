@@ -60,10 +60,29 @@ body,
 }
 
 body {
+  position: relative;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(198, 61, 130, 0.12), transparent 28%),
+    radial-gradient(circle at 78% 4%, rgba(127, 62, 157, 0.1), transparent 24%);
+  opacity: 0.8;
+  animation: ambientGlow 12s ease-in-out infinite alternate;
 }
 
 :root[data-theme="light"] .skeleton {
@@ -129,4 +148,121 @@ input[type="password"]::-ms-clear {
 }
 .animate-in {
   animation: fadeInUp 0.4s ease-out both;
+}
+
+@keyframes ambientGlow {
+  from { transform: translate3d(-1.5%, -1%, 0) scale(1); opacity: 0.55; }
+  to { transform: translate3d(1.5%, 1%, 0) scale(1.04); opacity: 0.85; }
+}
+
+@keyframes softPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes modalBackdropIn {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+@keyframes slideUpDock {
+  from { opacity: 0; transform: translate(-50%, 18px) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 193, 7, 0)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.35)); }
+}
+
+.animate-soft-pop {
+  animation: softPop 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropIn 0.22s ease-out both;
+}
+
+.animate-dock {
+  animation: slideUpDock 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.movie-card-motion {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+
+.movie-card-motion:hover {
+  transform: translateY(-6px) scale(1.015);
+}
+
+.poster-motion {
+  transition: transform 0.55s ease, filter 0.35s ease;
+}
+
+.group:hover .poster-motion {
+  transform: scale(1.07);
+  filter: saturate(1.12) contrast(1.04);
+}
+
+.button-glow {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.button-glow:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(198, 61, 130, 0.26);
+}
+
+.button-glow:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.rating-pulse svg {
+  animation: starPulse 2.8s ease-in-out infinite;
+}
+
+.hero-image-motion {
+  animation: heroDrift 14s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px) scale(0.97);
+  filter: blur(5px);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.55s ease;
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+@keyframes heroDrift {
+  from { transform: scale(1.02) translate3d(-0.5%, 0, 0); }
+  to { transform: scale(1.07) translate3d(0.5%, -0.5%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }

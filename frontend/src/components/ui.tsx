@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import type { ReactNode } from "react";
+import { formatRatingOutOf5 } from "../lib/format";
 
 export function Spinner({ className = "" }: { className?: string }) {
   return (
@@ -25,7 +26,7 @@ export function RowSkeleton() {
   return (
     <div className="flex gap-4 overflow-hidden">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="w-[160px] shrink-0">
+        <div key={i} className="w-[185px] shrink-0 sm:w-[205px] lg:w-[220px]">
           <PosterSkeleton />
         </div>
       ))}
@@ -35,7 +36,7 @@ export function RowSkeleton() {
 
 export function StarRating({
   value,
-  outOf = 10,
+  outOf = 5,
   size = 16,
 }: {
   value: number;
@@ -43,9 +44,9 @@ export function StarRating({
   size?: number;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 text-rating">
+    <span className="rating-pulse inline-flex items-center gap-1 text-rating">
       <Star size={size} className="fill-rating text-rating" />
-      <span className="font-semibold text-text">{value.toFixed(1)}</span>
+      <span className="font-semibold text-text">{formatRatingOutOf5(value)}</span>
       <span className="text-xs text-muted">/{outOf}</span>
     </span>
   );
@@ -87,7 +88,7 @@ export function Button({
   loading?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed";
+    "button-glow inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed";
   const variants = {
     primary: "gradient-primary text-white hover:opacity-90 shadow-lg shadow-primary/20",
     secondary: "border border-white/25 text-text hover:bg-white/5",

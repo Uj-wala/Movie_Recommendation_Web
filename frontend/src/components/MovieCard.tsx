@@ -2,7 +2,7 @@ import { GitCompare, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Movie } from "../api/types";
 import { useCompare } from "../context/CompareContext";
-import { PLACEHOLDER_POSTER, year } from "../lib/format";
+import { formatRatingLabelOutOf5, PLACEHOLDER_POSTER, year } from "../lib/format";
 
 export default function MovieCard({ movie }: { movie: Movie }) {
   const { isSelected, toggle } = useCompare();
@@ -11,19 +11,19 @@ export default function MovieCard({ movie }: { movie: Movie }) {
   return (
     <Link
       to={`/movie/${movie.slug}`}
-      className="group relative block overflow-hidden rounded-xl bg-card transition-transform duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/40"
+      className="group movie-card-motion relative block overflow-hidden rounded-xl bg-card hover:shadow-xl hover:shadow-black/40"
     >
       <div className="relative aspect-[2/3] overflow-hidden">
         <img
           src={movie.poster_url || PLACEHOLDER_POSTER}
           alt={movie.title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="poster-motion h-full w-full object-cover"
           onError={(e) => (e.currentTarget.src = PLACEHOLDER_POSTER)}
         />
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-rating backdrop-blur">
+        <div className="rating-pulse absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-rating backdrop-blur">
           <Star size={11} className="fill-rating text-rating" />
-          {movie.rating.toFixed(1)}
+          {formatRatingLabelOutOf5(movie.rating)}
         </div>
         <button
           type="button"
@@ -39,7 +39,7 @@ export default function MovieCard({ movie }: { movie: Movie }) {
               slug: movie.slug,
             });
           }}
-          className={`absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full text-white opacity-0 transition-opacity group-hover:opacity-100 ${
+          className={`absolute left-2 top-2 grid h-8 w-8 place-items-center rounded-full text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 ${
             selected ? "gradient-primary opacity-100" : "bg-black/70 hover:bg-black/90"
           }`}
           aria-label={selected ? "Remove from compare" : "Add to compare"}
