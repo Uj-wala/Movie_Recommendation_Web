@@ -213,15 +213,15 @@ function Header({ onMenu }: { onMenu: () => void }) {
               setShowResults(false);
             }
           }}
-          className="relative"
+          className="relative search-scale-up"
         >
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted search-icon-rotate" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => results && setShowResults(true)}
             placeholder="Search movies, actors, directors..."
-            className="w-full rounded-lg border border-border bg-surface py-2 pl-10 pr-4 text-sm outline-none focus:border-primary"
+            className="search-input-enhance w-full rounded-lg border border-border bg-surface py-2 pl-10 pr-4 text-sm outline-none focus:border-primary"
           />
         </form>
         {showResults && results && (

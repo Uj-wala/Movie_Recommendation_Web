@@ -21,7 +21,7 @@ export default function MovieCard({ movie }: { movie: Movie }) {
           className="poster-motion h-full w-full object-cover"
           onError={(e) => (e.currentTarget.src = PLACEHOLDER_POSTER)}
         />
-        <div className="rating-pulse absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-rating backdrop-blur">
+        <div className="rating-pulse rating-pop absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-rating backdrop-blur">
           <Star size={11} className="fill-rating text-rating" />
           {formatRatingLabelOutOf5(movie.rating)}
         </div>

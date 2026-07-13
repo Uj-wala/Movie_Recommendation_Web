@@ -21,7 +21,7 @@ from app.schemas.auth import (
     VerifyPhoneOTP,
 )
 from app.schemas.user import ProfileOut
-from app.services import auth_service
+from app.services import auth_service, recommendation_service
 from app.utils.rate_limit import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -32,6 +32,15 @@ def _tokens(user: User) -> TokenResponse:
         access_token=create_access_token(user.id, user.is_admin),
         refresh_token=create_refresh_token(user.id),
     )
+
+
+def _generate_recommendations_on_login(user: User, db: Session):
+    """Generate recommendations for user on login (non-blocking)."""
+    try:
+        recommendation_service.generate(db, user.id)
+    except Exception:
+        # Silently fail - don't block login if recommendations fail
+        pass
 
 
 @router.post("/register", response_model=ProfileOut, status_code=201)
@@ -45,6 +54,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 def login_password(data: PasswordLogin, db: Session = Depends(get_db)):
     """Email + password login, returning access & refresh JWTs."""
     user = auth_service.login_with_password(db, data.email, data.password)
+    _generate_recommendations_on_login(user, db)
     return _tokens(user)
 
 
@@ -66,6 +76,7 @@ def send_phone_otp(data: SendPhoneOTP, request: Request, db: Session = Depends(g
 @router.post("/login/email", response_model=TokenResponse)
 def verify_email_otp(data: VerifyEmailOTP, db: Session = Depends(get_db)):
     user = auth_service.verify_login_email(db, data.email, data.otp)
+    _generate_recommendations_on_login(user, db)
     return _tokens(user)
 
 
@@ -73,6 +84,7 @@ def verify_email_otp(data: VerifyEmailOTP, db: Session = Depends(get_db)):
 @router.post("/login/phone", response_model=TokenResponse)
 def verify_phone_otp(data: VerifyPhoneOTP, db: Session = Depends(get_db)):
     user = auth_service.verify_login_phone(db, data.phone_number, data.otp)
+    _generate_recommendations_on_login(user, db)
     return _tokens(user)
 
 

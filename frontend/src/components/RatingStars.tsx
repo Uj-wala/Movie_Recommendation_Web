@@ -25,7 +25,7 @@ export default function RatingStars({
           onClick={() => onChange?.(n)}
           onMouseEnter={() => interactive && setHover(n)}
           onMouseLeave={() => interactive && setHover(0)}
-          className={interactive ? "cursor-pointer transition-transform hover:scale-110" : "cursor-default"}
+          className={interactive ? "cursor-pointer transition-transform hover:scale-110 rating-pop" : "cursor-default rating-pop"}
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
         >
           <Star

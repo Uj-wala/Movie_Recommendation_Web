@@ -45,14 +45,16 @@ export default function OmdbSaveButtons({
           toggle("favorites", movie);
         }}
         aria-label="Toggle favorite"
-        className={`grid place-items-center rounded-full text-sm font-medium transition-colors ${dim} ${
+        className={`grid place-items-center rounded-full text-sm font-medium transition-colors heart-bounce ${dim} ${
           inFav ? "bg-primary text-white" : "bg-black/60 text-white hover:bg-black/80"
         }`}
       >
-        <Heart size={icon} className={inFav ? "fill-white" : ""} />
+        <Heart size={icon} className={inFav ? "fill-white heart-fill" : ""} />
         {size === "lg" && (inFav ? "Favorited" : "Favorite")}
       </button>
-      {isAuthenticated && <CollectionPickerButton movie={movie} genre={genre} size={size} />}
+      {isAuthenticated && (
+        <CollectionPickerButton movie={movie} genre={genre} imdbRating={imdbRating} size={size} />
+      )}
       {isAuthenticated && (
         <button
           onClick={(e) => {

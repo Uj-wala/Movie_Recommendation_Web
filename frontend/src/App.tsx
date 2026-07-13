@@ -56,7 +56,10 @@ export default function App() {
             <Route path="/watched" element={<ProtectedRoute><WatchedHistory /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+            <Route path="/collections/public" element={<Collections />} />
+            <Route path="/collections/public/:collectionId" element={<Collections />} />
             <Route path="/collections" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
+            <Route path="/collections/:collectionId" element={<ProtectedRoute><Collections /></ProtectedRoute>} />
             <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

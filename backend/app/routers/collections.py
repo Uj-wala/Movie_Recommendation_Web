@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -38,6 +38,27 @@ def get_movie_memberships(
     user: User = Depends(get_current_user),
 ):
     return svc.movie_memberships(db, user.id, movie_id)
+
+
+@router.get("/public", response_model=list[CollectionResponse])
+def list_public_collections(
+    search: str | None = Query(default=None, max_length=120),
+    db: Session = Depends(get_db),
+):
+    return svc.list_public_collections(db, search)
+
+
+@router.get("/public/{collection_id}", response_model=CollectionResponse)
+def get_public_collection(collection_id: str, db: Session = Depends(get_db)):
+    return svc.get_public_collection(db, collection_id)
+
+
+@router.get("/search", response_model=list[CollectionResponse])
+def search_collections(
+    query: str = Query(..., min_length=1, max_length=120),
+    db: Session = Depends(get_db),
+):
+    return svc.search_public_collections(db, query)
 
 
 @router.get("/{collection_id}", response_model=CollectionResponse)

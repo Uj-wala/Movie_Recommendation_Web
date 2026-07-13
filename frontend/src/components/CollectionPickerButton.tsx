@@ -1,34 +1,38 @@
 import { Check, FolderHeart, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import toast from "react-hot-toast";
 import {
   collectionsApi,
   type MovieCollection,
   type MovieCollectionStatus,
 } from "../api/movieverse";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import type { SavedMovie } from "../context/WatchlistContext";
 
 export default function CollectionPickerButton({
   movie,
   genre = null,
+  imdbRating = null,
   size = "sm",
   variant = "overlay",
 }: {
   movie: SavedMovie;
   genre?: string | null;
+  imdbRating?: number | null;
   size?: "sm" | "lg";
   variant?: "overlay" | "secondary";
 }) {
   const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<MovieCollection[]>([]);
   const [memberships, setMemberships] = useState<MovieCollectionStatus[]>([]);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [name, setName] = useState("");
+  const [visibility, setVisibility] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const dim = size === "lg" ? "h-10 px-4 gap-2" : "h-8 w-8";
   const icon = size === "lg" ? 18 : 15;
   const buttonClass =
@@ -43,11 +47,12 @@ export default function CollectionPickerButton({
       .then(([items, statuses]) => {
         setCollections(items);
         setMemberships(statuses);
-        setSelectedCollectionId(null);
+        setSelectedIds(new Set(statuses.filter((item) => item.contains_movie).map((item) => item.collection_id)));
         setName("");
       })
+      .catch(() => showToast("Could not load collections", "error"))
       .finally(() => setLoading(false));
-  }, [open, isAuthenticated, movie.imdbID]);
+  }, [open, isAuthenticated, movie.imdbID, showToast]);
 
   useEffect(() => {
     if (!open) return;
@@ -58,73 +63,86 @@ export default function CollectionPickerButton({
     return () => document.removeEventListener("keydown", handler);
   }, [open]);
 
-  function contains(collectionId: string) {
-    return memberships.some(
-      (membership) => membership.collection_id === collectionId && membership.contains_movie
-    );
+  const existingIds = useMemo(
+    () => new Set(memberships.filter((item) => item.contains_movie).map((item) => item.collection_id)),
+    [memberships]
+  );
+
+  function toggleSelection(collectionId: string) {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(collectionId)) next.delete(collectionId);
+      else next.add(collectionId);
+      return next;
+    });
   }
 
-  function selectCollection(collection: MovieCollection) {
-    setSelectedCollectionId(collection.id);
-    setName(collection.name);
-  }
+  async function saveSelected() {
+    const idsToAdd = [...selectedIds].filter((id) => !existingIds.has(id));
+    if (idsToAdd.length === 0) {
+      showToast("No new collections selected", "error");
+      return;
+    }
 
-  async function addMovieToCollection(collection: MovieCollection) {
+    setSaving(true);
     try {
-      if (contains(collection.id)) {
-        toast.success("Movie already exists in this collection");
-        return;
-      }
-      await collectionsApi.addMovie(collection.id, {
-        movie_id: movie.imdbID,
-        movie_title: movie.Title,
-        poster: movie.Poster || null,
-        genre,
-        year: movie.Year || null,
-      });
+      await Promise.all(
+        idsToAdd.map((collectionId) =>
+          collectionsApi.addMovie(collectionId, {
+            movie_id: movie.imdbID,
+            internal_movie_id: movie.imdbID.startsWith("tt") ? null : movie.imdbID,
+            movie_title: movie.Title,
+            poster: movie.Poster || null,
+            genre,
+            year: movie.Year || null,
+            imdb_rating: imdbRating,
+          })
+        )
+      );
       setMemberships((current) =>
         current.map((membership) =>
-          membership.collection_id === collection.id
+          idsToAdd.includes(membership.collection_id)
             ? { ...membership, contains_movie: true }
             : membership
         )
       );
-      toast.success("Added to collection");
+      showToast(idsToAdd.length === 1 ? "Added to collection" : "Added to collections");
       setOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Could not update collection");
+      showToast(error.response?.data?.message || "Could not update collections", "error");
+    } finally {
+      setSaving(false);
     }
   }
 
-  async function saveToCollection(e: FormEvent) {
+  async function createCollection(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-    try {
-      const selected = collections.find((collection) => collection.id === selectedCollectionId);
-      if (selected && selected.name === name.trim()) {
-        await addMovieToCollection(selected);
-        return;
-      }
+    const trimmed = name.trim();
+    if (!trimmed) {
+      showToast("Collection name is required", "error");
+      return;
+    }
+    if (collections.some((collection) => collection.name.toLowerCase() === trimmed.toLowerCase())) {
+      showToast("Duplicate collection names are not allowed", "error");
+      return;
+    }
 
-      const collection = await collectionsApi.create(name.trim(), null);
-      await collectionsApi.addMovie(collection.id, {
-        movie_id: movie.imdbID,
-        movie_title: movie.Title,
-        poster: movie.Poster || null,
-        genre,
-        year: movie.Year || null,
-      });
+    setSaving(true);
+    try {
+      const collection = await collectionsApi.create(trimmed, null, visibility);
       setCollections((current) => [collection, ...current]);
       setMemberships((current) => [
-        { collection_id: collection.id, name: collection.name, contains_movie: true },
+        { collection_id: collection.id, name: collection.name, contains_movie: false },
         ...current,
       ]);
-      setSelectedCollectionId(collection.id);
+      setSelectedIds((current) => new Set(current).add(collection.id));
       setName("");
-      toast.success("Collection created and movie added");
-      setOpen(false);
+      setVisibility(false);
+      showToast("Collection created");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Could not update collection");
+      showToast(error.response?.data?.message || "Could not create collection", "error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -134,7 +152,10 @@ export default function CollectionPickerButton({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          if (!isAuthenticated) return toast.error("Sign in to use collections");
+          if (!isAuthenticated) {
+            showToast("Sign in to use collections", "error");
+            return;
+          }
           setOpen((value) => !value);
         }}
         aria-label="Add to collection"
@@ -142,76 +163,121 @@ export default function CollectionPickerButton({
         className={buttonClass}
       >
         <FolderHeart size={icon} />
-        {size === "lg" && "Collections"}
+        {size === "lg" && "Add to Collection"}
       </button>
 
       {open &&
         createPortal(
-        <div
-          className="animate-modal-backdrop fixed inset-0 z-[100] grid place-items-center bg-black/60 px-4 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
           <div
-            className="animate-soft-pop w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-2xl shadow-black/50"
-            onClick={(e) => e.stopPropagation()}
+            className="animate-modal-backdrop fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/60 p-3 backdrop-blur-sm sm:p-4"
+            onClick={() => setOpen(false)}
           >
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-base font-semibold">Add to collection</p>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-chip">
-                <X size={16} />
-              </button>
-            </div>
-
-            {loading ? (
-              <p className="py-8 text-center text-sm text-muted">Loading collections...</p>
-            ) : collections.length === 0 ? (
-              <p className="py-5 text-sm text-muted">Create a collection to save this movie.</p>
-            ) : (
-              <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
-                {collections.map((collection) => {
-                  const checked = contains(collection.id);
-                  const selected = selectedCollectionId === collection.id;
-                  return (
-                    <button
-                      key={collection.id}
-                      type="button"
-                      onClick={() => selectCollection(collection)}
-                      className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-chip ${
-                        selected ? "bg-chip" : ""
-                      }`}
-                    >
-                      <span className="truncate">{collection.name}</span>
-                      {checked && <Check size={16} className="shrink-0 text-watched" />}
-                    </button>
-                  );
-                })}
+            <div
+              className="animate-soft-pop max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-2xl shadow-black/50 sm:max-h-[calc(100dvh-2rem)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-base font-semibold">Add to Collection</p>
+                <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-chip">
+                  <X size={16} />
+                </button>
               </div>
-            )}
 
-            <form onSubmit={saveToCollection} className="mt-3 flex gap-2 border-t border-border pt-3">
-              <input
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (collections.find((collection) => collection.id === selectedCollectionId)?.name !== e.target.value) {
-                    setSelectedCollectionId(null);
-                  }
-                }}
-                placeholder="New collection"
-                className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
-              />
-              <button
-                type="submit"
-                className="button-glow grid h-9 w-9 shrink-0 place-items-center rounded-lg gradient-primary text-white"
-                aria-label="Create collection"
-              >
-                <Plus size={16} />
-              </button>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+              {loading ? (
+                <p className="py-8 text-center text-sm text-muted">Loading collections...</p>
+              ) : collections.length === 0 ? (
+                <p className="py-5 text-sm text-muted">Create a collection to save this movie.</p>
+              ) : (
+                <div className="max-h-[35dvh] space-y-1 overflow-y-auto pr-1 sm:max-h-72">
+                  {collections.map((collection) => {
+                    const selected = selectedIds.has(collection.id);
+                    const alreadySaved = existingIds.has(collection.id);
+                    return (
+                      <button
+                        key={collection.id}
+                        type="button"
+                        onClick={() => toggleSelection(collection.id)}
+                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-chip ${
+                          selected ? "bg-chip" : ""
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{collection.name}</span>
+                          <span className="text-xs text-muted">
+                            {collection.visibility ? "Public" : "Private"}
+                            {alreadySaved ? " - already added" : ""}
+                          </span>
+                        </span>
+                        <span
+                          className={`grid h-5 w-5 shrink-0 place-items-center rounded border ${
+                            selected ? "border-primary bg-primary text-white" : "border-border"
+                          }`}
+                        >
+                          {selected && <Check size={14} />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-3 flex justify-end border-t border-border pt-3">
+                <ButtonLike onClick={saveSelected} disabled={saving || loading}>
+                  Save Selection
+                </ButtonLike>
+              </div>
+
+              <form onSubmit={createCollection} className="mt-3 space-y-3 border-t border-border pt-3">
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="New collection name"
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
+                />
+                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <label className="inline-flex items-center gap-2 text-sm text-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={visibility}
+                      onChange={(e) => setVisibility(e.target.checked)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    Public
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="button-glow inline-flex h-9 items-center justify-center gap-2 rounded-lg gradient-primary px-3 text-sm font-semibold text-white disabled:opacity-50"
+                  >
+                    <Plus size={16} /> Create
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
+  );
+}
+
+function ButtonLike({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="button-glow inline-flex items-center justify-center gap-2 rounded-lg gradient-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+    >
+      {children}
+    </button>
   );
 }

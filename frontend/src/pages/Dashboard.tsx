@@ -157,19 +157,21 @@ export default function Dashboard() {
           {genres.length === 0 ? (
             <ChartEmpty text="Watch movies to see your top genres." />
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={genres} margin={{ left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2A2633" />
-                <XAxis dataKey="genre" tick={AXIS} />
-                <YAxis allowDecimals={false} tick={AXIS} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "#ffffff10" }} />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {genres.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="bar-grow">
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={genres} margin={{ left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2A2633" />
+                  <XAxis dataKey="genre" tick={AXIS} />
+                  <YAxis allowDecimals={false} tick={AXIS} />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "#ffffff10" }} />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {genres.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </ChartCard>
 
@@ -196,25 +198,27 @@ export default function Dashboard() {
           {stats.watchlist_count + stats.watched_count === 0 ? (
             <ChartEmpty text="No watchlist or watched movies yet." />
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  label={(e) => `${e.name}: ${e.value}`}
-                >
-                  {pieData.map((d) => (
-                    <Cell key={d.key} fill={PIE_COLORS[d.key]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="pie-rotate pop">
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    label={(e) => `${e.name}: ${e.value}`}
+                  >
+                    {pieData.map((d) => (
+                      <Cell key={d.key} fill={PIE_COLORS[d.key]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </ChartCard>
       </div>
@@ -292,7 +296,7 @@ function CountUp({ value }: { value: number }) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-card p-5">
+    <div className="scale-in rounded-2xl bg-card p-5">
       <h2 className="mb-4 font-semibold">{title}</h2>
       {children}
     </div>

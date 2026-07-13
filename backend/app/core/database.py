@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData, text
+from sqlalchemy import create_engine, MetaData, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
@@ -77,17 +77,51 @@ def get_db():
 
 
 def ensure_collection_schema() -> None:
-    """Keep early local collection tables compatible with internal movie UUIDs.
+    """Keep early local collection tables compatible with the current contract.
 
     SQLAlchemy create_all creates missing tables, but it does not widen an existing
-    column. The first collection version stored only short IMDb IDs, while the app
-    now also saves internal movie UUIDs from /movie/:slug pages.
+    column or add columns to existing tables.
     """
     url = make_url(settings.DATABASE_URL)
-    if url.get_backend_name() != "mysql":
+    if url.get_backend_name() not in {"mysql", "sqlite"}:
         return
 
+    inspector = inspect(engine)
+    if not {"collections", "collection_movies"}.issubset(set(inspector.get_table_names())):
+        return
+
+    collection_columns = {column["name"] for column in inspector.get_columns("collections")}
+    movie_columns = {column["name"] for column in inspector.get_columns("collection_movies")}
+
     with engine.begin() as connection:
-        connection.execute(
-            text("ALTER TABLE collection_movies MODIFY movie_id VARCHAR(64) NOT NULL")
-        )
+        if url.get_backend_name() == "mysql":
+            connection.execute(
+                text("ALTER TABLE collection_movies MODIFY movie_id VARCHAR(64) NOT NULL")
+            )
+            if "visibility" not in collection_columns:
+                connection.execute(
+                    text("ALTER TABLE collections ADD COLUMN visibility BOOLEAN NOT NULL DEFAULT 0")
+                )
+            if "imdb_rating" not in movie_columns:
+                connection.execute(
+                    text("ALTER TABLE collection_movies ADD COLUMN imdb_rating FLOAT NULL")
+                )
+            if "internal_movie_id" not in movie_columns:
+                connection.execute(
+                    text(
+                        "ALTER TABLE collection_movies "
+                        "ADD COLUMN internal_movie_id VARCHAR(36) NULL"
+                    )
+                )
+            return
+
+        if "visibility" not in collection_columns:
+            connection.execute(
+                text("ALTER TABLE collections ADD COLUMN visibility BOOLEAN NOT NULL DEFAULT 0")
+            )
+        if "imdb_rating" not in movie_columns:
+            connection.execute(text("ALTER TABLE collection_movies ADD COLUMN imdb_rating FLOAT"))
+        if "internal_movie_id" not in movie_columns:
+            connection.execute(
+                text("ALTER TABLE collection_movies ADD COLUMN internal_movie_id VARCHAR(36)")
+            )

@@ -124,6 +124,7 @@ export default function MovieDetailsPage() {
                   Poster: movie.poster_url || "",
                 }}
                 genre={movie.genres.map((g) => g.name).join(", ")}
+                imdbRating={movie.rating}
                 size="lg"
                 variant="secondary"
               />

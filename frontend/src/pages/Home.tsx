@@ -1,4 +1,4 @@
-import { Info, Play, Star } from "lucide-react";
+import { Info, Play, Star, Popcorn, Film, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { moviesApi } from "../api/movieverse";
@@ -53,6 +53,11 @@ export default function Home() {
               alt={hero.title}
               className="hero-image-motion h-[340px] w-full object-cover sm:h-[420px]"
             />
+            {/* Floating icons */}
+            <Popcorn size={48} className="float-icon popcorn absolute right-16 top-12 text-white/40 opacity-50" />
+            <Film size={48} className="float-icon film-reel absolute right-32 bottom-20 text-white/40 opacity-50" />
+            <Ticket size={48} className="float-icon ticket absolute left-12 top-20 text-white/40 opacity-50" />
+            
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
             <div className="absolute bottom-0 left-0 max-w-xl p-6 sm:p-10">

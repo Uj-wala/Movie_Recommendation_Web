@@ -38,3 +38,4 @@ class Movie(Base, BaseModel):
     genres = relationship("Genre", secondary=movie_genres, back_populates="movies")
     cast = relationship("Actor", secondary=movie_actors, back_populates="movies")
     reviews = relationship("Review", back_populates="movie", cascade="all, delete-orphan")
+    collection_entries = relationship("CollectionMovie", back_populates="movie")

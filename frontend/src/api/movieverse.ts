@@ -255,10 +255,12 @@ export const watchedApi = {
 export interface CollectionMovie {
   id: string;
   movie_id: string;
+  internal_movie_id: string | null;
   movie_title: string;
   poster: string | null;
   genre: string | null;
   year: string | null;
+  imdb_rating: number | null;
   created_at: string;
 }
 
@@ -266,6 +268,11 @@ export interface MovieCollection {
   id: string;
   name: string;
   description: string | null;
+  visibility: boolean;
+  owner?: string | null;
+  owner_name?: string | null;
+  owner_username?: string | null;
+  movie_count?: number;
   created_at: string;
   updated_at: string;
   movies: CollectionMovie[];
@@ -273,10 +280,12 @@ export interface MovieCollection {
 
 export interface CollectionMoviePayload {
   movie_id: string;
+  internal_movie_id?: string | null;
   movie_title: string;
   poster?: string | null;
   genre?: string | null;
   year?: string | null;
+  imdb_rating?: number | null;
 }
 
 export interface MovieCollectionStatus {
@@ -287,9 +296,17 @@ export interface MovieCollectionStatus {
 
 export const collectionsApi = {
   list: () => api.get<MovieCollection[]>("/collections").then((r) => r.data),
-  create: (name: string, description?: string | null) =>
-    api.post<MovieCollection>("/collections", { name, description }).then((r) => r.data),
-  update: (id: string, data: { name?: string; description?: string | null }) =>
+  publicList: (search?: string) =>
+    (search
+      ? api.get<MovieCollection[]>("/collections/search", { params: { query: search } })
+      : api.get<MovieCollection[]>("/collections/public")
+    ).then((r) => r.data),
+  get: (id: string) => api.get<MovieCollection>(`/collections/${id}`).then((r) => r.data),
+  getPublic: (id: string) =>
+    api.get<MovieCollection>(`/collections/public/${id}`).then((r) => r.data),
+  create: (name: string, description?: string | null, visibility = false) =>
+    api.post<MovieCollection>("/collections", { name, description, visibility }).then((r) => r.data),
+  update: (id: string, data: { name?: string; description?: string | null; visibility?: boolean }) =>
     api.put<MovieCollection>(`/collections/${id}`, data).then((r) => r.data),
   remove: (id: string) => api.delete(`/collections/${id}`),
   addMovie: (collectionId: string, item: CollectionMoviePayload) =>
